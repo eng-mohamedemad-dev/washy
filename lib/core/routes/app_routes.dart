@@ -50,6 +50,9 @@ import 'package:wash_flutter/features/order_tracking/presentation/pages/order_tr
 import 'package:wash_flutter/features/service_selection/presentation/pages/service_selection_page.dart';
 import 'package:wash_flutter/features/welcome/presentation/pages/welcome_page.dart';
 import 'package:wash_flutter/features/home/presentation/pages/home_page.dart';
+import 'package:wash_flutter/features/order_status/presentation/pages/order_status_page.dart';
+import 'package:wash_flutter/features/premium/presentation/pages/premium_details_page.dart';
+import 'package:wash_flutter/features/create_password/presentation/pages/create_password_page.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
 
 /// App routes configuration
@@ -98,6 +101,9 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String orderSummary = '/order-summary';
   static const String orderTracking = '/order-tracking';
+  static const String orderStatus = '/order-status';
+  static const String premiumDetails = '/premium-details';
+  static const String createPassword = '/create-password';
   static const String serviceSelection = '/service-selection';
   static const String welcome = '/welcome';
   
@@ -385,6 +391,25 @@ class AppRoutes {
         
       case orderTracking:
         return MaterialPageRoute(builder: (_) => const OrderTrackingPage());
+        
+      case orderStatus:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          builder: (_) => OrderStatusPage(
+            orderId: args?['orderId'] ?? 1,
+          ),
+        );
+        
+      case premiumDetails:
+        return MaterialPageRoute(builder: (_) => const PremiumDetailsPage());
+        
+      case createPassword:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          builder: (_) => CreatePasswordPage(
+            isFromEmail: args?['isFromEmail'] ?? false,
+          ),
+        );
         
       case serviceSelection:
         return MaterialPageRoute(builder: (_) => const ServiceSelectionPage());
