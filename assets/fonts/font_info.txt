@@ -1,0 +1,12 @@
+# Font Files Required
+
+Place the following SourceSansPro font files in this directory:
+
+1. SourceSansPro-Regular.ttf
+2. SourceSansPro-Bold.ttf  
+3. SourceSansPro-Light.ttf
+4. SourceSansPro-SemiBold.ttf
+
+These fonts should be copied from the Java project's assets/fonts directory 
+or downloaded from Google Fonts to match the exact typography of the Java app.
+
