@@ -70,9 +70,9 @@ class SocialLoginSection extends StatelessWidget {
             ),
           ),
         ),
-        
+
         const SizedBox(height: AppDimensions.signUpSocialButtonSpacing),
-        
+
         // Email Login Button (matching Java layout)
         SizedBox(
           width: double.infinity,
@@ -121,10 +121,10 @@ class SocialLoginSection extends StatelessWidget {
             ),
           ),
         ),
-        
+
         const SizedBox(height: AppDimensions.signUpSocialButtonSpacing),
-        
-        // Facebook Connect Button (matching Java layout) 
+
+        // Facebook Connect Button (matching Java layout)
         SizedBox(
           width: double.infinity,
           height: AppDimensions.signUpContinueButtonHeight,

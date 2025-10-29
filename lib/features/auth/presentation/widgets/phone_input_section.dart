@@ -32,12 +32,14 @@ class PhoneInputSection extends StatelessWidget {
     return GestureDetector(
       onTap: onPhoneNumberTapped,
       child: Container(
+        // Shorten underline length from both sides to match design
+        margin: const EdgeInsets.symmetric(horizontal: 32),
         decoration: BoxDecoration(
           // No border like image
           border: Border(
             bottom: BorderSide(
               color: focusNode.hasFocus ? AppColors.washyBlue : AppColors.grey3,
-              width: 1,
+              width: 2,
             ),
           ),
         ),
@@ -46,62 +48,44 @@ class PhoneInputSection extends StatelessWidget {
           child: Row(
             children: [
               if (isMobileMode) ...[
-                // Jordan Flag (matching Java layout)
-                Container(
-                  width: AppDimensions.jordanFlagSize,
-                  height: AppDimensions.jordanFlagSize,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: Image.asset(
-                      'assets/images/jordan_flag.png',
-                      width: AppDimensions.jordanFlagSize,
-                      height: AppDimensions.jordanFlagSize,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Jordan flag colors placeholder
-                        return Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0xFF000000), // Black stripe
-                                Color(0xFFFFFFFF), // White stripe
-                                Color(0xFF007A3D), // Green stripe
-                              ],
-                              stops: [0.0, 0.33, 1.0],
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.star,
-                              size: 8,
-                              color: Color(0xFFCE1126), // Red triangle
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                // Shift flag + country code a bit to the left without touching the underline
+                Transform.translate(
+                  offset: const Offset(-30, 0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Jordan Flag (matching Java layout)
+                      SizedBox(
+                        width: AppDimensions.jordanFlagSize,
+                        height: AppDimensions.jordanFlagSize,
+                        child: Image.asset(
+                          'assets/images/jordan_flag.png',
+                          width: AppDimensions.jordanFlagSize,
+                          height: AppDimensions.jordanFlagSize,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // If flag asset missing, keep area transparent (no box)
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // Country Code (matching Java)
+                      const Text(
+                        '+962',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Color.fromARGB(255, 8, 14, 19),
+                          fontFamily: 'SourceSansPro',
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
-                const SizedBox(width: 8),
-
-                // Country Code (matching Java)
-                const Text(
-                  '+962',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.greyDark,
-                    fontFamily: 'SourceSansPro',
-                  ),
-                ),
-
-                const SizedBox(width: 8),
+                const SizedBox(width: 16),
 
                 // Phone Input Field (matching Java)
                 Expanded(
@@ -122,8 +106,8 @@ class PhoneInputSection extends StatelessWidget {
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: AppStrings.enterMobileNumber,
-                      hintStyle: const TextStyle(
-                        color: AppColors.grey2,
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
                         fontFamily: 'SourceSansPro',
                       ),
                       contentPadding: EdgeInsets.zero,

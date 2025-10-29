@@ -45,7 +45,7 @@ class IntroPage4 extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(
               top: 16,
-              bottom: 36,
+              bottom: 100,
               left: 16,
               right: 16,
             ),
@@ -67,8 +67,8 @@ class IntroPage4 extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 50),
                 child: Image.asset(
                   'assets/images/ic_intro_page4.png',
-                  width: 168,
-                  height: 160,
+                  width: 200,
+                  height: 200,
                   errorBuilder: (context, error, stackTrace) => Container(
                     width: 168,
                     height: 160,
@@ -86,11 +86,11 @@ class IntroPage4 extends StatelessWidget {
               ),
 
               // Space like Java version (50dp)
-              const SizedBox(height: 50),
+              const SizedBox(height: 10),
 
               // Title like Java version (matches fragment_intro_page4.xml - marginTop 30dp)
               Padding(
-                padding: const EdgeInsets.only(top: 30),
+                padding: const EdgeInsets.only(top: 20),
                 child: Text(
                   'استلم طلبك',
                   textAlign: TextAlign.center,
@@ -131,7 +131,7 @@ class IntroPage4 extends StatelessWidget {
                       'شاهد الفيديو',
                       style: TextStyle(
                         color: AppColors.washyBlue, // washy_blue_color
-                        fontSize: 19,
+                        fontSize: 24,
                       ),
                     ),
                     const SizedBox(width: 3),

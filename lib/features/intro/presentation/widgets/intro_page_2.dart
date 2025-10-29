@@ -14,7 +14,7 @@ class IntroPage2 extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(
               top: 16,
-              bottom: 36,
+              bottom: 100,
               left: 16,
               right: 16,
             ),
@@ -37,8 +37,8 @@ class IntroPage2 extends StatelessWidget {
               // Icon like Java version (160dp × 160dp, matches fragment_intro_page2.xml)
               Image.asset(
                 'assets/images/ic_intro_page2.png',
-                width: 160,
-                height: 160,
+                width: 180,
+                height: 180,
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 160,
                   height: 160,

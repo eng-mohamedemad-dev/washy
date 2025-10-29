@@ -14,7 +14,7 @@ class IntroPage3 extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(
               top: 16,
-              bottom: 36,
+              bottom: 100,
               left: 16,
               right: 16,
             ),
@@ -37,8 +37,8 @@ class IntroPage3 extends StatelessWidget {
               // Icon like Java version (173dp × 160dp, matches fragment_intro_page3.xml)
               Image.asset(
                 'assets/images/ic_intro_page3.png',
-                width: 173,
-                height: 160,
+                width: 180,
+                height: 180,
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 173,
                   height: 160,
@@ -73,26 +73,28 @@ class IntroPage3 extends StatelessWidget {
 
               // Description with highlighted EcoClean like Java version (from image with 30dp margins)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
                     style: AppTextStyles.introDescription.copyWith(
                       color: AppColors.colorTextNotSelected, // #8c96a8
-                      fontSize: 17,
+                      fontSize: 16,
                     ),
                     children: [
-                      const TextSpan(text: 'حدثنا نظام الدراي كلين و أصبح '),
-                      TextSpan(
-                        text: 'إكو كلين',
-                        style: TextStyle(
-                          color: AppColors.colorGreenButton, // #92e068 (green)
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                       const TextSpan(
                           text:
-                              '. أحدث نظام تنظيف متوفر عالمياً بنتائج تنظيف أفضل و باستخدام مواد صديقة للبيئة'),
+                              'حدثنا نظام الدراي كلين وأصبح اكو كلين. أحدث نظام تنظيف متوفر عالميا بنتائج تنظيف أفضل و باستخدام مواد صديقه للبيئة'),
+                      // TextSpan(
+                      //   text: 'إكو كلين',
+                      //   style: TextStyle(
+                      //     color: AppColors.colorGreenButton, // #92e068 (green)
+                      //     fontWeight: FontWeight.bold,
+                      //   ),
+                      // ),
+                      // const TextSpan(
+                      //     text:
+                      //         '. أحدث نظام تنظيف متوفر عالمياً بنتائج تنظيف أفضل و باستخدام مواد صديقة للبيئة'),
                     ],
                   ),
                 ),

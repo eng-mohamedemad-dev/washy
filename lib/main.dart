@@ -4,16 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/routes/app_routes.dart';
-// import removed: IndexPage is now routed via AppRoutes.splash
+import 'features/splash/presentation/pages/index_page.dart';
 import 'features/splash/presentation/bloc/splash_bloc.dart';
 import 'injection_container.dart' as di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize dependency injection
   await di.init();
-  
+
   runApp(const WashyWashApp());
 }
 
@@ -41,7 +41,7 @@ class WashyWashApp extends StatelessWidget {
             systemOverlayStyle: SystemUiOverlayStyle.light,
           ),
         ),
-        initialRoute: AppRoutes.splash,
+        initialRoute: AppRoutes.initial,
         onGenerateRoute: AppRoutes.generateRoute,
       ),
     );

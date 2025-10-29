@@ -14,7 +14,7 @@ class IntroPage1 extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(
               top: 16,
-              bottom: 36,
+              bottom: 100,
               left: 16,
               right: 16,
             ),
@@ -38,20 +38,20 @@ class IntroPage1 extends StatelessWidget {
                 const SizedBox(height: 77),
 
                 // Icon like Java version (160dp × 160dp, matches fragment_intro_page1.xml)
-              Image.asset(
+                Image.asset(
                   'assets/images/ic_intro_page1.png',
-                width: 120,
-                height: 120,
+                  width: 200,
+                  height: 200,
                   errorBuilder: (context, error, stackTrace) => Container(
-                  width: 120,
-                  height: 120,
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
                       color: AppColors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
-                    Icons.local_laundry_service_outlined,
-                    size: 60,
+                      Icons.local_laundry_service_outlined,
+                      size: 60,
                       color: AppColors.white,
                     ),
                   ),
