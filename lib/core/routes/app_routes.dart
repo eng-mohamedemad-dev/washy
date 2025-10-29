@@ -10,10 +10,11 @@ import 'package:wash_flutter/features/auth/presentation/pages/forget_password_pa
 import 'package:wash_flutter/features/auth/presentation/bloc/signup/signup_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
-import 'package:wash_flutter/features/splash/presentation/pages/index_page.dart';
+// import 'package:wash_flutter/features/splash/presentation/pages/index_page.dart'; // disabled
 // import removed: splash_page routed via IndexPage under AppRoutes.splash
 import 'package:wash_flutter/features/intro/presentation/pages/intro_page.dart';
-import 'package:wash_flutter/features/launcher/presentation/pages/launcher_page.dart';
+// import 'package:wash_flutter/features/launcher/presentation/pages/launcher_page.dart'; // disabled temporarily
+import 'package:wash_flutter/features/splash/presentation/pages/splash_page.dart';
 import 'package:wash_flutter/features/cart/presentation/pages/cart_page.dart';
 import 'package:wash_flutter/features/order/presentation/pages/new_order_page.dart';
 import 'package:wash_flutter/features/order/domain/entities/order_type.dart';
@@ -140,11 +141,10 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.initial:
-        return MaterialPageRoute(builder: (_) => const IndexPage());
+        return MaterialPageRoute(builder: (_) => const SplashPage());
 
       case splash:
-        // Start with IndexPage which shows SplashPage and controls navigation
-        return MaterialPageRoute(builder: (_) => const IndexPage());
+        return MaterialPageRoute(builder: (_) => const SplashPage());
 
       case intro:
         return MaterialPageRoute(builder: (_) => const IntroPage());
@@ -203,14 +203,14 @@ class AppRoutes {
       case home:
         return MaterialPageRoute(builder: (_) => const HomeFeature.HomePage());
 
-      case launcher:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
-          builder: (_) => LauncherPage(
-            deepLink: args?['deepLink'],
-            params: args?['params'],
-          ),
-        );
+      // case launcher:
+      //   final args = settings.arguments as Map<String, dynamic>?;
+      //   return MaterialPageRoute(
+      //     builder: (_) => LauncherPage(
+      //       deepLink: args?['deepLink'],
+      //       params: args?['params'],
+      //     ),
+      //   );
 
       case cart:
         return MaterialPageRoute(builder: (_) => const CartPage());

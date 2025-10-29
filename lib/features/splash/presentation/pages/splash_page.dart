@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_text_styles.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wash_flutter/core/routes/app_routes.dart';
+import 'package:wash_flutter/features/splash/presentation/bloc/splash_bloc.dart';
 
 /// SplashPage - App splash screen
 class SplashPage extends StatefulWidget {
@@ -20,7 +23,10 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
     _initAnimations();
-    // Navigation is controlled by SplashBloc in IndexPage, don't navigate here
+    // Trigger app start logic
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SplashBloc>().add(StartApp());
+    });
   }
 
   @override
@@ -56,7 +62,13 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<SplashBloc, SplashState>(
+      listener: (context, state) {
+        if (state is SplashNavigateToSplash) {
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
+        }
+      },
+      child: Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -159,6 +171,6 @@ class _SplashPageState extends State<SplashPage>
           ),
         ),
       ),
-    );
+    ));
   }
 }
