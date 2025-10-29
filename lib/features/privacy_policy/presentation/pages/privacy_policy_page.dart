@@ -309,3 +309,4 @@ class PrivacyPolicyPage extends StatelessWidget {
     );
   }
 }
+

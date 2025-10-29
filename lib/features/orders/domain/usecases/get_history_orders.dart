@@ -27,3 +27,4 @@ class GetHistoryOrdersParams {
     required this.page,
   });
 }
+

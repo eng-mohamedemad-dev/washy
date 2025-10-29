@@ -120,3 +120,4 @@ class OrderSummary extends Equatable {
         orderType,
       ];
 }
+

@@ -266,3 +266,4 @@ class StatusStep {
     required this.icon,
   });
 }
+

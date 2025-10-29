@@ -322,12 +322,32 @@ class _NewOrderPageState extends State<NewOrderPage> {
   /// Confirm order
   void _confirmOrder() {
     if (!_canConfirmOrder()) {
+      if (availableTimeSlots.isEmpty) {
+        Navigator.pushNamed(
+          context,
+          '/no-time-slots-new-order',
+          arguments: {
+            'navigationType': null,
+          },
+        );
+        return;
+      }
       _showErrorDialog('يرجى إكمال جميع الحقول المطلوبة');
       return;
     }
 
-    // TODO: Create NewOrderRequest object and submit
-    _showErrorDialog('تأكيد الطلب قيد التطوير');
+    // حساب الإجمالي وتمريره لصفحة الدفع (يحاكي إنشاء الطلب في Java)
+    _calculateTotal();
+    final generatedOrderId = DateTime.now().millisecondsSinceEpoch % 1000000; // Mock orderId
+
+    Navigator.pushNamed(
+      context,
+      '/payment',
+      arguments: {
+        'orderId': generatedOrderId,
+        'amount': total,
+      },
+    );
   }
 
   /// Get step labels

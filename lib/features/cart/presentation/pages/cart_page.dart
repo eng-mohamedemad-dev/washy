@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_text_styles.dart';
+import 'package:wash_flutter/core/routes/app_routes.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
 import '../bloc/cart_bloc.dart';
 import '../bloc/cart_event.dart';
@@ -54,9 +55,10 @@ class CartView extends StatelessWidget {
                 CartAppBar(
                   onBackPressed: () => Navigator.of(context).pop(),
                   onEditPressed: () => context.read<CartBloc>().add(
-                    const ToggleEditMode(),
-                  ),
-                  showEditButton: state is CartLoaded && state.cartSummary.hasItems,
+                        const ToggleEditMode(),
+                      ),
+                  showEditButton:
+                      state is CartLoaded && state.cartSummary.hasItems,
                   isEditMode: state is CartLoaded ? state.isEditMode : false,
                 ),
 
@@ -119,21 +121,21 @@ class CartView extends StatelessWidget {
               isEditMode: state.isEditMode,
               onQuantityChanged: (productId, newQuantity) {
                 context.read<CartBloc>().add(
-                  UpdateItemQuantity(
-                    productId: productId,
-                    newQuantity: newQuantity,
-                  ),
-                );
+                      UpdateItemQuantity(
+                        productId: productId,
+                        newQuantity: newQuantity,
+                      ),
+                    );
               },
               onRemoveItem: (productId) {
                 context.read<CartBloc>().add(
-                  RemoveItemFromCart(productId: productId),
-                );
+                      RemoveItemFromCart(productId: productId),
+                    );
               },
               onCategoryOrderPressed: (categoryType) {
                 context.read<CartBloc>().add(
-                  NavigateToOrder(categoryType: categoryType),
-                );
+                      NavigateToOrder(categoryType: categoryType),
+                    );
               },
             ),
           ),
@@ -169,8 +171,8 @@ class CartView extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => context.read<CartBloc>().add(
-                const LoadCartSummary(),
-              ),
+                    const LoadCartSummary(),
+                  ),
               child: const Text('إعادة المحاولة'),
             ),
           ],
@@ -188,8 +190,8 @@ class CartView extends StatelessWidget {
     if (nonEmptyCategories.isNotEmpty) {
       final primaryCategory = nonEmptyCategories.first;
       context.read<CartBloc>().add(
-        NavigateToOrder(categoryType: primaryCategory.type),
-      );
+            NavigateToOrder(categoryType: primaryCategory.type),
+          );
     }
   }
 
@@ -197,20 +199,20 @@ class CartView extends StatelessWidget {
   void _handleOrderNavigation(BuildContext context, CartNavigateToOrder state) {
     switch (state.destination) {
       case 'DISINFECTION':
-        Navigator.pushNamed(context, '/disinfection_order');
+        Navigator.pushNamed(context, AppRoutes.disinfectionDetails);
         break;
       case 'FURNITURE':
-        Navigator.pushNamed(context, '/furniture_order');
+        Navigator.pushNamed(context, AppRoutes.quickOrderFurniture);
         break;
       case 'HOUSEKEEPING':
-        Navigator.pushNamed(context, '/housekeeping_order');
+        Navigator.pushNamed(context, AppRoutes.serviceSelection);
         break;
       case 'CAR_CLEANING':
-        Navigator.pushNamed(context, '/car_cleaning_order');
+        Navigator.pushNamed(context, AppRoutes.serviceSelection);
         break;
       case 'CREATE_ORDER_PAGE':
       default:
-        Navigator.pushNamed(context, '/new_order');
+        Navigator.pushNamed(context, AppRoutes.newOrder);
         break;
     }
   }

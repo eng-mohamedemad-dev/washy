@@ -408,9 +408,20 @@ class _ExpressDeliveryPageState extends State<ExpressDeliveryPage> {
 
   // Actions
   void _onOrderPressed() {
-    Navigator.pop(context, {
-      'expressDelivery': isExpressSelected,
-      'extraCost': isExpressSelected ? 2.0 : 0.0,
-    });
+    // إذا اختار المستخدم التوصيل السريع نكمل إلى إنشاء الطلب
+    if (isExpressSelected) {
+      Navigator.pushNamed(
+        context,
+        '/new-order',
+        arguments: {
+          'orderType': 'express',
+        },
+      );
+      return;
+    }
+
+    // عودة للطلب العادي
+    Navigator.pushNamed(context, '/new-order');
   }
 }
+

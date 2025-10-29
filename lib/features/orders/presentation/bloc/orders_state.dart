@@ -233,3 +233,4 @@ class OrdersServerError extends OrdersState {
   @override
   List<Object?> get props => [message];
 }
+

@@ -32,3 +32,4 @@ class HomeService extends Equatable {
     color,
   ];
 }
+

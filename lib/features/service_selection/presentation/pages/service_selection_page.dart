@@ -422,7 +422,12 @@ class _ServiceSelectionPageState extends State<ServiceSelectionPage> {
     if (selectedService == null) return;
     
     final service = services.firstWhere((s) => s.id == selectedService);
-    
+
+    if (service.id == 'furniture') {
+      Navigator.pushNamed(context, '/furniture-service');
+      return;
+    }
+
     Navigator.pop(context, {
       'selectedService': selectedService,
       'serviceTitle': service.title,
@@ -451,3 +456,4 @@ class ServiceOption {
     required this.estimatedTime,
   });
 }
+

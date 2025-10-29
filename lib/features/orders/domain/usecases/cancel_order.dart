@@ -26,3 +26,4 @@ class CancelOrderParams {
     required this.orderId,
   });
 }
+

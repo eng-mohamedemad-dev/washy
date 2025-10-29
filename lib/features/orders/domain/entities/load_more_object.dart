@@ -100,3 +100,4 @@ class LoadMoreObject extends Equatable {
         isLoading,
       ];
 }
+

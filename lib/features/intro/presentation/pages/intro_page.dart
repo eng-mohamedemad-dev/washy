@@ -5,6 +5,9 @@ import '../../../../core/constants/app_gradients.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../widgets/intro_page_view.dart';
 import '../widgets/page_indicator.dart';
+import '../../../../injection_container.dart' as di;
+import '../../../splash/domain/usecases/set_walkthrough_consumed.dart';
+import '../../../../core/routes/app_routes.dart';
 
 class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
@@ -41,8 +44,12 @@ class _IntroPageState extends State<IntroPage> {
   }
 
   void _finishAndNavigate() {
-    // Set walk through consumed and navigate to SignUp
-    Navigator.pushReplacementNamed(context, '/signup');
+    // Set walk through consumed and navigate to Splash like Java
+    di.getIt<SetWalkThroughConsumed>()
+        .call(const SetWalkThroughConsumedParams(true))
+        .then((_) {
+      Navigator.pushReplacementNamed(context, AppRoutes.splash);
+    });
   }
 
   @override

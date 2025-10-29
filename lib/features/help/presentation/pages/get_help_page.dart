@@ -176,3 +176,4 @@ class GetHelpPage extends StatelessWidget {
     Navigator.pushNamed(context, '/faq');
   }
 }
+

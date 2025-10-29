@@ -25,3 +25,4 @@ class GetCachedOrdersParams {
     required this.orderType,
   });
 }
+

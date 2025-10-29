@@ -581,8 +581,15 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Future<void> _processCreditCardPayment() async {
-    // Mock credit card payment
-    print('Processing credit card payment for order ${widget.orderId}');
+    // الانتقال إلى صفحة Payfort لإتمام الدفع ثم العودة
+    await Navigator.pushNamed(
+      context,
+      '/payfort-payment',
+      arguments: {
+        'orderId': widget.orderId,
+        'amount': widget.amount,
+      },
+    );
   }
 
   Future<void> _processCODPayment() async {

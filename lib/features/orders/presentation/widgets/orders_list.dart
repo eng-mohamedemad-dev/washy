@@ -239,6 +239,60 @@ class _OrderItem extends StatelessWidget {
                 ),
             ],
           ),
+
+          const SizedBox(height: 8),
+          // Navigation buttons: Details and Tracking
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      // ignore: use_build_context_synchronously
+                      // context comes from build closure
+                      (Navigator.of(context).context),
+                      '/order-details',
+                      arguments: {
+                        'orderId': order.orderId,
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long, size: 18, color: AppColors.washyBlue),
+                  label: const Text(
+                    'تفاصيل الطلب',
+                    style: TextStyle(color: AppColors.washyBlue, fontFamily: 'Cairo', fontSize: 14),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.washyBlue),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      (Navigator.of(context).context),
+                      '/order-status',
+                      arguments: {
+                        'orderId': order.orderId,
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.local_shipping, size: 18, color: AppColors.washyGreen),
+                  label: const Text(
+                    'تتبع الطلب',
+                    style: TextStyle(color: AppColors.washyGreen, fontFamily: 'Cairo', fontSize: 14),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.washyGreen),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -435,3 +489,4 @@ class _OrderItem extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
+

@@ -27,3 +27,4 @@ class GetAllOrdersParams {
     required this.page,
   });
 }
+

@@ -307,3 +307,4 @@ class LanguageOption {
     required this.flag,
   });
 }
+

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
+import '../../../../features/splash/data/datasources/splash_local_data_source.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/network_info.dart';
@@ -21,18 +22,25 @@ class OrderRepositoryImpl implements OrderRepository {
   final OrderRemoteDataSource remoteDataSource;
   final OrderLocalDataSource localDataSource;
   final NetworkInfo networkInfo;
+  final SplashLocalDataSource splashLocalDataSource;
 
   const OrderRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.networkInfo,
+    required this.splashLocalDataSource,
   });
 
   @override
   Future<Either<Failure, List<WashyAddress>>> getAllAddresses() async {
+<<<<<<< HEAD
     // TODO: Get token from session/auth
     const String token = "";
 
+=======
+    final String token = await splashLocalDataSource.getUserToken() ?? '';
+    
+>>>>>>> 5c5db153474f1b053ffffec8498ffaf3824e95cd
     if (await networkInfo.isConnected) {
       try {
         final remoteAddresses = await remoteDataSource.getAllAddresses(token);

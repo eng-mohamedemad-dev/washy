@@ -35,14 +35,14 @@ class OrdersRemoteDataSourceImpl implements OrdersRemoteDataSource {
   @override
   Future<AllOrdersResponse> getAllOrders(String token, int page) async {
     final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}customer/order/all'),
+      Uri.parse('${AppConstants.baseUrl}customer/order/get-all'),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: json.encode({
-        'page': page,
-      }),
+      body: {
+        'token': token,
+        'page': page.toString(),
+      },
     );
 
     if (response.statusCode == 200) {
@@ -55,14 +55,14 @@ class OrdersRemoteDataSourceImpl implements OrdersRemoteDataSource {
   @override
   Future<AllOrdersResponse> getHistoryOrders(String token, int page) async {
     final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}customer/order/history'),
+      Uri.parse('${AppConstants.baseUrl}customer/order/get-history'),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: json.encode({
-        'page': page,
-      }),
+      body: {
+        'token': token,
+        'page': page.toString(),
+      },
     );
 
     if (response.statusCode == 200) {
@@ -75,14 +75,14 @@ class OrdersRemoteDataSourceImpl implements OrdersRemoteDataSource {
   @override
   Future<OrderDetailsResponse> getOrderDetails(String token, int orderId) async {
     final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}customer/order/details'),
+      Uri.parse('${AppConstants.baseUrl}customer/order/get'),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: json.encode({
-        'order_id': orderId,
-      }),
+      body: {
+        'token': token,
+        'order_id': orderId.toString(),
+      },
     );
 
     if (response.statusCode == 200) {
@@ -95,14 +95,14 @@ class OrdersRemoteDataSourceImpl implements OrdersRemoteDataSource {
   @override
   Future<CancelOrderResponse> cancelOrder(String token, int orderId) async {
     final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}customer/order/cancel'),
+      Uri.parse('${AppConstants.baseUrl}customer/order/cancel-order'),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: json.encode({
-        'order_id': orderId,
-      }),
+      body: {
+        'token': token,
+        'order_id': orderId.toString(),
+      },
     );
 
     if (response.statusCode == 200) {
@@ -112,3 +112,4 @@ class OrdersRemoteDataSourceImpl implements OrdersRemoteDataSource {
     }
   }
 }
+

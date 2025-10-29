@@ -613,10 +613,25 @@ class _HomePageState extends State<HomePage>
 
   // Action Methods
   void _onServiceTap(HomeService service) {
+    // إذا كانت خدمة الأثاث انتقل مباشرة لشاشة الأثاث
+    if (service.id == 4) {
+      Navigator.pushNamed(context, '/furniture-service');
+      return;
+    }
+
+    // إذا كانت الخدمة السريعة افتح شاشة الخدمة السريعة
+    if (service.id == 5) {
+      Navigator.pushNamed(context, '/express-delivery');
+      return;
+    }
+
     Navigator.pushNamed(
       context,
-      '/service-selection',
-      arguments: {'selectedServiceId': service.id},
+      '/home-category-details',
+      arguments: {
+        'title': service.title,
+        'description': service.subtitle,
+      },
     );
   }
 
@@ -624,3 +639,4 @@ class _HomePageState extends State<HomePage>
     Navigator.pushNamed(context, '/new-order');
   }
 }
+
