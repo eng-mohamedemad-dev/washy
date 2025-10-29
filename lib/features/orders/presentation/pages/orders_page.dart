@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/loading_widget.dart';
-import '../../../../injection_container.dart' as di;
+import 'package:wash_flutter/core/theme/app_colors.dart';
+import 'package:wash_flutter/core/widgets/loading_widget.dart';
+import 'package:wash_flutter/injection_container.dart' as di;
 import '../../domain/entities/orders_type.dart';
 import '../bloc/orders_bloc.dart';
 import '../bloc/orders_event.dart';
@@ -19,9 +19,9 @@ class OrdersPage extends StatefulWidget {
   final bool isFromThankYouPage;
 
   const OrdersPage({
-    Key? key,
+    super.key,
     this.isFromThankYouPage = false,
-  }) : super(key: key);
+  });
 
   @override
   State<OrdersPage> createState() => _OrdersPageState();
@@ -30,7 +30,7 @@ class OrdersPage extends StatefulWidget {
 class _OrdersPageState extends State<OrdersPage> {
   // Current selected order type (matching Java selectedOrderType)
   OrdersType selectedOrderType = OrdersType.ALL_ORDERS;
-  
+
   @override
   void initState() {
     super.initState();
@@ -40,13 +40,14 @@ class _OrdersPageState extends State<OrdersPage> {
   /// Initialize orders based on user login status
   void _initializeOrders() {
     // TODO: Check if user is logged in using SessionStateManager equivalent
-    final isLoggedIn = true; // For now, assume user is logged in
-    
+    const isLoggedIn = true; // For now, assume user is logged in
+
     if (isLoggedIn) {
       // Load initial orders
       context.read<OrdersBloc>().add(
-        const LoadAllOrdersEvent(token: 'user_token'), // TODO: Get actual token
-      );
+            const LoadAllOrdersEvent(
+                token: 'user_token'), // TODO: Get actual token
+          );
     }
   }
 
@@ -68,7 +69,7 @@ class _OrdersPageState extends State<OrdersPage> {
                 selectedOrderType: selectedOrderType,
                 onTabChanged: _handleTabChanged,
               ),
-              
+
               // Main content based on state
               Expanded(
                 child: _buildMainContent(state),
@@ -125,19 +126,22 @@ class _OrdersPageState extends State<OrdersPage> {
         onBrowseItemsPressed: _handleBrowseItemsPressed,
         onLoginPressed: _handleLoginPressed,
       );
-    } else if (state is OrdersError || 
-               state is OrdersNetworkError || 
-               state is OrdersCacheError || 
-               state is OrdersServerError) {
+    } else if (state is OrdersError ||
+        state is OrdersNetworkError ||
+        state is OrdersCacheError ||
+        state is OrdersServerError) {
       return OrdersErrorView(
-        message: state is OrdersError ? state.message :
-                state is OrdersNetworkError ? state.message :
-                state is OrdersCacheError ? state.message :
-                (state as OrdersServerError).message,
+        message: state is OrdersError
+            ? state.message
+            : state is OrdersNetworkError
+                ? state.message
+                : state is OrdersCacheError
+                    ? state.message
+                    : (state as OrdersServerError).message,
         onRetryPressed: _handleRetry,
       );
     }
-    
+
     return const LoadingWidget();
   }
 
@@ -146,28 +150,29 @@ class _OrdersPageState extends State<OrdersPage> {
     setState(() {
       selectedOrderType = orderType;
     });
-    
+
     context.read<OrdersBloc>().add(
-      SwitchOrderTypeEvent(orderType: orderType),
-    );
-    
+          SwitchOrderTypeEvent(orderType: orderType),
+        );
+
     // Load data for the selected tab if not already loaded
     if (orderType == OrdersType.HISTORY_ORDERS) {
       context.read<OrdersBloc>().add(
-        const LoadHistoryOrdersEvent(token: 'user_token'), // TODO: Get actual token
-      );
+            const LoadHistoryOrdersEvent(
+                token: 'user_token'), // TODO: Get actual token
+          );
     }
   }
 
   /// Handle order expansion (matching Java onExpandImageViewClicked)
   void _handleOrderExpanded(int orderId, int position) {
     context.read<OrdersBloc>().add(
-      LoadOrderDetailsEvent(
-        token: 'user_token', // TODO: Get actual token
-        orderId: orderId,
-        position: position,
-      ),
-    );
+          LoadOrderDetailsEvent(
+            token: 'user_token', // TODO: Get actual token
+            orderId: orderId,
+            position: position,
+          ),
+        );
   }
 
   /// Handle order cancellation (matching Java onCancelOrderClicked)
@@ -178,8 +183,9 @@ class _OrdersPageState extends State<OrdersPage> {
   /// Handle load more orders (matching Java onLoadMore)
   void _handleLoadMore() {
     context.read<OrdersBloc>().add(
-      const LoadMoreOrdersEvent(token: 'user_token'), // TODO: Get actual token
-    );
+          const LoadMoreOrdersEvent(
+              token: 'user_token'), // TODO: Get actual token
+        );
   }
 
   /// Handle browse items button press
@@ -197,12 +203,12 @@ class _OrdersPageState extends State<OrdersPage> {
   void _handleRetry() {
     if (selectedOrderType == OrdersType.ALL_ORDERS) {
       context.read<OrdersBloc>().add(
-        const LoadAllOrdersEvent(token: 'user_token', isRefresh: true),
-      );
+            const LoadAllOrdersEvent(token: 'user_token', isRefresh: true),
+          );
     } else {
       context.read<OrdersBloc>().add(
-        const LoadHistoryOrdersEvent(token: 'user_token', isRefresh: true),
-      );
+            const LoadHistoryOrdersEvent(token: 'user_token', isRefresh: true),
+          );
     }
   }
 
@@ -253,11 +259,11 @@ class _OrdersPageState extends State<OrdersPage> {
             onPressed: () {
               Navigator.of(context).pop();
               context.read<OrdersBloc>().add(
-                CancelOrderEvent(
-                  token: 'user_token', // TODO: Get actual token
-                  orderId: orderId,
-                ),
-              );
+                    CancelOrderEvent(
+                      token: 'user_token', // TODO: Get actual token
+                      orderId: orderId,
+                    ),
+                  );
             },
             child: const Text(
               'تأكيد',
@@ -305,9 +311,9 @@ class OrdersPageWrapper extends StatelessWidget {
   final bool isFromThankYouPage;
 
   const OrdersPageWrapper({
-    Key? key,
+    super.key,
     this.isFromThankYouPage = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

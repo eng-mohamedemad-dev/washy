@@ -34,7 +34,7 @@ class CouponResponse extends Equatable {
   /// Get properties for compatibility with repository
   bool get success => status == 'success';
   double get discount => data?.redeemResult.discountTotal ?? 0.0;
-  int get couponId => data?.redeemResult.id ?? 0;
+  int get couponId => data?.redeemResult.couponId ?? 0;
 
   @override
   List<Object?> get props => [data, message, status];

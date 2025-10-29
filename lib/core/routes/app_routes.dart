@@ -12,7 +12,6 @@ import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.da
 import 'package:wash_flutter/features/splash/presentation/pages/index_page.dart';
 import 'package:wash_flutter/features/splash/presentation/pages/splash_page.dart';
 import 'package:wash_flutter/features/intro/presentation/pages/intro_page.dart';
-import 'package:wash_flutter/features/home/presentation/pages/landing_page.dart';
 import 'package:wash_flutter/features/launcher/presentation/pages/launcher_page.dart';
 import 'package:wash_flutter/features/cart/presentation/pages/cart_page.dart';
 import 'package:wash_flutter/features/order/presentation/pages/new_order_page.dart';
@@ -43,14 +42,12 @@ import 'package:wash_flutter/features/terms/presentation/pages/terms_and_conditi
 import 'package:wash_flutter/features/express_delivery/presentation/pages/express_delivery_page.dart';
 import 'package:wash_flutter/features/furniture/presentation/pages/furniture_service_page.dart';
 import 'package:wash_flutter/features/share/presentation/pages/share_with_friends_page.dart';
-import 'package:wash_flutter/features/splash/presentation/pages/splash_page.dart';
 import 'package:wash_flutter/features/settings/presentation/pages/settings_page.dart';
 import 'package:wash_flutter/features/order_summary/presentation/pages/order_summary_page.dart';
 import 'package:wash_flutter/features/order_tracking/presentation/pages/order_tracking_page.dart';
 import 'package:wash_flutter/features/service_selection/presentation/pages/service_selection_page.dart';
 import 'package:wash_flutter/features/welcome/presentation/pages/welcome_page.dart';
-import 'package:wash_flutter/features/home/presentation/pages/home_page.dart';
-import 'package:wash_flutter/features/order_status/presentation/pages/order_status_page.dart';
+import 'package:wash_flutter/features/home/presentation/pages/home_page.dart' as HomeFeature;
 import 'package:wash_flutter/features/premium/presentation/pages/premium_details_page.dart';
 import 'package:wash_flutter/features/create_password/presentation/pages/create_password_page.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
@@ -101,7 +98,6 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String orderSummary = '/order-summary';
   static const String orderTracking = '/order-tracking';
-  static const String orderStatus = '/order-status';
   static const String premiumDetails = '/premium-details';
   static const String createPassword = '/create-password';
   static const String serviceSelection = '/service-selection';
@@ -110,7 +106,7 @@ class AppRoutes {
   /// Generate routes for the app
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case initial:
+      case AppRoutes.initial:
         return MaterialPageRoute(builder: (_) => const IndexPage());
         
       case splash:
@@ -163,7 +159,7 @@ class AppRoutes {
         );
         
       case home:
-        return MaterialPageRoute(builder: (_) => const HomePage());
+        return MaterialPageRoute(builder: (_) => const HomeFeature.HomePage());
         
       case launcher:
         final args = settings.arguments as Map<String, dynamic>?;
@@ -383,7 +379,7 @@ class AppRoutes {
       case shareWithFriends:
         return MaterialPageRoute(builder: (_) => const ShareWithFriendsPage());
         
-      case settings:
+      case AppRoutes.settings:
         return MaterialPageRoute(builder: (_) => const SettingsPage());
         
       case orderSummary:
@@ -391,14 +387,6 @@ class AppRoutes {
         
       case orderTracking:
         return MaterialPageRoute(builder: (_) => const OrderTrackingPage());
-        
-      case orderStatus:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
-          builder: (_) => OrderStatusPage(
-            orderId: args?['orderId'] ?? 1,
-          ),
-        );
         
       case premiumDetails:
         return MaterialPageRoute(builder: (_) => const PremiumDetailsPage());

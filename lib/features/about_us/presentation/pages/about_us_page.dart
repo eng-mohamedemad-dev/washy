@@ -12,7 +12,7 @@ class AboutUsPage extends StatelessWidget {
       backgroundColor: AppColors.colorBackground,
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context  ),
           Expanded(child: _buildContent()),
         ],
       ),
@@ -20,7 +20,7 @@ class AboutUsPage extends StatelessWidget {
   }
 
   /// Header with back button and title
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       height: 110,
       decoration: const BoxDecoration(

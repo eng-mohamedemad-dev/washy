@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
-import 'package:wash_flutter/features/auth/domain/entities/user.dart';
-import 'package:wash_flutter/features/auth/domain/entities/account_status.dart';
-import 'package:wash_flutter/features/auth/domain/entities/login_type.dart';
+import 'package:wash_flutter/features/auth/domain/entities/user.dart' as user;
+import 'package:wash_flutter/features/auth/domain/entities/account_status.dart' as account_status;
+import 'package:wash_flutter/features/auth/domain/entities/login_type.dart' as login_type;
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/send_verification_code.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_event.dart';
@@ -113,13 +113,13 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     } else {
       // For regular verification (sign up/login)
       // TODO: Get actual user from API response
-      const mockUser = User(
+      const mockUser = user.User(
         id: '123',
         name: 'Test User',
         email: 'test@example.com',
         phoneNumber: '+962787654321',
-        accountStatus: AccountStatus.verifiedCustomer,
-        loginType: LoginType.phoneNumber,
+        accountStatus: user.AccountStatus.verifiedCustomer,
+        loginType: user.LoginType.phone,
       );
       
       emit(const VerificationSuccess(user: mockUser));

@@ -8,7 +8,6 @@ import '../../domain/entities/date_slot.dart';
 import '../../domain/entities/new_order_request.dart';
 import '../../domain/entities/order_available_time_slots.dart';
 import '../../domain/entities/order_type.dart';
-import '../../domain/entities/payment_method.dart';
 import '../../domain/entities/redeem_result.dart';
 import '../../domain/entities/time_slot.dart';
 import '../../domain/entities/washy_address.dart';
@@ -33,66 +32,67 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Either<Failure, List<WashyAddress>>> getAllAddresses() async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         final remoteAddresses = await remoteDataSource.getAllAddresses(token);
-        final addresses = remoteAddresses.addresses
-            .map((model) => model.toEntity())
-            .toList();
-        
+        final addresses =
+            remoteAddresses.addresses.map((model) => model.toEntity()).toList();
+
         // Cache addresses
         await localDataSource.cacheAddresses(remoteAddresses.addresses);
-        
+
         return Right(addresses);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to get addresses'));
+        return const Left(ServerFailure('Failed to get addresses'));
       }
     } else {
       try {
         final cachedAddresses = await localDataSource.getCachedAddresses();
-        final addresses = cachedAddresses
-            .map((model) => model.toEntity())
-            .toList();
+        final addresses =
+            cachedAddresses.map((model) => model.toEntity()).toList();
         return Right(addresses);
       } on CacheException {
-        return Left(const CacheFailure('Failed to load cached addresses'));
+        return const Left(CacheFailure('Failed to load cached addresses'));
       }
     }
   }
 
   @override
-  Future<Either<Failure, OrderAvailableTimeSlots>> getOrderAvailableTimeSlots() async {
+  Future<Either<Failure, OrderAvailableTimeSlots>>
+      getOrderAvailableTimeSlots() async {
     // TODO: Implement when API is available
-    return Left(const ServerFailure('Not implemented yet'));
+    return const Left(ServerFailure('Not implemented yet'));
   }
 
   @override
   Future<Either<Failure, List<DateSlot>>> getAvailableDateSlots() async {
     // TODO: Implement when API is available
-    return Left(const ServerFailure('Not implemented yet'));
+    return const Left(ServerFailure('Not implemented yet'));
   }
 
   @override
-  Future<Either<Failure, List<TimeSlot>>> getAvailableTimeSlots(int dateSlotId) async {
+  Future<Either<Failure, List<TimeSlot>>> getAvailableTimeSlots(
+      int dateSlotId) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         // TODO: Update remote data source to use dateSlotId
         final timeSlots = await remoteDataSource.getAvailableTimeSlots(token);
         // TODO: Convert API response to List<TimeSlot> when model is ready
-        return Left(const ServerFailure('API response conversion not implemented'));
+        return const Left(
+            ServerFailure('API response conversion not implemented'));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to get time slots'));
+        return const Left(ServerFailure('Failed to get time slots'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -104,7 +104,7 @@ class OrderRepositoryImpl implements OrderRepository {
   ) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         final orderModel = NewOrderRequestModel.fromEntity(orderRequest);
@@ -114,29 +114,29 @@ class OrderRepositoryImpl implements OrderRepository {
           null, // orderId
           orderTypeTag ?? 'normal',
         );
-        
+
         // Cache the order request
         await localDataSource.cacheOrderRequest(orderModel);
-        
+
         return Right(response.data?.orderId ?? 0);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to submit order'));
+        return const Left(ServerFailure('Failed to submit order'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
-  @override  
+  @override
   Future<Either<Failure, int>> submitSkipSelectionOrder(
     NewOrderRequest orderRequest,
     int? skipSelectionId,
   ) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         final orderModel = NewOrderRequestModel.fromEntity(orderRequest);
@@ -145,18 +145,19 @@ class OrderRepositoryImpl implements OrderRepository {
           orderModel,
           skipSelectionId,
         );
-        
+
         // Cache the order request
         await localDataSource.cacheOrderRequest(orderModel);
-        
+
         return Right(response.data?.orderId ?? 0);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to submit skip selection order'));
+        return const Left(
+            ServerFailure('Failed to submit skip selection order'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -164,32 +165,30 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Either<Failure, List<CreditCard>>> getCreditCards() async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         final response = await remoteDataSource.getCreditCards(token);
-        final creditCards = response.creditCards
-            .map((model) => model.toEntity())
-            .toList();
-        
+        final creditCards =
+            response.creditCards.map((model) => model.toEntity()).toList();
+
         // Cache credit cards
         await localDataSource.cacheCreditCards(response.creditCards);
-        
+
         return Right(creditCards);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to get credit cards'));
+        return const Left(ServerFailure('Failed to get credit cards'));
       }
     } else {
       try {
         final cachedCards = await localDataSource.getCachedCreditCards();
-        final creditCards = cachedCards
-            .map((model) => model.toEntity())
-            .toList();
+        final creditCards =
+            cachedCards.map((model) => model.toEntity()).toList();
         return Right(creditCards);
       } on CacheException {
-        return Left(const CacheFailure('Failed to load cached credit cards'));
+        return const Left(CacheFailure('Failed to load cached credit cards'));
       }
     }
   }
@@ -203,17 +202,17 @@ class OrderRepositoryImpl implements OrderRepository {
   ]) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         final response = await remoteDataSource.applyRedeemCode(
           token,
           redeemCode,
           orderType,
-          orderId: orderId,
-          products: null, // TODO: Add products if needed
+          orderId,
+          null, // products JSON if needed
         );
-        
+
         final redeemResult = RedeemResult(
           code: redeemCode,
           success: response.success,
@@ -222,44 +221,40 @@ class OrderRepositoryImpl implements OrderRepository {
           subTotal: 0.0, // TODO: Calculate from response
           freeShipping: false, // TODO: Get from response
         );
-        
+
         return Right(redeemResult);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to apply redeem code'));
+        return const Left(ServerFailure('Failed to apply redeem code'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
   @override
-  Future<Either<Failure, int>> confirmOrder(int orderId, String paymentMethod) async {
+  Future<Either<Failure, int>> confirmOrder(
+      int orderId, String paymentMethod) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
-        final paymentMethodEnum = PaymentMethod.values.firstWhere(
-          (method) => method.name == paymentMethod,
-          orElse: () => PaymentMethod.cod,
-        );
-        
         final response = await remoteDataSource.confirmOrder(
           token,
           orderId,
-          paymentMethodEnum,
+          paymentMethod,
         );
-        
+
         return Right(response.data?.orderId ?? orderId);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to confirm order'));
+        return const Left(ServerFailure('Failed to confirm order'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -271,41 +266,41 @@ class OrderRepositoryImpl implements OrderRepository {
   ) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         // Upload image files
         for (final imagePath in imagePaths) {
           final imageFile = File(imagePath);
           await remoteDataSource.uploadFile(
-            token,
             'image',
             0, // editedBy
             imageFile,
             orderId,
+            token,
           );
         }
-        
+
         // Upload audio files
         for (final audioPath in audioPaths) {
           final audioFile = File(audioPath);
           await remoteDataSource.uploadFile(
-            token,
             'audio',
             0, // editedBy
             audioFile,
             orderId,
+            token,
           );
         }
-        
+
         return const Right(null);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to upload files'));
+        return const Left(ServerFailure('Failed to upload files'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -313,18 +308,19 @@ class OrderRepositoryImpl implements OrderRepository {
   Future<Either<Failure, dynamic>> getOrderDetails(int orderId) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
-        final orderDetails = await remoteDataSource.getOrderDetails(token, orderId);
+        final orderDetails =
+            await remoteDataSource.getOrderDetails(token, orderId);
         return Right(orderDetails);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to get order details'));
+        return const Left(ServerFailure('Failed to get order details'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -336,7 +332,7 @@ class OrderRepositoryImpl implements OrderRepository {
   ) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
         final orderModel = NewOrderRequestModel.fromEntity(orderRequest);
@@ -350,10 +346,10 @@ class OrderRepositoryImpl implements OrderRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to edit order'));
+        return const Left(ServerFailure('Failed to edit order'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 
@@ -365,10 +361,10 @@ class OrderRepositoryImpl implements OrderRepository {
   ) async {
     // TODO: Get token from session/auth
     const String token = "";
-    
+
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.callMotoPaymentMethod(
+        final response = await remoteDataSource.makeMotoPayment(
           token,
           orderId,
           creditCardId,
@@ -378,10 +374,10 @@ class OrderRepositoryImpl implements OrderRepository {
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       } on Exception {
-        return Left(const ServerFailure('Failed to process Moto payment'));
+        return const Left(ServerFailure('Failed to process Moto payment'));
       }
     } else {
-      return Left(const NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure('No internet connection'));
     }
   }
 }

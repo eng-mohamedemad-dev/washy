@@ -32,6 +32,8 @@ class NewOrderRowSection extends Equatable {
         return 'Important Notes';
       case NewOrderSectionType.paymentSection:
         return 'Payment Method';
+      default:
+        return '';
     }
   }
 
@@ -54,6 +56,8 @@ class NewOrderRowSection extends Equatable {
         return 'ملاحظات مهمة';
       case NewOrderSectionType.paymentSection:
         return 'طريقة الدفع';
+      default:
+        return '';
     }
   }
 

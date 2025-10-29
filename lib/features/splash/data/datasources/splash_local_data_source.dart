@@ -7,6 +7,7 @@ abstract class SplashLocalDataSource {
   Future<AppConfigModel> getAppConfig();
   Future<void> setServerUrl(String url);
   Future<void> setWalkThroughConsumed(bool consumed);
+  Future<bool> isWalkThroughConsumed();
   Future<String?> getUserToken();
 }
 
@@ -18,10 +19,16 @@ class SplashLocalDataSourceImpl implements SplashLocalDataSource {
   @override
   Future<AppConfigModel> getAppConfig() async {
     try {
-      final serverUrl = sharedPreferences.getString(AppConstants.keyServerUrl) ?? '';
-      final walkThroughConsumed = sharedPreferences.getBool(AppConstants.keyWalkThroughConsumed) ?? false;
-      final userLoggedIn = sharedPreferences.getBool(AppConstants.keyUserLoggedIn) ?? false;
-      final userLoggedInSkipped = sharedPreferences.getBool(AppConstants.keyUserLoggedInSkipped) ?? false;
+      final serverUrl =
+          sharedPreferences.getString(AppConstants.keyServerUrl) ?? '';
+      final walkThroughConsumed =
+          sharedPreferences.getBool(AppConstants.keyWalkThroughConsumed) ??
+              false;
+      final userLoggedIn =
+          sharedPreferences.getBool(AppConstants.keyUserLoggedIn) ?? false;
+      final userLoggedInSkipped =
+          sharedPreferences.getBool(AppConstants.keyUserLoggedInSkipped) ??
+              false;
       final userToken = sharedPreferences.getString(AppConstants.keyUserToken);
 
       return AppConfigModel(
@@ -48,9 +55,20 @@ class SplashLocalDataSourceImpl implements SplashLocalDataSource {
   @override
   Future<void> setWalkThroughConsumed(bool consumed) async {
     try {
-      await sharedPreferences.setBool(AppConstants.keyWalkThroughConsumed, consumed);
+      await sharedPreferences.setBool(
+          AppConstants.keyWalkThroughConsumed, consumed);
     } catch (e) {
       throw CacheException('Failed to set walk through consumed: $e');
+    }
+  }
+
+  @override
+  Future<bool> isWalkThroughConsumed() async {
+    try {
+      return sharedPreferences.getBool(AppConstants.keyWalkThroughConsumed) ??
+          false;
+    } catch (e) {
+      throw CacheException('Failed to get walk through consumed: $e');
     }
   }
 
@@ -63,4 +81,3 @@ class SplashLocalDataSourceImpl implements SplashLocalDataSource {
     }
   }
 }
-

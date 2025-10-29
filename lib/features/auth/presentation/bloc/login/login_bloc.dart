@@ -4,7 +4,8 @@ import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/core/usecases/usecase.dart';
 import 'package:wash_flutter/core/utils/phone_validator.dart';
 import 'package:wash_flutter/features/auth/domain/entities/user.dart';
-import 'package:wash_flutter/features/auth/domain/entities/account_status.dart';
+import 'package:wash_flutter/features/auth/domain/entities/account_status.dart'
+    as account_status;
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/check_mobile.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/login_with_google.dart';
@@ -35,12 +36,13 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     LoginPhoneNumberChanged event,
     Emitter<LoginState> emit,
   ) async {
-    final currentState = state is LoginPhoneInputState 
+    final currentState = state is LoginPhoneInputState
         ? state as LoginPhoneInputState
         : const LoginPhoneInputState();
-    
-    final isValid = PhoneValidator.isValidJordanianPhoneNumber(event.phoneNumber);
-    
+
+    final isValid =
+        PhoneValidator.isValidJordanianPhoneNumber(event.phoneNumber);
+
     String? validationMessage;
     if (event.phoneNumber.isNotEmpty && !isValid) {
       validationMessage = 'Please enter a valid phone number';
@@ -58,45 +60,49 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     LoginCheckMobilePressed event,
     Emitter<LoginState> emit,
   ) async {
-    final currentState = state is LoginPhoneInputState 
+    final currentState = state is LoginPhoneInputState
         ? state as LoginPhoneInputState
         : const LoginPhoneInputState();
-    
+
     if (currentState.phoneNumber.isEmpty) {
-      emit(currentState.copyWith(validationMessage: 'Please enter mobile number'));
+      emit(currentState.copyWith(
+          validationMessage: 'Please enter mobile number'));
       return;
     }
-    
+
     if (!currentState.isPhoneValid) {
-      emit(currentState.copyWith(validationMessage: 'Please enter a valid phone number'));
+      emit(currentState.copyWith(
+          validationMessage: 'Please enter a valid phone number'));
       return;
     }
 
     emit(const LoginLoading());
 
     // Format phone number for API (add Jordan country code)
-    final formattedPhone = '+962${event.phoneNumber.replaceAll(RegExp(r'^0+'), '')}';
-    
-    final result = await checkMobile(CheckMobileParams(phoneNumber: formattedPhone));
-    
+    final formattedPhone =
+        '+962${event.phoneNumber.replaceAll(RegExp(r'^0+'), '')}';
+
+    final result =
+        await checkMobile(CheckMobileParams(phoneNumber: formattedPhone));
+
     result.fold(
       (failure) => emit(LoginError(_mapFailureToMessage(failure))),
       (user) {
         // Handle different account statuses for LOGIN (different from SignUp)
         switch (user.accountStatus) {
-          case AccountStatus.NEW_CUSTOMER:
+          case account_status.AccountStatus.NEW_CUSTOMER:
             // User doesn't exist, navigate to sign up
             emit(const LoginNavigateToSignUp());
             break;
-          case AccountStatus.NOT_VERIFIED_CUSTOMER:
+          case account_status.AccountStatus.NOT_VERIFIED_CUSTOMER:
             // User exists but not verified, send verification code
             _sendVerificationCode(formattedPhone, emit);
             break;
-          case AccountStatus.VERIFIED_CUSTOMER:
+          case account_status.AccountStatus.VERIFIED_CUSTOMER:
             // User is verified, navigate to main screen
             emit(LoginSuccess(user: user));
             break;
-          case AccountStatus.ENTER_PASSWORD:
+          case account_status.AccountStatus.ENTER_PASSWORD:
             // User needs to enter password
             emit(LoginNavigateToPassword(user));
             break;
@@ -109,7 +115,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
   /// Send verification code for login
   Future<void> _sendVerificationCode(
-    String phoneNumber, 
+    String phoneNumber,
     Emitter<LoginState> emit,
   ) async {
     final verificationRequest = VerificationRequest(
@@ -123,7 +129,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     result.fold(
       (failure) => emit(LoginError(_mapFailureToMessage(failure))),
-      (_) => emit(LoginNavigateToVerification(identifier: phoneNumber, type: 'sms')),
+      (_) => emit(
+          LoginNavigateToVerification(identifier: phoneNumber, type: 'sms')),
     );
   }
 
@@ -133,7 +140,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     Emitter<LoginState> emit,
   ) async {
     emit(const LoginLoading());
-    
+
     // This would typically trigger Google Sign-In flow
     // For now, we'll show an error since it's not fully implemented
     emit(const LoginError('Google Sign-In not available'));

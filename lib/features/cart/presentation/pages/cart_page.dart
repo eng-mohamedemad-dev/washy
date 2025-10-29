@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
-import '../../../../injection_container.dart' as di;
+import 'package:wash_flutter/core/constants/app_colors.dart';
+import 'package:wash_flutter/core/constants/app_text_styles.dart';
+import 'package:wash_flutter/injection_container.dart' as di;
 import '../bloc/cart_bloc.dart';
 import '../bloc/cart_event.dart';
 import '../bloc/cart_state.dart';
@@ -146,7 +146,7 @@ class CartView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 64,
               color: AppColors.colorRedError,

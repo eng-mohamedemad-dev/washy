@@ -5,18 +5,18 @@ class AppDimensions {
   // From dimens.xml
   static const double activityHorizontalMargin = 16.0; // 16dp
   static const double activityVerticalMargin = 16.0; // 16dp
-  
+
   // Splash dimensions (from activity_splash.xml)
   static const double splashLogoWidth = 84.0; // 84dp
   static const double splashLogoHeight = 83.0; // 83dp
-  
+
   // Intro dimensions (from activity_intro.xml & fragments)
   static const double introIconSize = 160.0; // 160dp x 160dp
   static const double introTitleTopMargin = 77.0; // 77dp from top
   static const double introDescriptionMargin = 32.0; // 32dp horizontal
   static const double introPagerBottomMargin = 55.0; // 55dp from bottom
   static const double introSkipBottomMargin = 28.0; // 28dp from bottom
-  
+
   // SignUp dimensions (from sign_up.xml)
   static const double signUpHeaderTopMargin = 40.0; // 40dp
   static const double signUpSocialButtonSpacing = 10.0; // 10dp between buttons
@@ -25,9 +25,11 @@ class AppDimensions {
   static const double signUpPhoneInputPadding = 12.0; // 12dp
   static const double signUpPhoneInputBottomMargin = 15.0; // 15dp
   static const double signUpContinueButtonHeight = 50.0; // 50dp
-  static const double signUpContinueButtonMargin = 17.0; // 17dp horizontal margin
-  static const double signUpContinueButtonBottomPadding = 15.0; // 15dp vertical margin
-  
+  static const double signUpContinueButtonMargin =
+      17.0; // 17dp horizontal margin
+  static const double signUpContinueButtonBottomPadding =
+      15.0; // 15dp vertical margin
+
   // Additional SignUp dimensions
   static const double signUpOrDividerTopMargin = 24.0; // 24dp
   static const double orDividerHorizontalPadding = 20.0; // 20dp
@@ -67,11 +69,11 @@ class AppDimensions {
   // Standard text and rotation
   static const double textSize = 14.0; // 14sp
   static const double quarterArrowRotation = 90.0; // 90 degrees
-  
+
   // Phone input specific
   static const double jordanFlagSize = 19.0; // 19dp x 19dp
   static const double countryCodeSpacing = 8.0; // 8dp spacing
-  
+
   // Common spacing
   static const double smallSpacing = 8.0;
   static const double mediumSpacing = 16.0;
@@ -89,16 +91,18 @@ class AppDimensions {
   static const double iconSize = 24.0;
   static const double iconSizeSmall = 18.0;
   static const double iconSizeLarge = 32.0;
-  
+
   // Card and container dimensions
   static const double cardElevation = 2.0;
   static const double cardRadius = 8.0;
   static const double containerPadding = 16.0;
   static const double dividerHeight = 1.0;
-  
+
   // Input field dimensions
   static const double inputHeight = 48.0;
   static const double inputBorderRadius = 8.0;
   static const double inputPadding = 16.0;
-}
 
+  // Separator dimensions
+  static const double separatorWidth = 200.0;
+}

@@ -12,7 +12,7 @@ class OrderSummaryPage extends StatelessWidget {
       backgroundColor: AppColors.colorBackground,
       body: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           Expanded(child: _buildContent()),
           _buildConfirmButton(),
         ],
@@ -21,7 +21,7 @@ class OrderSummaryPage extends StatelessWidget {
   }
 
   /// Header
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       height: 110,
       decoration: const BoxDecoration(
@@ -41,9 +41,9 @@ class OrderSummaryPage extends StatelessWidget {
               bottom: 0,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Container(
+                child: const SizedBox(
                   width: 66,
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
                     color: AppColors.white,
                     size: 24,
@@ -51,7 +51,7 @@ class OrderSummaryPage extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Title
             const Positioned(
               left: 66,
@@ -113,9 +113,9 @@ class OrderSummaryPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Order Number
                   _buildInfoRow('رقم الطلب', '#WW12345'),
                   _buildInfoRow('التاريخ', '2024/01/15'),
@@ -125,9 +125,9 @@ class OrderSummaryPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Items Card
           Card(
             shape: RoundedRectangleBorder(
@@ -157,9 +157,9 @@ class OrderSummaryPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Items List
                   _buildItemRow('قميص قطني', 2, 3.500),
                   _buildItemRow('بنطلون جينز', 1, 4.000),
@@ -169,9 +169,9 @@ class OrderSummaryPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Address Card
           Card(
             shape: RoundedRectangleBorder(
@@ -179,10 +179,10 @@ class OrderSummaryPage extends StatelessWidget {
             ),
             child: Container(
               padding: const EdgeInsets.all(20),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(
                         Icons.location_on,
@@ -201,10 +201,8 @@ class OrderSummaryPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'المنزل',
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
@@ -213,8 +211,8 @@ class OrderSummaryPage extends StatelessWidget {
                       color: AppColors.colorTitleBlack,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'شارع الملك عبدالله الثاني، الدوار السابع، عمان',
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
@@ -222,18 +220,16 @@ class OrderSummaryPage extends StatelessWidget {
                       color: AppColors.greyDark,
                     ),
                   ),
-                  
-                  const SizedBox(height: 12),
-                  
+                  SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.schedule,
                         color: AppColors.grey2,
                         size: 16,
                       ),
-                      const SizedBox(width: 4),
-                      const Text(
+                      SizedBox(width: 4),
+                      Text(
                         'الاستلام: غداً 10:00 ص',
                         style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
@@ -241,14 +237,14 @@ class OrderSummaryPage extends StatelessWidget {
                           color: AppColors.grey2,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      const Icon(
+                      SizedBox(width: 16),
+                      Icon(
                         Icons.local_shipping,
                         color: AppColors.grey2,
                         size: 16,
                       ),
-                      const SizedBox(width: 4),
-                      const Text(
+                      SizedBox(width: 4),
+                      Text(
                         'التسليم: بعد غد 6:00 م',
                         style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
@@ -262,9 +258,9 @@ class OrderSummaryPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Payment Card
           Card(
             shape: RoundedRectangleBorder(
@@ -294,9 +290,7 @@ class OrderSummaryPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
                   const SizedBox(height: 16),
-                  
                   Row(
                     children: [
                       Container(
@@ -327,9 +321,9 @@ class OrderSummaryPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Total Card
           Card(
             shape: RoundedRectangleBorder(
@@ -353,9 +347,7 @@ class OrderSummaryPage extends StatelessWidget {
                   _buildTotalRow('المجموع الفرعي', '27.500 د.أ'),
                   _buildTotalRow('رسوم التوصيل', '2.000 د.أ'),
                   _buildTotalRow('خصم', '-3.000 د.أ', isDiscount: true),
-                  
                   const Divider(thickness: 2),
-                  
                   const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -478,7 +470,8 @@ class OrderSummaryPage extends StatelessWidget {
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: isDiscount ? AppColors.washyGreen : AppColors.colorTitleBlack,
+              color:
+                  isDiscount ? AppColors.washyGreen : AppColors.colorTitleBlack,
             ),
           ),
         ],

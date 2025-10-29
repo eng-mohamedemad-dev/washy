@@ -1,3 +1,4 @@
+import '../../../cart/domain/entities/cart_item.dart';
 import '../../domain/entities/order_summary.dart';
 import '../../../cart/data/models/cart_item_model.dart';
 
@@ -44,7 +45,8 @@ class OrderSummaryModel extends OrderSummary {
       'date_added': dateAdded,
       'total': total,
       'order_status': orderStatus,
-      'products': products.map((item) => (item as CartItemModel).toJson()).toList(),
+      'products':
+          products.map((item) => (item as CartItemModel).toJson()).toList(),
       'pickup_timeslot_timestamp': pickupTimeSlotTimeStamp,
       'unpaid': isUnpaid ? 1 : 0,
       'is_edit_mode': isEditMode,
@@ -72,12 +74,13 @@ class OrderSummaryModel extends OrderSummary {
   }
 
   /// Create a copy with updated fields
+  @override
   OrderSummaryModel copyWith({
     int? orderId,
     String? dateAdded,
     String? total,
     String? orderStatus,
-    List<dynamic>? products,
+    List<CartItem>? products,
     int? pickupTimeSlotTimeStamp,
     bool? isUnpaid,
     bool? isEditMode,
@@ -91,7 +94,8 @@ class OrderSummaryModel extends OrderSummary {
       total: total ?? this.total,
       orderStatus: orderStatus ?? this.orderStatus,
       products: products ?? this.products,
-      pickupTimeSlotTimeStamp: pickupTimeSlotTimeStamp ?? this.pickupTimeSlotTimeStamp,
+      pickupTimeSlotTimeStamp:
+          pickupTimeSlotTimeStamp ?? this.pickupTimeSlotTimeStamp,
       isUnpaid: isUnpaid ?? this.isUnpaid,
       isEditMode: isEditMode ?? this.isEditMode,
       isExpanded: isExpanded ?? this.isExpanded,

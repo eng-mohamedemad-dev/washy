@@ -1,3 +1,5 @@
+import '../../../cart/domain/entities/cart_item.dart';
+import '../../../order/domain/entities/washy_address.dart';
 import '../../domain/entities/order_details.dart';
 import '../../../cart/data/models/cart_item_model.dart';
 import '../../../order/data/models/washy_address_model.dart';
@@ -68,12 +70,13 @@ class OrderDetailsModel extends OrderDetails {
       'date_added': dateAdded,
       'total': total,
       'order_type': orderType,
-      'products': products.map((item) => (item as CartItemModel).toJson()).toList(),
-      'pickup_address': pickupAddress != null 
-          ? (pickupAddress as WashyAddressModel).toJson() 
+      'products':
+          products.map((item) => (item as CartItemModel).toJson()).toList(),
+      'pickup_address': pickupAddress != null
+          ? (pickupAddress as WashyAddressModel).toJson()
           : null,
-      'delivery_address': deliveryAddress != null 
-          ? (deliveryAddress as WashyAddressModel).toJson() 
+      'delivery_address': deliveryAddress != null
+          ? (deliveryAddress as WashyAddressModel).toJson()
           : null,
       'pickup_timeslot_timestamp': pickupTimeSlotTimeStamp,
       'delivery_timeslot_timestamp': deliveryTimeSlotTimeStamp,
@@ -115,15 +118,16 @@ class OrderDetailsModel extends OrderDetails {
   }
 
   /// Create a copy with updated fields
+  @override
   OrderDetailsModel copyWith({
     int? orderId,
     String? orderStatus,
     String? dateAdded,
     String? total,
     String? orderType,
-    List<dynamic>? products,
-    dynamic pickupAddress,
-    dynamic deliveryAddress,
+    List<CartItem>? products,
+    WashyAddress? pickupAddress,
+    WashyAddress? deliveryAddress,
     int? pickupTimeSlotTimeStamp,
     int? deliveryTimeSlotTimeStamp,
     String? paymentMethod,
@@ -145,8 +149,10 @@ class OrderDetailsModel extends OrderDetails {
       products: products ?? this.products,
       pickupAddress: pickupAddress ?? this.pickupAddress,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
-      pickupTimeSlotTimeStamp: pickupTimeSlotTimeStamp ?? this.pickupTimeSlotTimeStamp,
-      deliveryTimeSlotTimeStamp: deliveryTimeSlotTimeStamp ?? this.deliveryTimeSlotTimeStamp,
+      pickupTimeSlotTimeStamp:
+          pickupTimeSlotTimeStamp ?? this.pickupTimeSlotTimeStamp,
+      deliveryTimeSlotTimeStamp:
+          deliveryTimeSlotTimeStamp ?? this.deliveryTimeSlotTimeStamp,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       notes: notes ?? this.notes,
       isUnpaid: isUnpaid ?? this.isUnpaid,

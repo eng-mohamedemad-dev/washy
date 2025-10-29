@@ -146,6 +146,11 @@ class AppColors {
   static const Color gradientCenter = Color(0xFF2DD4EF);
   static const Color gradientEnd = washyGreen;
 
+  // Profile gradient colors
+  static const Color profileGradientStart = washyBlue;
+  static const Color profileGradientCenter = Color(0xFF2DD4EF);
+  static const Color profileGradientEnd = washyGreen;
+
   // Aliases for compatibility with existing code
   static const Color background = colorBackground;
   static const Color lightGrey = grey3;

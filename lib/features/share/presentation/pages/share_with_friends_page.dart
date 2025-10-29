@@ -13,15 +13,15 @@ class ShareWithFriendsPage extends StatelessWidget {
       backgroundColor: AppColors.colorBackground,
       body: Column(
         children: [
-          _buildHeader(),
-          Expanded(child: _buildContent()),
+          _buildHeader(context),
+          Expanded(child: _buildContent(context)),
         ],
       ),
     );
   }
 
   /// Header with gradient
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       height: 110,
       decoration: const BoxDecoration(
@@ -41,9 +41,9 @@ class ShareWithFriendsPage extends StatelessWidget {
               bottom: 0,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Container(
+                child: const SizedBox(
                   width: 66,
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
                     color: AppColors.white,
                     size: 24,
@@ -51,7 +51,7 @@ class ShareWithFriendsPage extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Title
             const Positioned(
               left: 66,
@@ -78,7 +78,7 @@ class ShareWithFriendsPage extends StatelessWidget {
   }
 
   /// Content
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -97,9 +97,9 @@ class ShareWithFriendsPage extends StatelessWidget {
               color: AppColors.washyBlue,
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           const Text(
             'شارك واشي واش مع أصدقائك',
             style: TextStyle(
@@ -109,9 +109,9 @@ class ShareWithFriendsPage extends StatelessWidget {
               color: AppColors.colorTitleBlack,
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           const Text(
             'اعطِ أصدقاءك تجربة رائعة في الغسيل والتنظيف',
             textAlign: TextAlign.center,
@@ -121,9 +121,9 @@ class ShareWithFriendsPage extends StatelessWidget {
               color: AppColors.grey2,
             ),
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Benefits
           _buildBenefitCard(
             icon: Icons.card_giftcard,
@@ -131,27 +131,27 @@ class ShareWithFriendsPage extends StatelessWidget {
             description: 'خصم 10% عند تسجيل صديق جديد',
             color: AppColors.washyGreen,
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildBenefitCard(
             icon: Icons.people,
             title: 'ساعد أصدقاءك',
             description: 'شارك تجربتك الرائعة معهم',
             color: AppColors.washyBlue,
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           _buildBenefitCard(
             icon: Icons.trending_up,
             title: 'اكسب نقاط',
             description: 'اكسب نقاط مع كل صديق ينضم',
             color: AppColors.premiumColor,
           ),
-          
+
           const SizedBox(height: 32),
-          
+
           // Share Message
           Card(
             shape: RoundedRectangleBorder(
@@ -181,9 +181,9 @@ class ShareWithFriendsPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -200,9 +200,9 @@ class ShareWithFriendsPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Copy Button
                   SizedBox(
                     width: double.infinity,
@@ -223,9 +223,9 @@ class ShareWithFriendsPage extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Share Options
           const Text(
             'طرق المشاركة',
@@ -236,9 +236,9 @@ class ShareWithFriendsPage extends StatelessWidget {
               color: AppColors.colorTitleBlack,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Share Buttons Grid
           GridView.count(
             crossAxisCount: 2,
@@ -304,9 +304,7 @@ class ShareWithFriendsPage extends StatelessWidget {
                 size: 24,
               ),
             ),
-            
             const SizedBox(width: 16),
-            
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,10 +380,11 @@ class ShareWithFriendsPage extends StatelessWidget {
 
   // Actions
   void _copyMessage(BuildContext context) {
-    const message = 'مرحباً! أنصحك بتجربة تطبيق واشي واش لخدمات الغسيل والتنظيف. خدمة ممتازة وسريعة!\n\nواشي واش - خدمات الغسيل والتنظيف\nتطبيق رقم 1 في الأردن';
-    
+    const message =
+        'مرحباً! أنصحك بتجربة تطبيق واشي واش لخدمات الغسيل والتنظيف. خدمة ممتازة وسريعة!\n\nواشي واش - خدمات الغسيل والتنظيف\nتطبيق رقم 1 في الأردن';
+
     Clipboard.setData(const ClipboardData(text: message));
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('تم نسخ الرسالة'),

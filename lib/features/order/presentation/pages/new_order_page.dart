@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/loading_widget.dart';
-import '../../../../injection_container.dart' as di;
+import 'package:wash_flutter/core/theme/app_colors.dart';
+import 'package:wash_flutter/core/widgets/loading_widget.dart';
+import 'package:wash_flutter/injection_container.dart' as di;
 import '../../domain/entities/new_order_section_type.dart';
 import '../../domain/entities/order_type.dart';
 import '../../domain/entities/payment_method.dart';
@@ -24,11 +24,11 @@ class NewOrderPage extends StatefulWidget {
   final int? skipSelectionId;
 
   const NewOrderPage({
-    Key? key,
+    super.key,
     this.orderType = OrderType.NORMAL,
     this.products,
     this.skipSelectionId,
-  }) : super(key: key);
+  });
 
   @override
   State<NewOrderPage> createState() => _NewOrderPageState();
@@ -39,32 +39,32 @@ class _NewOrderPageState extends State<NewOrderPage> {
   List<WashyAddress> addresses = [];
   WashyAddress? selectedPickupAddress;
   WashyAddress? selectedDeliveryAddress;
-  
+
   // Time and date slots
   DateTime? selectedDate;
   String? selectedTimeSlot;
   List<String> availableTimeSlots = [];
-  
+
   // Payment and pricing
   PaymentMethod selectedPaymentMethod = PaymentMethod.CASH;
   double subtotal = 0.0;
   double deliveryFee = 0.0;
   double discount = 0.0;
   double total = 0.0;
-  
+
   // Order details
   String orderNotes = '';
   String? redeemCode;
   bool isRedeemCodeApplied = false;
-  
+
   // File uploads (matching Java audio/photo functionality)
   List<File> uploadedPhotos = [];
   File? uploadedAudio;
-  
+
   // Step tracking (matching Java progress steps)
   int currentStep = 0;
   final int totalSteps = 5; // Address, Time, Payment, Notes, Confirm
-  
+
   // Loading and error states
   bool isLoading = false;
   String? errorMessage;
@@ -78,8 +78,9 @@ class _NewOrderPageState extends State<NewOrderPage> {
   /// Initialize order based on type (Normal vs Skip Selection)
   void _initializeOrder() {
     context.read<OrderBloc>().add(
-      const LoadAllAddressesEvent(token: 'user_token'), // TODO: Get actual token
-    );
+          const LoadAllAddressesEvent(
+              token: 'user_token'), // TODO: Get actual token
+        );
   }
 
   @override
@@ -101,12 +102,12 @@ class _NewOrderPageState extends State<NewOrderPage> {
                 totalSteps: totalSteps,
                 stepLabels: _getStepLabels(),
               ),
-              
+
               // Main content
               Expanded(
                 child: _buildMainContent(state),
               ),
-              
+
               // Confirm order button (matching Java button)
               OrderConfirmButton(
                 isEnabled: _canConfirmOrder(),
@@ -169,7 +170,8 @@ class _NewOrderPageState extends State<NewOrderPage> {
     sections.add({
       'type': NewOrderSectionType.ADDRESS,
       'title': 'العنوان',
-      'isCompleted': selectedPickupAddress != null && selectedDeliveryAddress != null,
+      'isCompleted':
+          selectedPickupAddress != null && selectedDeliveryAddress != null,
       'data': {
         'pickupAddress': selectedPickupAddress,
         'deliveryAddress': selectedDeliveryAddress,
@@ -229,7 +231,8 @@ class _NewOrderPageState extends State<NewOrderPage> {
   }
 
   /// Handle section changes
-  void _handleSectionChange(NewOrderSectionType sectionType, Map<String, dynamic> data) {
+  void _handleSectionChange(
+      NewOrderSectionType sectionType, Map<String, dynamic> data) {
     switch (sectionType) {
       case NewOrderSectionType.ADDRESS:
         setState(() {
@@ -237,26 +240,26 @@ class _NewOrderPageState extends State<NewOrderPage> {
           selectedDeliveryAddress = data['deliveryAddress'];
         });
         break;
-        
+
       case NewOrderSectionType.TIME:
         setState(() {
           selectedDate = data['selectedDate'];
           selectedTimeSlot = data['selectedTimeSlot'];
         });
         break;
-        
+
       case NewOrderSectionType.PAYMENT:
         setState(() {
           selectedPaymentMethod = data['selectedPaymentMethod'];
           redeemCode = data['redeemCode'];
         });
-        
+
         // Apply redeem code if provided
         if (data['applyRedeemCode'] == true && redeemCode != null) {
           _applyRedeemCode();
         }
         break;
-        
+
       case NewOrderSectionType.NOTES:
         setState(() {
           orderNotes = data['notes'] ?? '';
@@ -264,11 +267,11 @@ class _NewOrderPageState extends State<NewOrderPage> {
           uploadedAudio = data['uploadedAudio'];
         });
         break;
-        
+
       default:
         break;
     }
-    
+
     _calculateTotal();
     _updateCurrentStep();
   }
@@ -277,13 +280,13 @@ class _NewOrderPageState extends State<NewOrderPage> {
   void _applyRedeemCode() {
     if (redeemCode != null && redeemCode!.isNotEmpty) {
       context.read<OrderBloc>().add(
-        ApplyRedeemCodeEvent(
-          token: 'user_token', // TODO: Get actual token
-          redeemCode: redeemCode!,
-          orderTypeString: widget.orderType.name,
-          products: widget.products,
-        ),
-      );
+            ApplyRedeemCodeEvent(
+              token: 'user_token', // TODO: Get actual token
+              redeemCode: redeemCode!,
+              orderTypeString: widget.orderType.name,
+              products: widget.products,
+            ),
+          );
     }
   }
 
@@ -296,12 +299,13 @@ class _NewOrderPageState extends State<NewOrderPage> {
   /// Update current step based on completed sections
   void _updateCurrentStep() {
     int step = 0;
-    
-    if (selectedPickupAddress != null && selectedDeliveryAddress != null) step++;
+
+    if (selectedPickupAddress != null && selectedDeliveryAddress != null)
+      step++;
     if (selectedDate != null && selectedTimeSlot != null) step++;
     if (selectedPaymentMethod != PaymentMethod.CASH) step++;
     if (orderNotes.isNotEmpty) step++;
-    
+
     setState(() {
       currentStep = step;
     });
@@ -310,9 +314,9 @@ class _NewOrderPageState extends State<NewOrderPage> {
   /// Check if order can be confirmed
   bool _canConfirmOrder() {
     return selectedPickupAddress != null &&
-           selectedDeliveryAddress != null &&
-           selectedDate != null &&
-           selectedTimeSlot != null;
+        selectedDeliveryAddress != null &&
+        selectedDate != null &&
+        selectedTimeSlot != null;
   }
 
   /// Confirm order
@@ -379,11 +383,11 @@ class NewOrderPageWrapper extends StatelessWidget {
   final int? skipSelectionId;
 
   const NewOrderPageWrapper({
-    Key? key,
+    super.key,
     this.orderType = OrderType.NORMAL,
     this.products,
     this.skipSelectionId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

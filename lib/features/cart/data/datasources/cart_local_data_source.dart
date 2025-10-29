@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wash_flutter/features/cart/data/models/cart_category_model.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../models/cart_item_model.dart';
 import '../models/cart_summary_model.dart';
@@ -74,7 +75,7 @@ class CartLocalDataSourceImpl implements CartLocalDataSource {
       if (productIndex >= 0) {
         // Product exists, update quantity
         final existingItem = category.products[productIndex];
-        final updatedProduct = existingItem.copyWithQuantity(
+        final updatedProduct = (existingItem as CartItemModel).copyWithQuantity(
           existingItem.quantity + item.quantity,
         );
         final updatedProducts = List<CartItemModel>.from(category.products);

@@ -69,9 +69,9 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
               bottom: 0,
               child: GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Container(
+                child: const SizedBox(
                   width: 66,
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
                     color: AppColors.colorTitleBlack,
                     size: 24,
@@ -79,7 +79,7 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                 ),
               ),
             ),
-            
+
             // Center Content
             Positioned(
               left: 66,
@@ -99,12 +99,12 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 2),
-                  
+
                   // Order ID and Date
                   Text(
-                    orderIdAndDate.isEmpty 
+                    orderIdAndDate.isEmpty
                         ? 'طلب #${widget.orderId} - اليوم'
                         : orderIdAndDate,
                     style: const TextStyle(
@@ -116,7 +116,7 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                 ],
               ),
             ),
-            
+
             // Order Details Button
             Positioned(
               right: 20,
@@ -159,15 +159,15 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
       child: Column(
         children: [
           const SizedBox(height: 35),
-          
+
           // Order Status View (Custom progress indicator)
           OrderStatusView(
             currentStatus: currentStatus,
             orderId: widget.orderId,
           ),
-          
+
           const SizedBox(height: 15),
-          
+
           // Next Status Text
           Text(
             _getNextStatusText(),
@@ -178,9 +178,9 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
               color: AppColors.colorTextNotSelected,
             ),
           ),
-          
+
           const SizedBox(height: 35),
-          
+
           // Status Icon
           Container(
             width: 218,
@@ -195,9 +195,9 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
               color: _getStatusColor(),
             ),
           ),
-          
+
           const SizedBox(height: 26),
-          
+
           // Status Title
           Text(
             statusTitle.isEmpty ? _getStatusTitle() : statusTitle,
@@ -210,15 +210,15 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
               height: 1.4,
             ),
           ),
-          
+
           const SizedBox(height: 15),
-          
+
           // Status Description
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              statusDescription.isEmpty 
-                  ? _getStatusDescription() 
+              statusDescription.isEmpty
+                  ? _getStatusDescription()
                   : statusDescription,
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -229,9 +229,9 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // Action Button
           if (showActionButton || _shouldShowActionButton())
             Container(
@@ -256,8 +256,8 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      actionButtonText.isEmpty 
-                          ? _getActionButtonText() 
+                      actionButtonText.isEmpty
+                          ? _getActionButtonText()
                           : actionButtonText,
                       style: const TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
@@ -270,12 +270,12 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                 ),
               ),
             ),
-          
+
           const SizedBox(height: 40),
-          
+
           // Additional Info Card
           _buildInfoCard(),
-          
+
           const SizedBox(height: 30),
         ],
       ),
@@ -313,25 +313,22 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 16),
-            
             _buildInfoRow('رقم الطلب', '#WW${widget.orderId}'),
             _buildInfoRow('تاريخ الطلب', '15/01/2024'),
             _buildInfoRow('الوقت المقدر', _getEstimatedTime()),
             _buildInfoRow('طريقة الدفع', 'الدفع نقداً'),
-            
             if (currentStatus == OrderStatus.inProgress) ...[
               const Divider(height: 20),
-              Row(
+              const Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.schedule,
                     color: AppColors.washyGreen,
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: 8),
+                  Text(
                     'الوقت المتبقي: ',
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
@@ -341,7 +338,7 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
                   ),
                   Text(
                     '12 ساعة',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -483,8 +480,8 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
   }
 
   bool _shouldShowActionButton() {
-    return currentStatus == OrderStatus.outForDelivery || 
-           currentStatus == OrderStatus.delivered;
+    return currentStatus == OrderStatus.outForDelivery ||
+        currentStatus == OrderStatus.delivered;
   }
 
   String _getActionButtonText() {
@@ -546,13 +543,15 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
       case OrderStatus.delivered:
         _rateService();
         break;
+      default:
+        break;
     }
   }
 
   void _callDriver() async {
     const phoneNumber = '+962799123456'; // Mock driver number
     final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
-    
+
     if (await canLaunchUrl(phoneUri)) {
       await launchUrl(phoneUri);
     } else {
@@ -590,12 +589,13 @@ class _OrderStatusPageState extends State<OrderStatusPage> {
   void _loadOrderDetails() async {
     // Simulate API call
     await Future.delayed(const Duration(seconds: 1));
-    
+
     setState(() {
       isLoading = false;
       orderIdAndDate = 'طلب #WW${widget.orderId} - 15 يناير 2024';
       // Mock different statuses for demo
-      currentStatus = OrderStatus.values[widget.orderId % OrderStatus.values.length];
+      currentStatus =
+          OrderStatus.values[widget.orderId % OrderStatus.values.length];
     });
   }
 }

@@ -1,9 +1,9 @@
 /// Payment Method enumeration (matching Java PaymentMethod)
 enum PaymentMethod {
-  cod,        // Cash on Delivery
-  ccod,       // Credit Card on Delivery  
+  cod, // Cash on Delivery
+  ccod, // Credit Card on Delivery
   creditCard, // Online Credit Card
-  wallet,     // Digital Wallet
+  wallet, // Digital Wallet
   bankTransfer; // Bank Transfer
 
   // Static constants for backward compatibility
@@ -54,6 +54,11 @@ enum PaymentMethod {
       case 'CREDIT_CARD':
       case 'CREDITCARD':
         return PaymentMethod.creditCard;
+      case 'WALLET':
+        return PaymentMethod.wallet;
+      case 'BANK_TRANSFER':
+      case 'BANKTRANSFER':
+        return PaymentMethod.bankTransfer;
       default:
         return null;
     }
@@ -68,6 +73,10 @@ enum PaymentMethod {
         return 'CCOD';
       case PaymentMethod.creditCard:
         return 'CREDIT_CARD';
+      case PaymentMethod.wallet:
+        return 'WALLET';
+      case PaymentMethod.bankTransfer:
+        return 'BANK_TRANSFER';
     }
   }
 }

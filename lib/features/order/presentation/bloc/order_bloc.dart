@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/usecases/usecase.dart';
+import '../../domain/entities/order_type.dart';
 import '../../domain/usecases/apply_redeem_code.dart';
 import '../../domain/usecases/confirm_order.dart';
 import '../../domain/usecases/get_all_addresses.dart';
@@ -53,7 +54,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   ) async {
     emit(const OrderLoading(message: 'Loading addresses...'));
 
-    final result = await getAllAddresses(const NoParams());
+    final result = await getAllAddresses(NoParams());
 
     result.fold(
       (failure) => emit(_mapFailureToState(failure)),
@@ -70,7 +71,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 
     final result = await submitOrder(SubmitOrderParams(
       orderRequest: event.orderRequest,
-      orderType: event.orderType,
+      orderType: OrderType.NORMAL,
       orderTypeTag: event.orderTypeTag,
     ));
 
@@ -89,7 +90,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 
     final result = await submitOrder(SubmitOrderParams(
       orderRequest: event.orderRequest,
-      orderType: event.orderType,
+      orderType: OrderType.SKIP_SELECTION,
       orderTypeTag: 'skip_selection',
     ));
 
@@ -106,8 +107,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   ) async {
     emit(const OrderLoading(message: 'Loading available time slots...'));
 
-    final result = await getAvailableTimeSlots(GetAvailableTimeSlotsParams(
-      dateSlotId: event.dateSlotId,
+    final result =
+        await getAvailableTimeSlots(const GetAvailableTimeSlotsParams(
+      dateSlotId: 0,
     ));
 
     result.fold(
@@ -123,7 +125,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   ) async {
     emit(const OrderLoading(message: 'Loading credit cards...'));
 
-    final result = await getCreditCards(const NoParams());
+    final result = await getCreditCards(NoParams());
 
     result.fold(
       (failure) => emit(_mapFailureToState(failure)),
@@ -142,7 +144,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       redeemCode: event.redeemCode,
       orderType: event.orderTypeString,
       orderId: event.orderId,
-      priceTotal: event.priceTotal,
+      products: null,
     ));
 
     result.fold(
@@ -160,7 +162,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 
     final result = await confirmOrder(ConfirmOrderParams(
       orderId: event.orderId,
-      paymentMethod: event.paymentMethod,
+      paymentMethod: event.paymentMethod.toApiString(),
     ));
 
     result.fold(

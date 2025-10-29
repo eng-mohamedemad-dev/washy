@@ -4,7 +4,7 @@ import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/core/usecases/usecase.dart';
 import 'package:wash_flutter/core/utils/phone_validator.dart';
 import 'package:wash_flutter/features/auth/domain/entities/user.dart';
-import 'package:wash_flutter/features/auth/domain/entities/account_status.dart';
+import 'package:wash_flutter/features/auth/domain/entities/account_status.dart' as account_status;
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/check_mobile.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/login_with_google.dart';
@@ -90,16 +90,16 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
         (user) {
           // Handle different account statuses like Java
           switch (user.accountStatus) {
-            case AccountStatus.NEW_CUSTOMER:
-            case AccountStatus.NOT_VERIFIED_CUSTOMER:
+            case account_status.AccountStatus.NEW_CUSTOMER:
+            case account_status.AccountStatus.NOT_VERIFIED_CUSTOMER:
               // Show verification dialog and send SMS
               add(SendSmsVerificationCode(phoneNumber: formattedPhone));
               break;
-            case AccountStatus.VERIFIED_CUSTOMER:
+            case account_status.AccountStatus.VERIFIED_CUSTOMER:
               // Navigate to main screen
               emit(NavigateToHome(user));
               break;
-            case AccountStatus.ENTER_PASSWORD:
+            case account_status.AccountStatus.ENTER_PASSWORD:
               // Navigate to password screen
               emit(NavigateToPassword(user));
               break;

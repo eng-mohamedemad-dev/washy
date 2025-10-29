@@ -1,4 +1,4 @@
-package com.washywash.test_app
+package com.washywash.customerapp
 
 import io.flutter.embedding.android.FlutterActivity
 

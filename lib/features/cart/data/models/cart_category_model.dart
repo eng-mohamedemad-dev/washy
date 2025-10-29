@@ -40,7 +40,11 @@ class CartCategoryModel extends CartCategory {
   factory CartCategoryModel.fromEntity(CartCategory entity) {
     return CartCategoryModel(
       type: entity.type,
-      products: entity.products,
+      products: entity.products
+          .map((item) => item is CartItemModel
+              ? item
+              : CartItemModel.fromEntity(item))
+          .toList(),
       isAdded: entity.isAdded,
     );
   }
