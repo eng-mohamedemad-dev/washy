@@ -7,6 +7,7 @@ import 'package:wash_flutter/features/auth/presentation/bloc/email/email_event.d
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_state.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 
+/// EmailPage - Exactly matches Java activity_email.xml
 class EmailPage extends StatefulWidget {
   const EmailPage({super.key});
 
@@ -19,6 +20,7 @@ class _EmailPageState extends State<EmailPage> {
   final FocusNode _emailFocusNode = FocusNode();
   bool _isEmailValid = false;
   String? _validationMessage;
+  bool _showContinueButton = false;
 
   @override
   void initState() {
@@ -38,12 +40,15 @@ class _EmailPageState extends State<EmailPage> {
       if (email.isEmpty) {
         _isEmailValid = false;
         _validationMessage = null;
+        _showContinueButton = false;
       } else if (EmailValidator.isValidEmail(email)) {
         _isEmailValid = true;
         _validationMessage = null;
+        _showContinueButton = true;
       } else {
         _isEmailValid = false;
-        _validationMessage = null;
+        _validationMessage = 'البريد الإلكتروني غير صحيح';
+        _showContinueButton = false;
       }
     });
   }
@@ -53,10 +58,6 @@ class _EmailPageState extends State<EmailPage> {
       context.read<EmailBloc>().add(
             SendEmailCodeEvent(email: _emailController.text),
           );
-    } else {
-      setState(() {
-        _validationMessage = 'البريد الإلكتروني غير صحيح';
-      });
     }
   }
 
@@ -106,199 +107,200 @@ class _EmailPageState extends State<EmailPage> {
           }
         },
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
-              ),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    // Top Close Button
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: GestureDetector(
-                          onTap: _goBack,
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.black,
-                            size: 28,
-                          ),
-                        ),
-                      ),
+          child: Column(
+            children: [
+              // Back button at top (from layout_back_icon_black)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: GestureDetector(
+                    onTap: _goBack,
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.black,
+                      size: 28,
                     ),
-
-                    // Welcome Text
-                    const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                      child: Text(
-                        'أهلاً و سهلاً! أدخل الايميل',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.colorTitleBlack,
-                          fontFamily: 'SourceSansPro',
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // Email Icon
-                    Image.asset(
-                      'assets/images/email_icon.png',
-                      width: 161,
-                      height: 85,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 161,
-                          height: 85,
-                          decoration: const BoxDecoration(
-                            color: AppColors.washyBlue,
-                            shape: BoxShape.rectangle,
-                          ),
-                          child: const Icon(
-                            Icons.email_outlined,
-                            size: 60,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 60),
-
-                    // Email Input
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 30),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Label
-                          const Text(
-                            'الايميل',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.colorLoginText,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // TextField
-                          ValueListenableBuilder<TextEditingValue>(
-                            valueListenable: _emailController,
-                            builder: (context, value, child) {
-                              return TextField(
-                                controller: _emailController,
-                                focusNode: _emailFocusNode,
-                                keyboardType: TextInputType.emailAddress,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  color: AppColors.colorTitleBlack,
-                                ),
-                                decoration: InputDecoration(
-                                  border: const UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: AppColors.colorViewSeparators,
-                                    ),
-                                  ),
-                                  focusedBorder: const UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: AppColors.washyBlue,
-                                    ),
-                                  ),
-                                  suffixIcon: value.text.isNotEmpty
-                                      ? GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _emailController.clear();
-                                            });
-                                          },
-                                          child: const Icon(
-                                            Icons.close,
-                                            color: Colors.black54,
-                                            size: 20,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                              );
-                            },
-                          ),
-
-                          // Validation message
-                          if (_validationMessage != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              _validationMessage!,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.colorRedError,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    // Bottom Buttons
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          // Back button
-                          GestureDetector(
-                            onTap: _goBack,
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                color: AppColors.washyGreen,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-
-                          const Spacer(),
-
-                          // Next button
-                          GestureDetector(
-                            onTap: _isEmailValid ? _onSendCodePressed : null,
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: _isEmailValid
-                                    ? AppColors.washyBlue
-                                    : Colors.grey.shade300,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.arrow_forward,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+
+              // Main Content (from LinearLayout starting at line 9)
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 30),
+                    child: Column(
+                      children: [
+                        // Welcome Text (line 15-29)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                          child: Text(
+                            'أهلاً! ما هو بريدك الإلكتروني؟',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.colorTitleBlack,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Email Icon (line 31-36)
+                        Image.asset(
+                          'assets/images/email_icon.png',
+                          width: 161,
+                          height: 85,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 161,
+                              height: 85,
+                              decoration: const BoxDecoration(
+                                color: AppColors.washyBlue,
+                                shape: BoxShape.rectangle,
+                              ),
+                              child: const Icon(
+                                Icons.email_outlined,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Email Input Section (RelativeLayout 38-83)
+                        Stack(
+                          children: [
+                            // Email TextField (line 46-63)
+                            Center(
+                              child: Container(
+                                width: double.infinity,
+                                constraints:
+                                    const BoxConstraints(maxWidth: 300),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 8),
+                                child: TextField(
+                                  controller: _emailController,
+                                  focusNode: _emailFocusNode,
+                                  keyboardType: TextInputType.emailAddress,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.colorBlack,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: 'البريد الإلكتروني',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.colorLoginText,
+                                      fontSize: 16,
+                                    ),
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // Clear button (line 65-80)
+                            if (_emailController.text.isNotEmpty)
+                              Positioned(
+                                right: 30,
+                                top: 15,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _emailController.clear();
+                                    });
+                                  },
+                                  child: Image.asset(
+                                    'assets/images/ic_cancel.png',
+                                    width: 13,
+                                    height: 13,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.close,
+                                        size: 13,
+                                        color: Colors.black54,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Separator, Validation, and Continue Button (RelativeLayout 85-122)
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _emailController,
+                          builder: (context, value, child) {
+                            return Column(
+                              children: [
+                                // Separator line (line 90-96)
+                                Container(
+                                  width: 100,
+                                  height: 1,
+                                  color: AppColors.colorViewSeparators,
+                                ),
+
+                                const SizedBox(height: 8),
+
+                                // Validation message (line 98-108)
+                                if (_validationMessage != null)
+                                  Text(
+                                    _validationMessage!,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.colorRedError,
+                                    ),
+                                  )
+                                else
+                                  const SizedBox(height: 0),
+
+                                const SizedBox(height: 6),
+
+                                // Continue button (line 110-120) - green circular arrow
+                                if (_showContinueButton &&
+                                    value.text.isNotEmpty)
+                                  GestureDetector(
+                                    onTap: _onSendCodePressed,
+                                    child: Image.asset(
+                                      'assets/images/go_to_next_page_icon.png',
+                                      width: 50,
+                                      height: 50,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          width: 50,
+                                          height: 50,
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.washyGreen,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.arrow_forward,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

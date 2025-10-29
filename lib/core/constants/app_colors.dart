@@ -17,7 +17,8 @@ class AppColors {
 
   // Main WashyWash Colors (From Java values/colors.xml)
   static const Color washyBlue = Color(0xFF13C0D7); // washy_blue_color
-  static const Color washyGreen = Color(0xFF41D99E); // washy_green_color
+  static const Color washyGreen =
+      Color(0xFF92E068); // colorGreenButton - exact match from Java
   static const Color colorGreenButton = Color(0xFF92E068);
   static const Color colorBlueButton = Color(0xFF50AAC2);
 

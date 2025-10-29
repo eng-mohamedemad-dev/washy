@@ -7,7 +7,7 @@ import '../../../../core/constants/app_text_styles.dart';
 class IntroPage4 extends StatelessWidget {
   const IntroPage4({super.key});
 
-  Future<void> _launchVideo(BuildContext context) async {
+  void _launchVideo() async {
     try {
       // Use the exact URL from Java: https://youtu.be/coHI9wb7KgM
       final videoUrl = AppConstants.washyVideoUrl;
@@ -22,7 +22,7 @@ class IntroPage4 extends StatelessWidget {
         mode: LaunchMode.externalApplication,
       );
 
-      if (!success && context.mounted) {
+      if (!success) {
         print('[Intro] Launch failed, trying alternative URL');
         // Try alternative YouTube URL format
         final altUrl = 'https://www.youtube.com/watch?v=coHI9wb7KgM';
@@ -122,7 +122,7 @@ class IntroPage4 extends StatelessWidget {
 
               // Watch Video button like Java version (simple text with arrow)
               GestureDetector(
-                onTap: () => _launchVideo(context),
+                onTap: _launchVideo,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,

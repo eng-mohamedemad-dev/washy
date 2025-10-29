@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_dimensions.dart';
+import 'package:wash_flutter/core/constants/app_strings.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_state.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/custom_back_button.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/custom_continue_button.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/phone_input_section.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/email_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
@@ -41,16 +40,6 @@ class _LoginPageState extends State<LoginPage> {
     context.read<LoginBloc>().add(
           LoginPhoneNumberChanged(phoneNumber: _phoneController.text),
         );
-  }
-
-  void _onContinuePressed() {
-    context.read<LoginBloc>().add(
-          LoginCheckMobilePressed(phoneNumber: _phoneController.text),
-        );
-  }
-
-  void _onSignUpPressed() {
-    context.read<LoginBloc>().add(NavigateToSignUpPressed());
   }
 
   @override
@@ -136,8 +125,38 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                // Bottom Section (Continue Button)
-                _buildBottomSection(state),
+                // Email Login Button at bottom (like image) - Green rounded button
+                Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<LoginBloc>().add(LoginEmailPressed());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.washyGreen,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        elevation: 0, // No shadow like image
+                      ),
+                      child: Text(
+                        AppStrings.continueWithEmail,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'SourceSansPro',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 30,
+                ),
               ],
             ),
           );
@@ -146,43 +165,20 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Build header section (like Java's login header)
+  /// Build header section (just X button on top right)
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: AppDimensions.signUpHeaderTopMargin,
-        left: AppDimensions.pageMargin,
-        right: AppDimensions.pageMargin,
-      ),
-      child: Row(
-        children: [
-          CustomBackButton(onPressed: () => Navigator.of(context).pop()),
-          const Expanded(
-            child: Text(
-              'تسجيل الدخول',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.greyDark,
-                fontFamily: 'SourceSansPro',
-              ),
-            ),
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: const Icon(
+            Icons.close,
+            color: Colors.black,
+            size: 28,
           ),
-          // Sign Up navigation (like Java's navigation to SignUp)
-          GestureDetector(
-            onTap: _onSignUpPressed,
-            child: const Text(
-              'إنشاء حساب',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.washyBlue,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'SourceSansPro',
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -193,12 +189,10 @@ class _LoginPageState extends State<LoginPage> {
         state is LoginPhoneInputState ? state : const LoginPhoneInputState();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 60),
-
-        // Logo (like Java's LoginActivity logo)
-        Center(
+        // Logo at top
+        Padding(
+          padding: const EdgeInsets.only(top: 40),
           child: Image.asset(
             'assets/images/ic_logo_with_text.png',
             width: 202,
@@ -243,36 +237,26 @@ class _LoginPageState extends State<LoginPage> {
 
         const SizedBox(height: 40),
 
-        // Clean with WashyWash hint (like Java)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Text(
-            'ملابس أنظف مع واشيواش',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 20,
-              color: AppColors.colorTextNotSelected,
-              fontWeight: FontWeight.w300,
+        // Clean with WashyWash hint (right-aligned like image)
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(
+              'ملابس أنظف مع واشيواش',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 20,
+                color: AppColors.colorTextNotSelected,
+                fontWeight: FontWeight.w300,
+              ),
             ),
           ),
         ),
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 30),
 
-        // Mobile label (like Java's login description) - Arabic
-        const Text(
-          'رقم الجوال',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: AppColors.grey1,
-            fontFamily: 'SourceSansPro',
-          ),
-        ),
-
-        const SizedBox(height: 13),
-
-        // Phone Number Input Section (like Java's phone input for login)
+        // Phone Number Input Section (like Java's phone input for login) - No label above
         PhoneInputSection(
           controller: _phoneController,
           focusNode: _phoneFocusNode,
@@ -298,93 +282,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ],
-
-        const SizedBox(height: 30),
-
-        // OR Divider (like Java's divider) - Arabic
-        const Row(
-          children: [
-            Expanded(child: Divider(color: Colors.grey, height: 0.4)),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 30),
-              child: Text(
-                'أو',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 13,
-                  fontFamily: 'SourceSansPro',
-                ),
-              ),
-            ),
-            Expanded(child: Divider(color: Colors.grey, height: 0.4)),
-          ],
-        ),
-
-        const SizedBox(height: 30),
-
-        // Email Login Button only (no Facebook/Google) - Arabic
-        SizedBox(
-          width: double.infinity,
-          height: 45,
-          child: ElevatedButton(
-            onPressed: () {
-              context.read<LoginBloc>().add(LoginEmailPressed());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.white,
-              foregroundColor: AppColors.greyDark,
-              side: const BorderSide(color: AppColors.grey3, width: 1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              elevation: 0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Email Icon
-                Image.asset(
-                  'assets/images/email.png',
-                  width: 20,
-                  height: 20,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.email_outlined,
-                      size: 20,
-                      color: AppColors.grey1,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'تسجيل الدخول بالبريد الإلكتروني',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'SourceSansPro',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
-    );
-  }
-
-  /// Build bottom section (Continue button like Java)
-  Widget _buildBottomSection(LoginState state) {
-    final phoneInputState =
-        state is LoginPhoneInputState ? state : const LoginPhoneInputState();
-
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.pageMargin),
-      child: CustomContinueButton(
-        text: 'تسجيل الدخول',
-        onPressed: _onContinuePressed,
-        isEnabled: phoneInputState.isPhoneValid,
-        isLoading: state is LoginLoading,
-      ),
     );
   }
 

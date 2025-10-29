@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_gradients.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import 'dart:async';
 import '../widgets/intro_page_view.dart';
 import '../widgets/page_indicator.dart';
 import '../../../../injection_container.dart' as di;
@@ -24,8 +24,8 @@ class _IntroPageState extends State<IntroPage> {
   @override
   void initState() {
     super.initState();
-    // Set full screen like Java version
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+    // Don't set full screen to avoid performance issues
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   }
 
   void _onPageChanged(int page) {
@@ -36,27 +36,34 @@ class _IntroPageState extends State<IntroPage> {
   }
 
   void _onSkipPressed() {
-    _finishAndNavigate();
-  }
+    try {
+      // Set walk through consumed in background (don't block)
+      unawaited(
+        di
+            .getIt<SetWalkThroughConsumed>()
+            .call(const SetWalkThroughConsumedParams(true)),
+      );
 
-  void _finishAndNavigate() {
-    // Set walk through consumed and navigate directly to LoginPage (like Java SignUpActivity)
-    di
-        .getIt<SetWalkThroughConsumed>()
-        .call(const SetWalkThroughConsumedParams(true))
-        .then((_) {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
-    });
+      // Navigate to LoginPage immediately
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    } catch (e) {
+      print('[Intro] Navigation error: $e');
+      // Fallback: just navigate
+      if (mounted) {
+        try {
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
+        } catch (e2) {
+          print('[Intro] Navigation fallback error: $e2');
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    // Restore system UI
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: SystemUiOverlay.values,
-    );
     super.dispose();
   }
 
@@ -72,7 +79,7 @@ class _IntroPageState extends State<IntroPage> {
           child: SafeArea(
             child: Column(
               children: [
-                // ViewPager equivalent
+                // ViewPager equivalent - Allow smooth swiping
                 Expanded(
                   child: IntroPageView(
                     pageController: _pageController,

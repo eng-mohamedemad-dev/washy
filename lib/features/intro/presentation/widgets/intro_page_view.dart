@@ -16,16 +16,25 @@ class IntroPageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
+    return PageView.builder(
       controller: pageController,
       onPageChanged: onPageChanged,
-      children: const [
-        IntroPage1(),
-        IntroPage2(),
-        IntroPage3(),
-        IntroPage4(),
-      ],
+      physics: const PageScrollPhysics(),
+      itemBuilder: (context, index) {
+        switch (index) {
+          case 0:
+            return const IntroPage1();
+          case 1:
+            return const IntroPage2();
+          case 2:
+            return const IntroPage3();
+          case 3:
+            return const IntroPage4();
+          default:
+            return const SizedBox();
+        }
+      },
+      itemCount: 4,
     );
   }
 }
-
