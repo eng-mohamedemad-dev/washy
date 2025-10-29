@@ -104,7 +104,7 @@ class PhoneInputSection extends StatelessWidget {
                 const SizedBox(width: 8),
 
                 // Phone Input Field (matching Java)
-                Flexible(
+                Expanded(
                   child: TextFormField(
                     controller: controller,
                     focusNode: focusNode,
@@ -130,6 +130,35 @@ class PhoneInputSection extends StatelessWidget {
                     ),
                     onChanged: onPhoneNumberChanged,
                   ),
+                ),
+
+                // زر مسح (X) على يمين الحقل مثل الجافا
+                const SizedBox(width: 8),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: controller,
+                  builder: (context, value, _) {
+                    if (value.text.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return GestureDetector(
+                      onTap: () {
+                        controller.clear();
+                        onPhoneNumberChanged('');
+                      },
+                      child: Image.asset(
+                        'assets/images/ic_cancel.png',
+                        width: 13,
+                        height: 13,
+                        errorBuilder: (context, error, stack) {
+                          return const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.black54,
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ] else ...[
                 // Non-mobile mode - just show "Phone Number" text

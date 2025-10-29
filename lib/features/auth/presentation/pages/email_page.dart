@@ -20,7 +20,7 @@ class _EmailPageState extends State<EmailPage> {
   final FocusNode _emailFocusNode = FocusNode();
   bool _isEmailValid = false;
   String? _validationMessage;
-  bool _showContinueButton = false;
+  // لم نعد بحاجة لهذا العلم بعد استبدال المنطق بزر يعتمد على التركيز وصحة الإدخال
 
   @override
   void initState() {
@@ -40,23 +40,21 @@ class _EmailPageState extends State<EmailPage> {
       if (email.isEmpty) {
         _isEmailValid = false;
         _validationMessage = null;
-        _showContinueButton = false;
       } else if (EmailValidator.isValidEmail(email)) {
         _isEmailValid = true;
         _validationMessage = null;
-        _showContinueButton = true;
       } else {
         _isEmailValid = false;
         _validationMessage = 'البريد الإلكتروني غير صحيح';
-        _showContinueButton = false;
       }
     });
   }
 
   void _onSendCodePressed() {
     if (_isEmailValid) {
+      // أولاً نفحص الإيميل لمعرفة حالة الحساب كما في الجافا
       context.read<EmailBloc>().add(
-            SendEmailCodeEvent(email: _emailController.text),
+            CheckEmailEvent(email: _emailController.text),
           );
     }
   }
@@ -71,7 +69,7 @@ class _EmailPageState extends State<EmailPage> {
       backgroundColor: AppColors.white,
       body: BlocListener<EmailBloc, EmailState>(
         listener: (context, state) {
-          if (state is EmailLoading) {
+      if (state is EmailLoading) {
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -82,12 +80,28 @@ class _EmailPageState extends State<EmailPage> {
                 ),
               ),
             );
-          } else {
+      } else {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
 
-            if (state is EmailCodeSent) {
+        if (state is EmailChecked) {
+          // قرارات مطابقة للجافا حسب حالة الحساب
+          final status = state.user.accountStatus;
+          if (status.name == 'newCustomer') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('أنت عميل جديد. من فضلك أنشئ حساباً.')),
+            );
+            Navigator.of(context).pushReplacementNamed('/signup');
+          } else if (status.name == 'notVerifiedCustomer') {
+            context.read<EmailBloc>().add(
+                  SendEmailCodeEvent(email: _emailController.text),
+                );
+          } else if (status.name == 'enterPassword' || status.name == 'verifiedCustomer') {
+            // في حالة الإيميل يمكن أن ينتقل لإدخال كلمة المرور
+            Navigator.pushReplacementNamed(context, '/password');
+          }
+        } else if (state is EmailCodeSent) {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => VerificationPage(
@@ -205,10 +219,10 @@ class _EmailPageState extends State<EmailPage> {
                               ),
                             ),
 
-                            // Clear button (line 65-80)
+                            // Clear button (X) should be above the left arrow like Java (left side)
                             if (_emailController.text.isNotEmpty)
                               Positioned(
-                                right: 30,
+                                left: 30,
                                 top: 15,
                                 child: GestureDetector(
                                   onTap: () {
@@ -264,31 +278,38 @@ class _EmailPageState extends State<EmailPage> {
 
                                 const SizedBox(height: 6),
 
-                                // Continue button (line 110-120) - green circular arrow
-                                if (_showContinueButton &&
-                                    value.text.isNotEmpty)
-                                  GestureDetector(
-                                    onTap: _onSendCodePressed,
-                                    child: Image.asset(
-                                      'assets/images/go_to_next_page_icon.png',
-                                      width: 50,
-                                      height: 50,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return Container(
-                                          width: 50,
-                                          height: 50,
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.washyGreen,
-                                            shape: BoxShape.circle,
+                                // زر السهم الأخضر: يظهر عند التركيز أو وجود كتابة، والتفعيل فقط عند صحة الإيميل
+                                if (_emailFocusNode.hasFocus || value.text.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: SizedBox(
+                                        width: 56,
+                                        height: 56,
+                                        child: ElevatedButton(
+                                          onPressed: _isEmailValid ? _onSendCodePressed : null,
+                                          style: ButtonStyle(
+                                            shape: const MaterialStatePropertyAll(CircleBorder()),
+                                            elevation: const MaterialStatePropertyAll(0),
+                                            padding: const MaterialStatePropertyAll(EdgeInsets.zero),
+                                            backgroundColor: MaterialStateProperty.resolveWith((states) {
+                                              final isDisabled = states.contains(MaterialState.disabled);
+                                              return isDisabled
+                                                  ? AppColors.washyGreen.withOpacity(0.5)
+                                                  : AppColors.washyGreen;
+                                            }),
+                                            foregroundColor: MaterialStateProperty.resolveWith((states) {
+                                              final isDisabled = states.contains(MaterialState.disabled);
+                                              return isDisabled ? Colors.white70 : Colors.white;
+                                            }),
                                           ),
                                           child: const Icon(
-                                            Icons.arrow_forward,
-                                            color: Colors.white,
-                                            size: 24,
+                                            Icons.arrow_back_ios_new_rounded,
+                                            size: 18,
                                           ),
-                                        );
-                                      },
+                                        ),
+                                      ),
                                     ),
                                   ),
                               ],

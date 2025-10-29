@@ -44,7 +44,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     String? validationMessage;
     if (event.phoneNumber.isNotEmpty && !isValid) {
-      validationMessage = 'Please enter a valid phone number';
+      validationMessage = 'من فضلك أدخل رقم موبايل صحيحًا';
     }
 
     emit(currentState.copyWith(
@@ -65,21 +65,21 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     if (currentState.phoneNumber.isEmpty) {
       emit(currentState.copyWith(
-          validationMessage: 'Please enter mobile number'));
+          validationMessage: 'من فضلك أدخل رقم الموبايل'));
       return;
     }
 
     if (!currentState.isPhoneValid) {
       emit(currentState.copyWith(
-          validationMessage: 'Please enter a valid phone number'));
+          validationMessage: 'من فضلك أدخل رقم موبايل صحيحًا'));
       return;
     }
 
     emit(const LoginLoading());
 
-    // Format phone number for API (add Jordan country code)
-    final formattedPhone =
-        '+962${event.phoneNumber.replaceAll(RegExp(r'^0+'), '')}';
+    // تنسيق رقم الهاتف وفق تطبيق الجافا: رقم محلي يبدأ بـ 0 (بدون +962)
+    final rawDigits = event.phoneNumber.replaceAll(RegExp('[^0-9]'), '');
+    final formattedPhone = rawDigits.startsWith('0') ? rawDigits : '0$rawDigits';
 
     print('[LoginBloc] Checking mobile: $formattedPhone');
 
@@ -168,9 +168,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   ) async {
     emit(const LoginLoading());
 
-    // This would typically trigger Google Sign-In flow
-    // For now, we'll show an error since it's not fully implemented
-    emit(const LoginError('Google Sign-In not available'));
+    // لم يتم تفعيل تسجيل جوجل حالياً
+    emit(const LoginError('تسجيل الدخول عبر جوجل غير متاح حالياً'));
   }
 
   /// Handle email login navigation

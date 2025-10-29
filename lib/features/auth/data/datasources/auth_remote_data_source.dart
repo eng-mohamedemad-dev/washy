@@ -84,19 +84,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<CheckUserResponse> checkEmail(String email) async {
+    final url = '${AppConstants.baseUrl}customer/auth/check-email';
+    final body = 'email=${Uri.encodeComponent(email)}';
+    print('[API] Check Email - URL: $url');
+    print('[API] Check Email - Body: $body');
+
     final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}customer/auth/check-email'),
+      Uri.parse(url),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'device': 'mobile'
       },
-      body: 'email=${Uri.encodeComponent(email)}',
+      body: body,
     );
+
+    print('[API] Check Email Response Status: ${response.statusCode}');
+    print('[API] Check Email Response Body: ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 400) {
       return CheckUserResponse.fromJson(json.decode(response.body));
     } else {
-      throw const ServerException('Failed to check email');
+      try {
+        final err = json.decode(response.body) as Map<String, dynamic>;
+        throw ServerException(err['message'] ?? 'Failed to check email');
+      } catch (_) {
+        throw const ServerException('Failed to check email');
+      }
     }
   }
 
@@ -159,28 +172,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<SmsResponse> sendEmailVerificationCode(String email) async {
     try {
+      final url =
+          '${AppConstants.baseUrl}customer/auth/send-email-verification';
+      final body = 'email=${Uri.encodeComponent(email)}';
+      print('[API] Send Email Verification - URL: $url');
+      print('[API] Send Email Verification - Body: $body');
+
       final response = await client.post(
-        Uri.parse(
-            '${AppConstants.baseUrl}customer/auth/send-email-verification'),
+        Uri.parse(url),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'device': 'mobile'
         },
-        body: 'email=${Uri.encodeComponent(email)}',
+        body: body,
       );
+
+      print('[API] Email Verification Response Status: ${response.statusCode}');
+      print('[API] Email Verification Response Headers: ${response.headers}');
+      print('[API] Email Verification Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body) as Map<String, dynamic>;
         return SmsResponse.fromJson(jsonData);
       } else {
-        // Try to parse error response
+        // Try to parse error response with login_status mapping
         try {
           final errorJson = json.decode(response.body) as Map<String, dynamic>;
+          final data = errorJson['data'] as Map<String, dynamic>?;
+          final loginStatus = data != null ? (data['login_status'] as String?) : null;
+          if (loginStatus == 'does_not_exists') {
+            throw ServerException('أنت عميل جديد. من فضلك أنشئ حساباً.');
+          }
           throw ServerException(
-              errorJson['message'] ?? 'Failed to send email verification code');
-        } catch (_) {
+              errorJson['message'] ?? loginStatus ?? 'فشل إرسال كود التحقق عبر الإيميل');
+        } catch (e) {
+          if (e is ServerException) rethrow;
           throw ServerException(
-              'Failed to send email verification code (${response.statusCode})');
+              'فشل إرسال كود التحقق عبر الإيميل (${response.statusCode})');
         }
       }
     } catch (e) {

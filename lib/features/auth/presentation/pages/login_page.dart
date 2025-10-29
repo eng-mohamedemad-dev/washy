@@ -29,6 +29,10 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _phoneController.addListener(_onPhoneChanged);
+    _phoneFocusNode.addListener(() {
+      // لإعادة بناء الواجهة عند تغيير التركيز لإخفاء/إظهار زر الإيميل
+      if (mounted) setState(() {});
+    });
 
     // Initialize with phone input state (like Java)
     context
@@ -124,36 +128,36 @@ class _LoginPageState extends State<LoginPage> {
                     child: _buildContent(state),
                   ),
                 ),
-
-                // Email Login Button at bottom (like image) - Green rounded button
-                Padding(
-                  padding: const EdgeInsets.all(40.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<LoginBloc>().add(LoginEmailPressed());
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.washyGreen,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
+                // زر "تابع بواسطة الايميل" يظهر فقط عندما لا يكون تركيز على حقل الهاتف ولا يوجد إدخال
+                if (!_phoneFocusNode.hasFocus && _phoneController.text.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(40.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.read<LoginBloc>().add(LoginEmailPressed());
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.washyGreen,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0, // No shadow like image
-                      ),
-                      child: Text(
-                        AppStrings.continueWithEmail,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontFamily: 'SourceSansPro',
+                        child: Text(
+                          AppStrings.continueWithEmail,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontFamily: 'SourceSansPro',
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 Container(
                   height: 30,
                 ),
@@ -282,6 +286,49 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ],
+
+        const SizedBox(height: 20),
+
+        // زر السهم مثل الجافا: يظهر فقط عند التركيز أو وجود كتابة، ويكون على اليسار وباتجاه اليسار
+        if (_phoneFocusNode.hasFocus || _phoneController.text.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: phoneInputState.isPhoneValid
+                      ? () {
+                          context
+                              .read<LoginBloc>()
+                              .add(LoginCheckMobilePressed(phoneNumber: _phoneController.text));
+                        }
+                      : null,
+                  style: ButtonStyle(
+                    shape: const MaterialStatePropertyAll(CircleBorder()),
+                    elevation: const MaterialStatePropertyAll(0),
+                    padding: const MaterialStatePropertyAll(EdgeInsets.zero),
+                    backgroundColor: MaterialStateProperty.resolveWith((states) {
+                      final isDisabled = states.contains(MaterialState.disabled);
+                      return isDisabled
+                          ? AppColors.washyGreen.withOpacity(0.5)
+                          : AppColors.washyGreen;
+                    }),
+                    foregroundColor: MaterialStateProperty.resolveWith((states) {
+                      final isDisabled = states.contains(MaterialState.disabled);
+                      return isDisabled ? Colors.white70 : Colors.white;
+                    }),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

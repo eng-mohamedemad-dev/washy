@@ -26,11 +26,14 @@ class IntroPage1 extends StatelessWidget {
           ),
         ),
 
-        // Content like Java version
+        // Content like Java version (scrollable to avoid overflow on small screens)
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               // Top spacing like Java version (77dp)
               const SizedBox(height: 77),
 
@@ -80,7 +83,8 @@ class IntroPage1 extends StatelessWidget {
                   fontSize: 17,
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

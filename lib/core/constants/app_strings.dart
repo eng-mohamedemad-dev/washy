@@ -4,52 +4,52 @@ class AppStrings {
 
   // Common
   static const String appName = 'WashyWash';
-  static const String skip = 'Skip';
-  static const String continueText = 'Continue';
-  static const String or = 'OR';
+  static const String skip = 'تخطي';
+  static const String continueText = 'متابعة';
+  static const String or = 'أو';
 
   // SignUp page (from strings.xml)
-  static const String signUp = 'Sign Up';
+  static const String signUp = 'إنشاء حساب';
   static const String phoneNumber = 'رقم الجوال';
   static const String yourMobile = 'رقم الموبايل';
   static const String enterMobileNumber = 'رقم الموبايل';
-  static const String invalidNumber = 'Invalid number';
-  static const String createAccount = 'Create Account';
+  static const String invalidNumber = 'رقم غير صحيح';
+  static const String createAccount = 'إنشاء حساب';
   static const String continueWithGoogle = 'تسجيل الدخول بـ Google';
   static const String continueWithEmail = 'تابع بواسطة الايميل';
-  static const String connectWithOthers = 'Connect with others';
+  static const String connectWithOthers = 'اتصال بطرق أخرى';
 
   // Terms and privacy
-  static const String subjectToThe = 'Subject to the ';
-  static const String washywashPrivacy = 'WashyWash Privacy';
-  static const String and = ' and ';
-  static const String termOfService = 'Terms of Service';
+  static const String subjectToThe = 'خاضع لـ ';
+  static const String washywashPrivacy = 'سياسة الخصوصية لواشيواش';
+  static const String and = ' و ';
+  static const String termOfService = 'شروط الخدمة';
 
   // Checkbox text
-  static const String sendMe = 'Send me the latest updates & offers';
-  static const String unsubscribe = 'You can unsubscribe at any time';
+  static const String sendMe = 'أرسل لي آخر التحديثات والعروض';
+  static const String unsubscribe = 'يمكنك إلغاء الاشتراك في أي وقت';
 
   // Intro pages (from strings.xml)
-  static const String introPage1Title = 'Schedule a pickup';
+  static const String introPage1Title = 'جدولة الاستلام';
   static const String introPage1Description =
-      'Schedule a pickup from the comfort of your home and we will come to you within 2 hours!';
+      'جدوِل الاستلام من منزلك وسنصل إليك خلال ساعتين!';
 
-  static const String introPage2Title = 'Expert dry cleaning';
+  static const String introPage2Title = 'تنظيف احترافي';
   static const String introPage2Description =
-      'Your clothes will be handled by professional cleaners with years of experience';
+      'ملابسك مع خبراء تنظيف ذوي خبرة طويلة';
 
-  static const String introPage3Title = 'Eco cleaning';
+  static const String introPage3Title = 'إيكو كلين';
   static const String introPage3Description =
-      'We replaced Dryclean with the better and improved EcoClean';
+      'استبدلنا الدراي كلين بتقنية EcoClean الأفضل';
   static const String ecoClean = 'eco cleaning';
 
-  static const String introPage4Title = 'Receive your clothes';
+  static const String introPage4Title = 'استلم ملابسك';
   static const String introPage4Description =
-      'Perfect cleaning results, toxin-free, fresh smell, feels like new, and be happy because you didn\'t harm our planet in the process!';
+      'نتائج تنظيف مثالية، خالية من السموم، رائحة منعشة وكأنها جديدة!';
   static const String watchOurVideo = 'Watch our Video';
 
   // Validation messages
-  static const String pleaseEnterValidEmail = 'Please enter a valid email';
+  static const String pleaseEnterValidEmail = 'من فضلك أدخل بريدًا إلكترونيًا صحيحًا';
   static const String pleaseEnterValidPhone =
-      'Please enter a valid phone number';
+      'من فضلك أدخل رقم موبايل صحيحًا';
 }
