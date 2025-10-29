@@ -77,36 +77,42 @@ class _IntroPageState extends State<IntroPage> {
             gradient: AppGradients.introGradient,
           ),
           child: SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                // ViewPager equivalent - Allow smooth swiping
-                Expanded(
+                // Pages
+                Positioned.fill(
                   child: IntroPageView(
                     pageController: _pageController,
                     onPageChanged: _onPageChanged,
                   ),
                 ),
 
-                // Page indicators like Java version (55dp from bottom)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 55.0),
-                  child: PageIndicator(
-                    currentPage: _currentPage,
-                    totalPages: _totalPages,
+                // Page indicators INSIDE the main card area
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 160.0),
+                    child: PageIndicator(
+                      currentPage: _currentPage,
+                      totalPages: _totalPages,
+                    ),
                   ),
                 ),
 
-                // Skip/Continue button like Java version (28dp from bottom)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 28.0),
-                  child: TextButton(
-                    onPressed: _onSkipPressed,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.all(10),
-                    ),
-                    child: Text(
-                      _currentPage == _totalPages - 1 ? 'تابع' : 'تخطي',
-                      style: AppTextStyles.skipButtonText,
+                // Skip/Continue button at the very bottom
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 28.0),
+                    child: TextButton(
+                      onPressed: _onSkipPressed,
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.all(10),
+                      ),
+                      child: Text(
+                        _currentPage == _totalPages - 1 ? 'تابع' : 'تخطي',
+                        style: AppTextStyles.skipButtonText,
+                      ),
                     ),
                   ),
                 ),

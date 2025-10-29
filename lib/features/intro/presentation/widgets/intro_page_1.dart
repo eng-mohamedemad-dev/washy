@@ -74,13 +74,16 @@ class IntroPage1 extends StatelessWidget {
               // Space like Java version (16dp = activity_vertical_margin)
               const SizedBox(height: 16),
 
-              // Description like Java version (from image)
-              Text(
-                'جميع احتياجاتك للتنظيف والكوي متوفرة بين يديك',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.introDescription.copyWith(
-                  color: AppColors.colorTextNotSelected, // #8c96a8
-                  fontSize: 17,
+              // Description with extra horizontal padding
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'جميع احتياجاتك للتنظيف والكوي متوفرة بين يديك',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.introDescription.copyWith(
+                    color: AppColors.colorTextNotSelected, // #8c96a8
+                    fontSize: 17,
+                  ),
                 ),
               ),
               ],
