@@ -40,18 +40,18 @@ class IntroPage1 extends StatelessWidget {
                 // Icon like Java version (160dp × 160dp, matches fragment_intro_page1.xml)
               Image.asset(
                   'assets/images/ic_intro_page1.png',
-                width: 140,
-                height: 140,
+                width: 120,
+                height: 120,
                   errorBuilder: (context, error, stackTrace) => Container(
-                  width: 140,
-                  height: 140,
+                  width: 120,
+                  height: 120,
                     decoration: BoxDecoration(
                       color: AppColors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
                     Icons.local_laundry_service_outlined,
-                    size: 70,
+                    size: 60,
                       color: AppColors.white,
                     ),
                   ),
