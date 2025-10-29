@@ -19,13 +19,13 @@ class PageIndicator extends StatelessWidget {
         totalPages,
         (index) => Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 12,
-          height: 12,
+          width: 10,
+          height: 10,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: index == currentPage 
-                ? AppColors.white 
-                : AppColors.white.withOpacity(0.4),
+            color: index == currentPage
+                ? AppColors.washyGreen
+                : AppColors.grey2,
           ),
         ),
       ),
