@@ -324,3 +324,4 @@ class _TermsAndConditionsPageState extends State<TermsAndConditionsPage> {
     Navigator.pop(context, true);
   }
 }
+

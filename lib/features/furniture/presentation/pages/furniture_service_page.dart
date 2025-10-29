@@ -385,9 +385,16 @@ class _FurnitureServicePageState extends State<FurnitureServicePage> {
   }
 
   void _onOrderPressed() {
-    Navigator.pop(context, {
-      'selectedItems': selectedItems,
-      'totalCost': selectedItems.fold(0.0, (sum, item) => sum + item.price),
+    final totalCost = selectedItems.fold(0.0, (sum, item) => sum + item.price);
+    Navigator.pushNamed(context, '/time-furniture').then((value) {
+      if (value is Map) {
+        Navigator.pop(context, {
+          'selectedItems': selectedItems,
+          'totalCost': totalCost,
+          'selectedDate': value['date'],
+          'selectedTime': value['time'],
+        });
+      }
     });
   }
 }
@@ -424,3 +431,4 @@ class FurnitureItem {
   @override
   int get hashCode => name.hashCode;
 }
+

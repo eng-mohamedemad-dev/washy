@@ -7,6 +7,7 @@ abstract class SplashLocalDataSource {
   Future<AppConfigModel> getAppConfig();
   Future<void> setServerUrl(String url);
   Future<void> setWalkThroughConsumed(bool consumed);
+  Future<bool> isWalkThroughConsumed();
   Future<String?> getUserToken();
 }
 
@@ -51,6 +52,15 @@ class SplashLocalDataSourceImpl implements SplashLocalDataSource {
       await sharedPreferences.setBool(AppConstants.keyWalkThroughConsumed, consumed);
     } catch (e) {
       throw CacheException('Failed to set walk through consumed: $e');
+    }
+  }
+
+  @override
+  Future<bool> isWalkThroughConsumed() async {
+    try {
+      return sharedPreferences.getBool(AppConstants.keyWalkThroughConsumed) ?? false;
+    } catch (e) {
+      throw CacheException('Failed to get walk through consumed: $e');
     }
   }
 

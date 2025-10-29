@@ -1,6 +1,10 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/config/app_config.dart';
+import 'features/addresses/domain/services/location_autocomplete_service.dart';
+import 'features/addresses/data/services/mock_location_autocomplete_service.dart';
+import 'features/addresses/data/services/google_places_autocomplete_service.dart';
 // import 'package:connectivity_plus/connectivity_plus.dart'; // Temporarily disabled
 
 import 'core/utils/network_info.dart';
@@ -11,6 +15,8 @@ import 'features/splash/domain/repositories/splash_repository.dart';
 import 'features/splash/domain/usecases/fetch_server_url.dart';
 import 'features/splash/domain/usecases/get_app_config.dart';
 import 'features/splash/domain/usecases/initialize_app.dart';
+import 'features/splash/domain/usecases/set_walkthrough_consumed.dart';
+import 'features/splash/domain/usecases/is_walkthrough_consumed.dart';
 import 'features/splash/presentation/bloc/splash_bloc.dart';
 
 // Auth imports
@@ -70,6 +76,16 @@ import 'features/orders/presentation/bloc/orders_bloc.dart';
 final getIt = GetIt.instance;
 
 Future<void> init() async {
+  // Location Autocomplete (Mock or Google Places)
+  if (AppConfig.useGooglePlaces) {
+    getIt.registerLazySingleton<LocationAutocompleteService>(
+      () => GooglePlacesAutocompleteService(client: getIt()),
+    );
+  } else {
+    getIt.registerLazySingleton<LocationAutocompleteService>(
+      () => MockLocationAutocompleteService(),
+    );
+  }
   //! Features - Order
   // Bloc
   getIt.registerFactory(
@@ -97,6 +113,7 @@ Future<void> init() async {
       remoteDataSource: getIt(),
       localDataSource: getIt(),
       networkInfo: getIt(),
+      splashLocalDataSource: getIt(),
     ),
   );
 
@@ -265,6 +282,8 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => FetchServerUrl(getIt()));
   getIt.registerLazySingleton(() => GetAppConfig(getIt()));
   getIt.registerLazySingleton(() => InitializeApp(getIt()));
+  getIt.registerLazySingleton(() => SetWalkThroughConsumed(getIt()));
+  getIt.registerLazySingleton(() => IsWalkThroughConsumed(getIt()));
 
   // Repository
   getIt.registerLazySingleton<SplashRepository>(

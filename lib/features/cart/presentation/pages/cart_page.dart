@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../injection_container.dart' as di;
 import '../bloc/cart_bloc.dart';
 import '../bloc/cart_event.dart';
@@ -197,20 +198,20 @@ class CartView extends StatelessWidget {
   void _handleOrderNavigation(BuildContext context, CartNavigateToOrder state) {
     switch (state.destination) {
       case 'DISINFECTION':
-        Navigator.pushNamed(context, '/disinfection_order');
+        Navigator.pushNamed(context, AppRoutes.disinfectionDetails);
         break;
       case 'FURNITURE':
-        Navigator.pushNamed(context, '/furniture_order');
+        Navigator.pushNamed(context, AppRoutes.quickOrderFurniture);
         break;
       case 'HOUSEKEEPING':
-        Navigator.pushNamed(context, '/housekeeping_order');
+        Navigator.pushNamed(context, AppRoutes.serviceSelection);
         break;
       case 'CAR_CLEANING':
-        Navigator.pushNamed(context, '/car_cleaning_order');
+        Navigator.pushNamed(context, AppRoutes.serviceSelection);
         break;
       case 'CREATE_ORDER_PAGE':
       default:
-        Navigator.pushNamed(context, '/new_order');
+        Navigator.pushNamed(context, AppRoutes.newOrder);
         break;
     }
   }

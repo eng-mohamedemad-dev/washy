@@ -487,3 +487,4 @@ class TrackingStep {
     this.isCurrent = false,
   });
 }
+

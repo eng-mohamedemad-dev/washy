@@ -32,3 +32,4 @@ abstract class OrdersRepository {
   /// Clear all cached orders
   Future<Either<Failure, void>> clearCachedOrders();
 }
+

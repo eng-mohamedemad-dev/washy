@@ -39,3 +39,4 @@ class ProfileItem extends Equatable {
     );
   }
 }
+

@@ -27,3 +27,4 @@ class GetOrderDetailsParams {
     required this.orderId,
   });
 }
+

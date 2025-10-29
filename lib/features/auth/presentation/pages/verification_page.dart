@@ -4,9 +4,14 @@ import 'dart:async';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_dimensions.dart';
 import 'package:wash_flutter/core/constants/app_strings.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_back_button.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_continue_button.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/pin_input_field.dart';
+import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_bloc.dart';
+import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_event.dart';
+import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_state.dart';
+import 'package:wash_flutter/injection_container.dart' as di;
 
 class VerificationPage extends StatefulWidget {
   final String identifier; // Phone number or email
@@ -124,7 +129,53 @@ class _VerificationPageState extends State<VerificationPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: Column(
+        child: BlocProvider(
+          create: (_) => di.getIt<VerificationBloc>(
+            param1: {
+              'identifier': widget.identifier,
+              'isPhone': widget.isPhone,
+              'isFromForgetPassword': widget.isFromForgetPassword,
+            },
+          ),
+          child: BlocConsumer<VerificationBloc, VerificationState>(
+            listener: (context, state) async {
+              if (state is VerificationLoading) {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
+                    ),
+                  ),
+                );
+              } else {
+                // Dismiss progress
+                if (Navigator.of(context, rootNavigator: true).canPop()) {
+                  Navigator.of(context, rootNavigator: true).pop();
+                }
+
+                if (state is CodeSentSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Verification code sent successfully')),
+                  );
+                } else if (state is VerificationError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.message), backgroundColor: AppColors.colorRedError),
+                  );
+                } else if (state is NavigateToPasswordReset) {
+                  Navigator.pushReplacementNamed(context, '/create-password', arguments: {
+                    'isFromEmail': !widget.isPhone,
+                  });
+                } else if (state is NavigateToHome) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                }
+              }
+            },
+            builder: (context, state) {
+              final seconds = state is VerificationInitial ? state.remainingSeconds : _secondsRemaining;
+              final canResend = state is VerificationInitial ? state.canResend : _canResend;
+              return Column(
           children: [
             // Header Section (matching Java layout)
             Padding(
@@ -224,9 +275,9 @@ class _VerificationPageState extends State<VerificationPage> {
                     const SizedBox(height: 30),
                     
                     // Timer and Resend (matching Java)
-                    if (!_canResend) ...[
+                    if (!canResend) ...[
                       Text(
-                        'Resend code in ${_secondsRemaining}s',
+                        'Resend code in ${seconds}s',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.grey2,
@@ -235,7 +286,15 @@ class _VerificationPageState extends State<VerificationPage> {
                       ),
                     ] else ...[
                       TextButton(
-                        onPressed: _onResendPressed,
+                        onPressed: () {
+                          context.read<VerificationBloc>().add(
+                            ResendCodePressed(
+                              identifier: widget.identifier,
+                              isPhone: widget.isPhone,
+                              isFromForgetPassword: widget.isFromForgetPassword,
+                            ),
+                          );
+                        },
                         child: Text(
                           'Resend Code',
                           style: TextStyle(
@@ -257,11 +316,23 @@ class _VerificationPageState extends State<VerificationPage> {
               padding: EdgeInsets.all(AppDimensions.signUpContinueButtonMargin),
               child: CustomContinueButton(
                 text: 'Verify Code',
-                onPressed: _onVerifyPressed,
+                onPressed: () {
+                  context.read<VerificationBloc>().add(
+                    VerifyCodePressed(
+                      code: _verificationCode,
+                      identifier: widget.identifier,
+                      isPhone: widget.isPhone,
+                      isFromForgetPassword: widget.isFromForgetPassword,
+                    ),
+                  );
+                },
                 isEnabled: _isCodeComplete,
               ),
             ),
           ],
+              );
+            },
+          ),
         ),
       ),
     );

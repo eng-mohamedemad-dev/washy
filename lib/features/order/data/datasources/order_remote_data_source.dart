@@ -32,6 +32,9 @@ abstract class OrderRemoteDataSource {
     int orderId,
   );
   Future<CreditCardsResponse> getCreditCards(String token);
+  Future<CreditCardsResponse> getDefaultCreditCard(String token);
+  Future<void> deleteCreditCard(String token, int creditCardId);
+  Future<void> setAsPrimaryCreditCard(String token, int creditCardId);
   Future<CouponResponse> applyRedeemCode(
     String token,
     String redeemCode,
@@ -70,7 +73,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   Future<AllAddressesResponse> getAllAddresses(String token) async {
     try {
       final response = await client.post(
-        Uri.parse('${AppConstants.baseUrl}customer/address/all'),
+        Uri.parse('${AppConstants.baseUrl}customer/address/get-all'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'token': token},
       );
@@ -97,14 +100,14 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       // Convert order request to form data (matching Java implementation)
       final formData = <String, dynamic>{
         'token': token,
-        'pickup_address_id': orderRequest.pickUpAddress?.addressId.toString(),
-        'dropoff_address_id': orderRequest.dropOffAddress?.addressId.toString(),
-        'pickup_date_id': orderRequest.pickUpDate?.dateSlotId.toString(),
-        'dropoff_date_id': orderRequest.dropOffDate?.dateSlotId.toString(),
+        'pick_up_address_id': orderRequest.pickUpAddress?.addressId.toString(),
+        'drop_off_address_id': orderRequest.dropOffAddress?.addressId.toString(),
+        'pick_up_date': orderRequest.pickUpDate?.dateSlotId.toString(),
+        'drop_off_date': orderRequest.dropOffDate?.dateSlotId.toString(),
         'pickup_time_slot_id': orderRequest.pickUpTimeSlot?.timeSlotId.toString(),
         'dropoff_time_slot_id': orderRequest.dropOffTimeSlot?.timeSlotId.toString(),
-        'note': orderRequest.note ?? '',
-        'is_recycle_hanger': orderRequest.isRecycleHanger ? '1' : '0',
+        'notes': orderRequest.note ?? '',
+        'recycle_hanger': orderRequest.isRecycleHanger ? '1' : '0',
         'order_type': orderTypeTag,
       };
 
@@ -142,14 +145,14 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     try {
       final formData = <String, dynamic>{
         'token': token,
-        'pickup_address_id': orderRequest.pickUpAddress?.addressId.toString(),
-        'dropoff_address_id': orderRequest.dropOffAddress?.addressId.toString(),
-        'pickup_date_id': orderRequest.pickUpDate?.dateSlotId.toString(),
-        'dropoff_date_id': orderRequest.dropOffDate?.dateSlotId.toString(),
+        'pick_up_address_id': orderRequest.pickUpAddress?.addressId.toString(),
+        'drop_off_address_id': orderRequest.dropOffAddress?.addressId.toString(),
+        'pick_up_date': orderRequest.pickUpDate?.dateSlotId.toString(),
+        'drop_off_date': orderRequest.dropOffDate?.dateSlotId.toString(),
         'pickup_time_slot_id': orderRequest.pickUpTimeSlot?.timeSlotId.toString(),
         'dropoff_time_slot_id': orderRequest.dropOffTimeSlot?.timeSlotId.toString(),
-        'note': orderRequest.note ?? '',
-        'is_recycle_hanger': orderRequest.isRecycleHanger ? '1' : '0',
+        'notes': orderRequest.note ?? '',
+        'recycle_hanger': orderRequest.isRecycleHanger ? '1' : '0',
       };
 
       if (orderId != null) {
@@ -157,7 +160,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       }
 
       final response = await client.post(
-        Uri.parse('${AppConstants.baseUrl}customer/order/skip_selection'),
+        Uri.parse('${AppConstants.baseUrl}customer/order/skip-selection'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: formData,
       );
@@ -184,14 +187,14 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
       final formData = <String, dynamic>{
         'token': token,
         'order_id': orderId.toString(),
-        'pickup_address_id': orderRequest.pickUpAddress?.addressId.toString(),
-        'dropoff_address_id': orderRequest.dropOffAddress?.addressId.toString(),
-        'pickup_date_id': orderRequest.pickUpDate?.dateSlotId.toString(),
-        'dropoff_date_id': orderRequest.dropOffDate?.dateSlotId.toString(),
+        'pick_up_address_id': orderRequest.pickUpAddress?.addressId.toString(),
+        'drop_off_address_id': orderRequest.dropOffAddress?.addressId.toString(),
+        'pick_up_date': orderRequest.pickUpDate?.dateSlotId.toString(),
+        'drop_off_date': orderRequest.dropOffDate?.dateSlotId.toString(),
         'pickup_time_slot_id': orderRequest.pickUpTimeSlot?.timeSlotId.toString(),
         'dropoff_time_slot_id': orderRequest.dropOffTimeSlot?.timeSlotId.toString(),
-        'note': orderRequest.note ?? '',
-        'is_recycle_hanger': orderRequest.isRecycleHanger ? '1' : '0',
+        'notes': orderRequest.note ?? '',
+        'recycle_hanger': orderRequest.isRecycleHanger ? '1' : '0',
         'products': json.encode(products),
       };
 
@@ -212,11 +215,10 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
 
   @override
   Future<dynamic> getAvailableTimeSlots(String token) async {
-    final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}customer/order/available_time_slots'),
+    final response = await client.get(
+      Uri.parse('${AppConstants.baseUrl}customer/order/get-date-time-slots'),
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
       },
     );
 
@@ -231,7 +233,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   Future<CreditCardsResponse> getCreditCards(String token) async {
     try {
       final response = await client.post(
-        Uri.parse('${AppConstants.baseUrl}customer/payment/credit_cards'),
+        Uri.parse('${AppConstants.baseUrl}customer/payment/get-credit-cards'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {'token': token},
       );
@@ -244,6 +246,66 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     } catch (e) {
       if (e is ServerException) rethrow;
       throw const ServerException('Failed to get credit cards');
+    }
+  }
+
+  @override
+  Future<CreditCardsResponse> getDefaultCreditCard(String token) async {
+    try {
+      final response = await client.post(
+        Uri.parse('${AppConstants.baseUrl}customer/payment/default-credit-card'),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'token': token},
+      );
+
+      if (response.statusCode == 200) {
+        return CreditCardsResponse.fromJson(json.decode(response.body));
+      } else {
+        throw const ServerException('Failed to get default credit card');
+      }
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw const ServerException('Failed to get default credit card');
+    }
+  }
+
+  @override
+  Future<void> deleteCreditCard(String token, int creditCardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('${AppConstants.baseUrl}customer/creditcard/delete-credit-card'),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'token': token,
+          'credit_card_id': creditCardId.toString(),
+        },
+      );
+      if (response.statusCode != 200) {
+        throw const ServerException('Failed to delete credit card');
+      }
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw const ServerException('Failed to delete credit card');
+    }
+  }
+
+  @override
+  Future<void> setAsPrimaryCreditCard(String token, int creditCardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('${AppConstants.baseUrl}customer/creditcard/set-default-card'),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {
+          'token': token,
+          'credit_card_id': creditCardId.toString(),
+        },
+      );
+      if (response.statusCode != 200) {
+        throw const ServerException('Failed to set default credit card');
+      }
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw const ServerException('Failed to set default credit card');
     }
   }
 
@@ -334,7 +396,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         body: {
           'token': token,
           'order_id': orderId.toString(),
-          'payment_method': paymentMethod,
+          'payment_code': paymentMethod,
         },
       );
 

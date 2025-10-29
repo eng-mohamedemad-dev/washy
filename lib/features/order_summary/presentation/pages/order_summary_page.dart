@@ -504,7 +504,7 @@ class OrderSummaryPage extends StatelessWidget {
         width: double.infinity,
         height: 55,
         child: ElevatedButton(
-          onPressed: () => _confirmOrder(),
+          onPressed: () => _confirmOrder(context),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.washyGreen,
             shape: RoundedRectangleBorder(
@@ -526,7 +526,16 @@ class OrderSummaryPage extends StatelessWidget {
   }
 
   // Actions
-  void _confirmOrder() {
-    // Navigate to thank you or order tracking
+  void _confirmOrder(BuildContext context) {
+    // الانتقال إلى صفحة الدفع مع تمرير رقم الطلب والمبلغ (تماثل تدفق Java)
+    Navigator.pushNamed(
+      context,
+      '/payment',
+      arguments: {
+        'orderId': 12345, // TODO: اجلب رقم الطلب الحقيقي بعد إنشاء الطلب
+        'amount': 99.99,  // TODO: احسب الإجمالي الحقيقي من ملخص الطلب
+      },
+    );
   }
 }
+

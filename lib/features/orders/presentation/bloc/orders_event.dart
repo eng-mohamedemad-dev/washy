@@ -132,3 +132,4 @@ class ClearOrdersDataEvent extends OrdersEvent {
 class ResetOrdersStateEvent extends OrdersEvent {
   const ResetOrdersStateEvent();
 }
+

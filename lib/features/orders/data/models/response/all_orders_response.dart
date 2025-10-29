@@ -70,3 +70,4 @@ class AllOrdersData {
   /// Check if has more pages
   bool get hasMorePages => totalPages > 1;
 }
+

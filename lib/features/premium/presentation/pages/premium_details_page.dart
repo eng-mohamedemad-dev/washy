@@ -625,3 +625,4 @@ class _PremiumDetailsPageState extends State<PremiumDetailsPage> {
     Navigator.pushNamed(context, '/cart');
   }
 }
+
