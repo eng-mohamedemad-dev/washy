@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/routes/app_routes.dart';
-import 'features/splash/presentation/pages/index_page.dart';
+// import removed: IndexPage is now routed via AppRoutes.splash
 import 'features/splash/presentation/bloc/splash_bloc.dart';
 import 'injection_container.dart' as di;
 
@@ -41,7 +41,7 @@ class WashyWashApp extends StatelessWidget {
             systemOverlayStyle: SystemUiOverlayStyle.light,
           ),
         ),
-        initialRoute: AppRoutes.initial,
+        initialRoute: AppRoutes.splash,
         onGenerateRoute: AppRoutes.generateRoute,
       ),
     );
