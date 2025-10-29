@@ -10,12 +10,20 @@ class SmsResponse {
   });
 
   factory SmsResponse.fromJson(Map<String, dynamic> json) {
+    // Java SendSMSCodeResponse structure: { "data": { "login_status": "..." } }
+    final data = json['data'] ?? json['sms_code_data'];
+    final dataMap = data is Map<String, dynamic>
+        ? data
+        : data is Map
+            ? Map<String, dynamic>.from(data)
+            : null;
     return SmsResponse(
-      status: json['status'] ?? '',
-      message: json['message'],
-      smsCodeData: json['sms_code_data'] != null
-          ? SmsCodeData.fromJson(json['sms_code_data'])
-          : null,
+      status: dataMap?['login_status'] ??
+          dataMap?['status'] ??
+          json['status'] ??
+          '',
+      message: json['message'] ?? dataMap?['message'],
+      smsCodeData: dataMap != null ? SmsCodeData.fromJson(dataMap) : null,
     );
   }
 
@@ -40,8 +48,9 @@ class SmsCodeData {
   });
 
   factory SmsCodeData.fromJson(Map<String, dynamic> json) {
+    // Java Data structure: { "login_status": "..." }
     return SmsCodeData(
-      status: json['status'] ?? '',
+      status: json['login_status'] ?? json['status'] ?? '',
       code: json['code'],
       message: json['message'],
     );
@@ -55,4 +64,3 @@ class SmsCodeData {
     };
   }
 }
-

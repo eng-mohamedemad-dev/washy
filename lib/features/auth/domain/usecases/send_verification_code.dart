@@ -5,18 +5,22 @@ import 'package:wash_flutter/core/usecases/usecase.dart';
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 import 'package:wash_flutter/features/auth/domain/repositories/auth_repository.dart';
 
-class SendVerificationCode implements UseCase<void, SendVerificationCodeParams> {
+class SendVerificationCode
+    implements UseCase<String, SendVerificationCodeParams> {
   final AuthRepository repository;
 
   SendVerificationCode(this.repository);
 
   @override
-  Future<Either<Failure, void>> call(SendVerificationCodeParams params) async {
+  Future<Either<Failure, String>> call(
+      SendVerificationCodeParams params) async {
     switch (params.request.type) {
       case VerificationType.sms:
-        return await repository.sendSmsVerificationCode(params.request.identifier);
+        return await repository
+            .sendSmsVerificationCode(params.request.identifier);
       case VerificationType.email:
-        return await repository.sendEmailVerificationCode(params.request.identifier);
+        return await repository
+            .sendEmailVerificationCode(params.request.identifier);
     }
   }
 }
@@ -29,4 +33,3 @@ class SendVerificationCodeParams extends Equatable {
   @override
   List<Object?> get props => [request];
 }
-

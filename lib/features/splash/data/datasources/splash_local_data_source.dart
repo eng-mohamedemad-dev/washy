@@ -65,12 +65,8 @@ class SplashLocalDataSourceImpl implements SplashLocalDataSource {
   @override
   Future<bool> isWalkThroughConsumed() async {
     try {
-<<<<<<< HEAD
       return sharedPreferences.getBool(AppConstants.keyWalkThroughConsumed) ??
           false;
-=======
-      return sharedPreferences.getBool(AppConstants.keyWalkThroughConsumed) ?? false;
->>>>>>> 5c5db153474f1b053ffffec8498ffaf3824e95cd
     } catch (e) {
       throw CacheException('Failed to get walk through consumed: $e');
     }

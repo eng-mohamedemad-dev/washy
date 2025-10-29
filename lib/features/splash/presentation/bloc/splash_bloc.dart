@@ -28,56 +28,92 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
   Future<void> _onStartApp(StartApp event, Emitter<SplashState> emit) async {
     emit(SplashLoading());
-    
-    // Initialize app
-    final initResult = await initializeApp(NoParams());
-    await initResult.fold(
-      (failure) async => emit(SplashError(failure.message)),
-      (success) async {
-        // Fetch server URL
-        add(FetchServerUrlEvent());
-      },
-    );
-  }
 
-  Future<void> _onFetchServerUrl(FetchServerUrlEvent event, Emitter<SplashState> emit) async {
-    final result = await fetchServerUrl(NoParams());
-    await result.fold(
-      (failure) async => emit(SplashError(failure.message)),
-      (serverUrl) async {
-        // After fetching server URL, check app config
-        add(CheckAppConfig());
-      },
-    );
-  }
-
-  Future<void> _onCheckAppConfig(CheckAppConfig event, Emitter<SplashState> emit) async {
-    final result = await getAppConfig(NoParams());
-    await result.fold(
-      (failure) async => emit(SplashError(failure.message)),
-      (appConfig) async {
-        emit(SplashConfigLoaded(appConfig));
-        
-        // Determine navigation after a delay (like Java version)
-        await Future.delayed(const Duration(milliseconds: 3000));
-        add(NavigateToNext());
-      },
-    );
-  }
-
-  Future<void> _onNavigateToNext(NavigateToNext event, Emitter<SplashState> emit) async {
-    final currentState = state;
-    if (currentState is SplashConfigLoaded) {
-      final appConfig = currentState.appConfig;
-      
-      if (appConfig.isWalkThroughConsumed) {
-        // Go to splash screen (user has seen intro)
-        emit(SplashNavigateToSplash());
-      } else {
-        // Go to intro screen (user hasn't seen intro)
-        emit(SplashNavigateToIntro());
-      }
+    try {
+      // Initialize app with timeout
+      final initResult =
+          await initializeApp(NoParams()).timeout(const Duration(seconds: 5));
+      await initResult.fold(
+        (failure) async {
+          // On failure, still proceed to check app config
+          add(CheckAppConfig());
+        },
+        (success) async {
+          // Fetch server URL
+          add(FetchServerUrlEvent());
+        },
+      );
+    } catch (e) {
+      // On timeout or error, proceed directly to check app config
+      add(CheckAppConfig());
     }
   }
-}
 
+  Future<void> _onFetchServerUrl(
+      FetchServerUrlEvent event, Emitter<SplashState> emit) async {
+    try {
+      final result =
+          await fetchServerUrl(NoParams()).timeout(const Duration(seconds: 5));
+      await result.fold(
+        (failure) async {
+          // On failure, proceed to check app config anyway
+          add(CheckAppConfig());
+        },
+        (serverUrl) async {
+          // After fetching server URL, check app config
+          add(CheckAppConfig());
+        },
+      );
+    } catch (e) {
+      // On timeout or error, proceed to check app config
+      add(CheckAppConfig());
+    }
+  }
+
+  Future<void> _onCheckAppConfig(
+      CheckAppConfig event, Emitter<SplashState> emit) async {
+    try {
+      final result =
+          await getAppConfig(NoParams()).timeout(const Duration(seconds: 5));
+      await result.fold(
+        (failure) async {
+          // On failure, use default config and navigate to intro
+          emit(SplashConfigLoaded(AppConfig(
+            serverUrl: '',
+            isWalkThroughConsumed: false,
+            isUserLoggedIn: false,
+            isUserLoggedInSkipped: false,
+            userToken: null,
+          )));
+          await Future.delayed(const Duration(milliseconds: 1500));
+          add(NavigateToNext());
+        },
+        (appConfig) async {
+          emit(SplashConfigLoaded(appConfig));
+
+          // Determine navigation after a delay (like Java version)
+          await Future.delayed(const Duration(milliseconds: 1500));
+          add(NavigateToNext());
+        },
+      );
+    } catch (e) {
+      // On timeout or error, use default config and navigate to intro
+      emit(SplashConfigLoaded(AppConfig(
+        serverUrl: '',
+        isWalkThroughConsumed: false,
+        isUserLoggedIn: false,
+        isUserLoggedInSkipped: false,
+        userToken: null,
+      )));
+      await Future.delayed(const Duration(milliseconds: 500));
+      add(NavigateToNext());
+    }
+  }
+
+  Future<void> _onNavigateToNext(
+      NavigateToNext event, Emitter<SplashState> emit) async {
+    // Always show the Intro flow first (4 صفحات مقدمة)،
+    // ثم من داخل IntroPage سيتم ضبط WalkThroughConsumed والانتقال للّوجين.
+    emit(SplashNavigateToIntro());
+  }
+}

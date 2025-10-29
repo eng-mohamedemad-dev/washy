@@ -12,19 +12,18 @@ class AppGradients {
     end: Alignment.bottomCenter,
     colors: [
       AppColors.gradientStart, // #92E068
-      AppColors.gradientEnd,   // #13C0D7
+      AppColors.gradientEnd, // #13C0D7
     ],
   );
 
-  /// Intro screen gradient (angle 315)
-  /// From #13C0D7 to #52D0A0 to #92E068
+  /// Intro screen gradient (angle 90 - vertical)
+  /// From #92E068 (green) to #13C0D7 (turquoise) - matches Java background_intro_gradient.xml
   static const LinearGradient introGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
     colors: [
-      AppColors.gradientEnd,    // #13C0D7
-      AppColors.gradientCenter, // #52D0A0
-      AppColors.gradientStart,  // #92E068
+      AppColors.gradientStart, // #92E068 (green)
+      AppColors.gradientEnd, // #13C0D7 (turquoise)
     ],
   );
 
@@ -48,4 +47,3 @@ class AppGradients {
     ],
   );
 }
-

@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
-import 'package:wash_flutter/core/usecases/usecase.dart';
 import 'package:wash_flutter/core/utils/phone_validator.dart';
-import 'package:wash_flutter/features/auth/domain/entities/user.dart';
+// import 'package:wash_flutter/features/auth/domain/entities/user.dart';
 import 'package:wash_flutter/features/auth/domain/entities/account_status.dart'
     as account_status;
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
@@ -82,12 +81,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     final formattedPhone =
         '+962${event.phoneNumber.replaceAll(RegExp(r'^0+'), '')}';
 
+    print('[LoginBloc] Checking mobile: $formattedPhone');
+
     final result =
         await checkMobile(CheckMobileParams(phoneNumber: formattedPhone));
 
+    print(
+        '[LoginBloc] Check Mobile Result: ${result.isRight() ? "Success" : "Failure"}');
+
     result.fold(
-      (failure) => emit(LoginError(_mapFailureToMessage(failure))),
+      (failure) {
+        print('[LoginBloc] Check Mobile Failed: $failure');
+        emit(LoginError(_mapFailureToMessage(failure)));
+      },
       (user) {
+        print(
+            '[LoginBloc] Check Mobile Success: Account Status = ${user.accountStatus}');
         // Handle different account statuses for LOGIN (different from SignUp)
         switch (user.accountStatus) {
           case account_status.AccountStatus.NEW_CUSTOMER:
@@ -113,7 +122,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
   }
 
-  /// Send verification code for login
+  /// Send verification code for login (like Java's sendVerificationCode)
   Future<void> _sendVerificationCode(
     String phoneNumber,
     Emitter<LoginState> emit,
@@ -123,14 +132,32 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       type: VerificationType.sms,
     );
 
+    print('[LoginBloc] Sending verification code to: $phoneNumber');
+
     final result = await sendVerificationCode(
       SendVerificationCodeParams(request: verificationRequest),
     );
 
+    print(
+        '[LoginBloc] Send Verification Result: ${result.isRight() ? "Success" : "Failure"}');
+
     result.fold(
-      (failure) => emit(LoginError(_mapFailureToMessage(failure))),
-      (_) => emit(
-          LoginNavigateToVerification(identifier: phoneNumber, type: 'sms')),
+      (failure) {
+        print('[LoginBloc] Send Verification Failed: $failure');
+        emit(LoginError(_mapFailureToMessage(failure)));
+      },
+      (status) {
+        print('[LoginBloc] Send Verification Success: Status = $status');
+        // Check if SMS was sent successfully (like Java: SMS_SENT_SUCCESS.equals(status))
+        final statusLower = status.toLowerCase();
+        if (statusLower == 'sms_sent' || statusLower == 'sms_sent_success') {
+          emit(LoginNavigateToVerification(
+              identifier: phoneNumber, type: 'sms'));
+        } else {
+          print('[LoginBloc] Unexpected status: $status');
+          emit(LoginError('فشل إرسال كود التحقق: $status'));
+        }
+      },
     );
   }
 
@@ -164,15 +191,26 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
   /// Map failures to user-friendly messages
   String _mapFailureToMessage(Failure failure) {
-    switch (failure.runtimeType) {
-      case ServerFailure _:
-        return (failure as ServerFailure).message;
-      case CacheFailure _:
-        return (failure as CacheFailure).message;
-      case NetworkFailure _:
-        return (failure as NetworkFailure).message;
-      default:
-        return 'Unexpected Error';
+    print('[LoginBloc] Failure Type: ${failure.runtimeType}');
+    print('[LoginBloc] Failure: $failure');
+
+    if (failure is ServerFailure) {
+      final message = failure.message;
+      print('[LoginBloc] ServerFailure Message: $message');
+      // Return Arabic message if it's already in Arabic, otherwise return the message
+      return message.isNotEmpty ? message : 'حدث خطأ في الخادم';
+    } else if (failure is CacheFailure) {
+      return failure.message.isNotEmpty
+          ? failure.message
+          : 'حدث خطأ في التخزين المحلي';
+    } else if (failure is NetworkFailure) {
+      return failure.message.isNotEmpty
+          ? failure.message
+          : 'لا يوجد اتصال بالإنترنت';
+    } else {
+      print(
+          '[LoginBloc] Unknown Failure Type: ${failure.runtimeType}, Failure: $failure');
+      return 'حدث خطأ غير متوقع: ${failure.toString()}';
     }
   }
 }

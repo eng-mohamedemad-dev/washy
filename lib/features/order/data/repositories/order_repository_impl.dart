@@ -33,14 +33,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
   @override
   Future<Either<Failure, List<WashyAddress>>> getAllAddresses() async {
-<<<<<<< HEAD
-    // TODO: Get token from session/auth
-    const String token = "";
-
-=======
     final String token = await splashLocalDataSource.getUserToken() ?? '';
-    
->>>>>>> 5c5db153474f1b053ffffec8498ffaf3824e95cd
     if (await networkInfo.isConnected) {
       try {
         final remoteAddresses = await remoteDataSource.getAllAddresses(token);

@@ -4,6 +4,8 @@ import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_dimensions.dart';
 import 'package:wash_flutter/core/widgets/loading_widget.dart';
 import 'package:wash_flutter/features/order/presentation/bloc/order_bloc.dart';
+import 'package:wash_flutter/features/order/presentation/bloc/order_event.dart';
+import 'package:wash_flutter/features/order/presentation/bloc/order_state.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
 
 class CreditCardsPage extends StatelessWidget {
@@ -12,7 +14,8 @@ class CreditCardsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => di.getIt<OrderBloc>()..add(GetCreditCardsEvent()),
+      create: (_) =>
+          di.getIt<OrderBloc>()..add(const LoadCreditCardsEvent(token: '')),
       child: Scaffold(
         backgroundColor: AppColors.white,
         appBar: AppBar(
@@ -24,7 +27,8 @@ class CreditCardsPage extends StatelessWidget {
           ),
           title: const Text(
             'بطاقاتي',
-            style: TextStyle(color: AppColors.greyDark, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: AppColors.greyDark, fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
           actions: [
@@ -55,10 +59,13 @@ class CreditCardsPage extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final card = cards[index];
                     return _CreditCardTile(
-                      brand: card.brand,
-                      last4: card.last4,
-                      holder: card.holderName,
-                      isDefault: card.isDefault,
+                      brand: card.cardType,
+                      last4: card.hashedCardNumber.length >= 4
+                          ? card.hashedCardNumber
+                              .substring(card.hashedCardNumber.length - 4)
+                          : card.hashedCardNumber,
+                      holder: card.cardHolderName,
+                      isDefault: card.isPrimary,
                       onMakeDefault: () {
                         // TODO: Implement make default
                       },
@@ -88,7 +95,8 @@ class CreditCardsPage extends StatelessWidget {
           },
           backgroundColor: AppColors.washyBlue,
           icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text('إضافة بطاقة', style: TextStyle(color: Colors.white)),
+          label:
+              const Text('إضافة بطاقة', style: TextStyle(color: Colors.white)),
         ),
       ),
     );
@@ -106,9 +114,11 @@ class _EmptyCardsView extends StatelessWidget {
         children: const [
           Icon(Icons.credit_card_off, size: 72, color: AppColors.grey2),
           SizedBox(height: 12),
-          Text('لا توجد بطاقات محفوظة', style: TextStyle(color: AppColors.greyDark)),
+          Text('لا توجد بطاقات محفوظة',
+              style: TextStyle(color: AppColors.greyDark)),
           SizedBox(height: 6),
-          Text('أضف بطاقة جديدة لاستخدامها في الدفع', style: TextStyle(color: AppColors.grey2)),
+          Text('أضف بطاقة جديدة لاستخدامها في الدفع',
+              style: TextStyle(color: AppColors.grey2)),
         ],
       ),
     );
@@ -139,7 +149,8 @@ class _CreditCardTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 6)),
+          BoxShadow(
+              color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 6)),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -151,21 +162,24 @@ class _CreditCardTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$brand •••• $last4', style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text('$brand •••• $last4',
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text(holder, style: const TextStyle(color: AppColors.grey2)),
               ],
             ),
           ),
           if (isDefault)
-            const Chip(label: Text('افتراضية'), backgroundColor: Color(0xFFE9F5FF))
+            const Chip(
+                label: Text('افتراضية'), backgroundColor: Color(0xFFE9F5FF))
           else
-            TextButton(onPressed: onMakeDefault, child: const Text('تعيين افتراضية')),
-          IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline, color: Colors.red)),
+            TextButton(
+                onPressed: onMakeDefault, child: const Text('تعيين افتراضية')),
+          IconButton(
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline, color: Colors.red)),
         ],
       ),
     );
   }
 }
-
-

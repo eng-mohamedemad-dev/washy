@@ -20,7 +20,7 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
     _initAnimations();
-    _navigateToNext();
+    // Navigation is controlled by SplashBloc in IndexPage, don't navigate here
   }
 
   @override
@@ -52,15 +52,6 @@ class _SplashPageState extends State<SplashPage>
     ));
 
     _animationController.forward();
-  }
-
-  void _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
-    
-    if (mounted) {
-      // Navigate to intro or main app
-      Navigator.pushReplacementNamed(context, '/intro');
-    }
   }
 
   @override
@@ -109,9 +100,9 @@ class _SplashPageState extends State<SplashPage>
                           color: AppColors.washyBlue,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // App Name
                       const Text(
                         'واشي واش',
@@ -123,9 +114,9 @@ class _SplashPageState extends State<SplashPage>
                           letterSpacing: 2,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // App Subtitle
                       const Text(
                         'خدمات الغسيل والتنظيف',
@@ -136,9 +127,9 @@ class _SplashPageState extends State<SplashPage>
                           letterSpacing: 1,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 50),
-                      
+
                       // Loading Indicator
                       const SizedBox(
                         width: 30,
@@ -148,9 +139,9 @@ class _SplashPageState extends State<SplashPage>
                           strokeWidth: 3,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Loading Text
                       const Text(
                         'جاري التحميل...',

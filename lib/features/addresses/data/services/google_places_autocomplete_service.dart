@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../../core/config/app_config.dart';
+import 'package:wash_flutter/core/config/app_config.dart';
 import '../../domain/services/location_autocomplete_service.dart';
 
 class GooglePlacesAutocompleteService implements LocationAutocompleteService {
-  GooglePlacesAutocompleteService({http.Client? client}) : _client = client ?? http.Client();
+  GooglePlacesAutocompleteService({http.Client? client})
+      : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -31,8 +32,9 @@ class GooglePlacesAutocompleteService implements LocationAutocompleteService {
     final data = json.decode(resp.body) as Map<String, dynamic>;
     final preds = (data['predictions'] as List<dynamic>? ?? <dynamic>[])
         .cast<Map<String, dynamic>>();
-    return preds.map((p) => p['description'] as String? ?? '').where((s) => s.isNotEmpty).toList(growable: false);
+    return preds
+        .map((p) => p['description'] as String? ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
   }
 }
-
-

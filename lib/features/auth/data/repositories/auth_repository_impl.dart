@@ -50,11 +50,15 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, String>> sendSmsVerificationCode(String phoneNumber) async {
+  Future<Either<Failure, String>> sendSmsVerificationCode(
+      String phoneNumber) async {
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.sendSmsVerificationCode(phoneNumber);
-        return Right(response.status);
+        final response =
+            await remoteDataSource.sendSmsVerificationCode(phoneNumber);
+        // Return status from smsCodeData.login_status (like Java)
+        final status = response.smsCodeData?.status ?? response.status;
+        return Right(status);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -64,11 +68,15 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, String>> sendEmailVerificationCode(String email) async {
+  Future<Either<Failure, String>> sendEmailVerificationCode(
+      String email) async {
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.sendEmailVerificationCode(email);
-        return Right(response.status);
+        final response =
+            await remoteDataSource.sendEmailVerificationCode(email);
+        // Return status from smsCodeData.login_status (like Java)
+        final status = response.smsCodeData?.status ?? response.status;
+        return Right(status);
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -78,10 +86,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, User>> verifySmsCode(String phoneNumber, String code) async {
+  Future<Either<Failure, User>> verifySmsCode(
+      String phoneNumber, String code) async {
     if (await networkInfo.isConnected) {
       try {
-        final response = await remoteDataSource.verifySmsCode(phoneNumber, code);
+        final response =
+            await remoteDataSource.verifySmsCode(phoneNumber, code);
         if (response.data.status.toLowerCase() == 'verified') {
           // User is verified, cache the user with token
           final user = response.data.user?.copyWith(
@@ -93,7 +103,8 @@ class AuthRepositoryImpl implements AuthRepository {
             return Right(user);
           }
         }
-        return Left(ServerFailure(response.data?.message ?? 'Verification failed'));
+        return Left(
+            ServerFailure(response.data?.message ?? 'Verification failed'));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -103,7 +114,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, User>> verifyEmailCode(String email, String code) async {
+  Future<Either<Failure, User>> verifyEmailCode(
+      String email, String code) async {
     if (await networkInfo.isConnected) {
       try {
         final response = await remoteDataSource.verifyEmailCode(email, code);
@@ -117,7 +129,8 @@ class AuthRepositoryImpl implements AuthRepository {
             return Right(user);
           }
         }
-        return Left(ServerFailure(response.data?.message ?? 'Verification failed'));
+        return Left(
+            ServerFailure(response.data?.message ?? 'Verification failed'));
       } on ServerException catch (e) {
         return Left(ServerFailure(e.message));
       }
@@ -157,10 +170,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, User>> loginWithPassword(String identifier, String password) async {
+  Future<Either<Failure, User>> loginWithPassword(
+      String identifier, String password) async {
     if (await networkInfo.isConnected) {
       try {
-        final user = await remoteDataSource.loginWithPassword(identifier, password);
+        final user =
+            await remoteDataSource.loginWithPassword(identifier, password);
         await localDataSource.cacheUser(user);
         return Right(user);
       } on ServerException catch (e) {
@@ -222,7 +237,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, void>> saveUserSession(User user) async {
     try {
-          await localDataSource.cacheUser(user.toModel());
+      await localDataSource.cacheUser(user.toModel());
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));

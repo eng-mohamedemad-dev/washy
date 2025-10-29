@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
+import 'package:wash_flutter/core/routes/app_routes.dart';
+import 'package:wash_flutter/injection_container.dart' as di;
+import 'package:wash_flutter/features/splash/data/datasources/splash_local_data_source.dart';
 
 /// LauncherPage - Handles deep linking like Java LauncherActivity
 class LauncherPage extends StatefulWidget {
@@ -25,10 +28,31 @@ class _LauncherPageState extends State<LauncherPage> {
     });
   }
 
+  /// Check if user is logged in
+  Future<bool> _isUserLoggedIn() async {
+    try {
+      final token = await di.getIt<SplashLocalDataSource>().getUserToken();
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /// Handle deep link navigation (like Java LauncherActivity)
-  void _handleDeepLink() {
+  Future<void> _handleDeepLink() async {
+    // Check if user is logged in first
+    final isLoggedIn = await _isUserLoggedIn();
+
+    if (!isLoggedIn) {
+      // User not logged in, navigate to login
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+      return;
+    }
+
     if (widget.deepLink == null) {
-      // No deep link, navigate to normal flow
+      // No deep link, navigate to normal flow (home)
       _navigateToHome();
       return;
     }
@@ -65,7 +89,7 @@ class _LauncherPageState extends State<LauncherPage> {
   void _handleCategoryLink(Uri uri) {
     final categoryId = uri.queryParameters['id'];
     final categoryName = uri.queryParameters['name'];
-    
+
     if (categoryId != null) {
       // Navigate to category details
       Navigator.pushReplacementNamed(
@@ -84,7 +108,7 @@ class _LauncherPageState extends State<LauncherPage> {
   /// Handle order deep link (like Java's order navigation)
   void _handleOrderLink(Uri uri) {
     final orderId = uri.queryParameters['id'];
-    
+
     if (orderId != null) {
       // Navigate to order details
       Navigator.pushReplacementNamed(
@@ -112,11 +136,11 @@ class _LauncherPageState extends State<LauncherPage> {
   void _handleNotificationLink(Uri uri) {
     final notificationId = uri.queryParameters['id'];
     final type = uri.queryParameters['type'];
-    
+
     if (notificationId != null) {
       // Mark notification as read (like Java)
       _markNotificationAsRead(notificationId);
-      
+
       // Navigate based on notification type
       switch (type?.toLowerCase()) {
         case 'order':
@@ -151,7 +175,9 @@ class _LauncherPageState extends State<LauncherPage> {
 
   /// Navigate to home/main screen (like Java's default navigation)
   void _navigateToHome() {
-    Navigator.pushReplacementNamed(context, '/home');
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    }
   }
 
   @override
@@ -168,7 +194,7 @@ class _LauncherPageState extends State<LauncherPage> {
             ),
             SizedBox(height: 20),
             Text(
-              'Loading...',
+              'جاري التحميل...',
               style: TextStyle(
                 fontSize: 16,
                 color: AppColors.grey1,

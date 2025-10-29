@@ -14,7 +14,7 @@ class OrderSummaryPage extends StatelessWidget {
         children: [
           _buildHeader(context),
           Expanded(child: _buildContent()),
-          _buildConfirmButton(),
+          _buildConfirmButton(context),
         ],
       ),
     );
@@ -480,7 +480,7 @@ class OrderSummaryPage extends StatelessWidget {
   }
 
   /// Confirm Button
-  Widget _buildConfirmButton() {
+  Widget _buildConfirmButton(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -526,9 +526,8 @@ class OrderSummaryPage extends StatelessWidget {
       '/payment',
       arguments: {
         'orderId': 12345, // TODO: اجلب رقم الطلب الحقيقي بعد إنشاء الطلب
-        'amount': 99.99,  // TODO: احسب الإجمالي الحقيقي من ملخص الطلب
+        'amount': 99.99, // TODO: احسب الإجمالي الحقيقي من ملخص الطلب
       },
     );
   }
 }
-

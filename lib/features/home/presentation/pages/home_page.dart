@@ -18,7 +18,7 @@ class _HomePageState extends State<HomePage>
   int cartItemCount = 3;
   int notificationCount = 5;
   bool isHurryModeEnabled = false;
-  
+
   // Mock data for home services
   final List<HomeService> services = [
     HomeService(
@@ -77,7 +77,14 @@ class _HomePageState extends State<HomePage>
     ),
   ];
 
-  final List<String> categories = ['الكل', 'غسيل', 'تنظيف جاف', 'أثاث', 'سريع', 'مميز'];
+  final List<String> categories = [
+    'الكل',
+    'غسيل',
+    'تنظيف جاف',
+    'أثاث',
+    'سريع',
+    'مميز'
+  ];
 
   @override
   void initState() {
@@ -138,7 +145,7 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
-            
+
             // Logo
             Positioned(
               left: 66,
@@ -154,7 +161,7 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
-            
+
             // Notification Badge
             Positioned(
               right: 80,
@@ -205,7 +212,7 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
-            
+
             // Cart Badge
             Positioned(
               right: 20,
@@ -307,7 +314,7 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
-          
+
           // Categories Button
           Container(
             height: 50,
@@ -423,6 +430,7 @@ class _HomePageState extends State<HomePage>
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Service Icon
               Container(
@@ -438,38 +446,40 @@ class _HomePageState extends State<HomePage>
                   size: 28,
                 ),
               ),
-              
-              const SizedBox(height: 12),
-              
+
+              const SizedBox(height: 8),
+
               // Service Title
               Text(
                 service.title,
                 style: const TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: AppColors.colorTitleBlack,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              
-              const SizedBox(height: 4),
-              
+
+              const SizedBox(height: 2),
+
               // Service Subtitle
-              Text(
-                service.subtitle,
-                style: const TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 12,
-                  color: AppColors.greyDark,
+              Flexible(
+                child: Text(
+                  service.subtitle,
+                  style: const TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 11,
+                    color: AppColors.greyDark,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              
+
               const Spacer(),
-              
+
               // Price and Time
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +559,8 @@ class _HomePageState extends State<HomePage>
               if (isHurryModeEnabled) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.colorRedBadge,
                     borderRadius: BorderRadius.circular(12),
@@ -575,7 +586,7 @@ class _HomePageState extends State<HomePage>
   // Helper Methods
   List<HomeService> _getFilteredServices(String category) {
     if (category == 'الكل') return services;
-    
+
     switch (category) {
       case 'غسيل':
         return services.where((s) => s.id == 1).toList();
@@ -639,4 +650,3 @@ class _HomePageState extends State<HomePage>
     Navigator.pushNamed(context, '/new-order');
   }
 }
-

@@ -31,11 +31,7 @@ class _IntroPageState extends State<IntroPage> {
   void _onPageChanged(int page) {
     setState(() {
       _currentPage = page;
-      
-      // If reached last page and user tries to scroll next
-      if (page == _totalPages - 1) {
-        _finishAndNavigate();
-      }
+      // Don't automatically navigate - user must press button
     });
   }
 
@@ -44,11 +40,12 @@ class _IntroPageState extends State<IntroPage> {
   }
 
   void _finishAndNavigate() {
-    // Set walk through consumed and navigate to Splash like Java
-    di.getIt<SetWalkThroughConsumed>()
+    // Set walk through consumed and navigate directly to LoginPage (like Java SignUpActivity)
+    di
+        .getIt<SetWalkThroughConsumed>()
         .call(const SetWalkThroughConsumedParams(true))
         .then((_) {
-      Navigator.pushReplacementNamed(context, AppRoutes.splash);
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
     });
   }
 
@@ -66,45 +63,48 @@ class _IntroPageState extends State<IntroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppGradients.introGradient,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // ViewPager equivalent
-              Expanded(
-                child: IntroPageView(
-                  pageController: _pageController,
-                  onPageChanged: _onPageChanged,
-                ),
-              ),
-              
-              // Page indicators like Java version (55dp from bottom)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 55.0),
-                child: PageIndicator(
-                  currentPage: _currentPage,
-                  totalPages: _totalPages,
-                ),
-              ),
-              
-              // Skip/Continue button like Java version (28dp from bottom)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 28.0),
-                child: TextButton(
-                  onPressed: _onSkipPressed,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(10),
-                  ),
-                  child: Text(
-                    _currentPage == _totalPages - 1 ? 'Continue' : 'Skip',
-                    style: AppTextStyles.skipButtonText,
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: AppGradients.introGradient,
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // ViewPager equivalent
+                Expanded(
+                  child: IntroPageView(
+                    pageController: _pageController,
+                    onPageChanged: _onPageChanged,
                   ),
                 ),
-              ),
-            ],
+
+                // Page indicators like Java version (55dp from bottom)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 55.0),
+                  child: PageIndicator(
+                    currentPage: _currentPage,
+                    totalPages: _totalPages,
+                  ),
+                ),
+
+                // Skip/Continue button like Java version (28dp from bottom)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 28.0),
+                  child: TextButton(
+                    onPressed: _onSkipPressed,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.all(10),
+                    ),
+                    child: Text(
+                      _currentPage == _totalPages - 1 ? 'تابع' : 'تخطي',
+                      style: AppTextStyles.skipButtonText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

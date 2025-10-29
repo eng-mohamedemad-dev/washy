@@ -47,7 +47,16 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     );
     result.fold(
       (failure) => emit(EmailError(message: _mapFailureToMessage(failure))),
-      (_) => emit(EmailCodeSent(email: event.email)),
+      (status) {
+        // Check if email code was sent successfully (like Java: SMS_SENT_SUCCESS.equals(status))
+        // Note: Java uses same constant for both SMS and email
+        if (status.toLowerCase() == 'sms_sent' ||
+            status.toLowerCase() == 'email_sent') {
+          emit(EmailCodeSent(email: event.email));
+        } else {
+          emit(EmailError(message: 'فشل إرسال كود التحقق: $status'));
+        }
+      },
     );
   }
 

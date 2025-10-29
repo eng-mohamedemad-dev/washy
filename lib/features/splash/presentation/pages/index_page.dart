@@ -14,41 +14,27 @@ class IndexPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => di.getIt<SplashBloc>()..add(StartApp()),
-      child: Scaffold(
-        backgroundColor: AppColors.white,
-        body: BlocListener<SplashBloc, SplashState>(
-          listener: (context, state) {
-            if (state is SplashNavigateToIntro) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const IntroPage()),
-              );
-            } else if (state is SplashNavigateToSplash) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const SplashPage()),
-              );
-            } else if (state is SplashError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.colorRedError,
-                ),
-              );
-            }
-          },
-          child: BlocBuilder<SplashBloc, SplashState>(
-            builder: (context, state) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
-                ),
-              );
-            },
-          ),
-        ),
+      child: BlocListener<SplashBloc, SplashState>(
+        listener: (context, state) {
+          if (state is SplashNavigateToIntro) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const IntroPage()),
+            );
+          } else if (state is SplashNavigateToSplash) {
+            // User has seen intro, navigate to login page directly
+            Navigator.pushReplacementNamed(context, '/login');
+          } else if (state is SplashError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.colorRedError,
+              ),
+            );
+          }
+        },
+        child: const SplashPage(),
       ),
     );
   }
 }
-

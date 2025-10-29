@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/features/auth/domain/entities/user.dart' as user;
-import 'package:wash_flutter/features/auth/domain/entities/account_status.dart' as account_status;
-import 'package:wash_flutter/features/auth/domain/entities/login_type.dart' as login_type;
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/send_verification_code.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_event.dart';
@@ -13,7 +11,7 @@ import 'package:wash_flutter/features/auth/presentation/bloc/verification/verifi
 class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
   final SendVerificationCode sendVerificationCode;
   // TODO: Add verify code use cases
-  
+
   Timer? _timer;
 
   VerificationBloc({
@@ -32,7 +30,7 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     on<TimerTick>(_onTimerTick);
     on<StartTimer>(_onStartTimer);
     on<ClearCode>(_onClearCode);
-    
+
     // Start timer automatically like Java
     add(StartTimer());
   }
@@ -43,35 +41,36 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     Emitter<VerificationState> emit,
   ) async {
     final currentState = state as VerificationInitial;
-    
+
     // Update code at specific position
     String newCode = currentState.code;
     if (event.position < 4 && event.position >= 0) {
       if (newCode.length <= event.position) {
-        newCode = newCode.padRight(event.position, ' ') + event.code.substring(event.code.length - 1);
+        newCode = newCode.padRight(event.position, ' ') +
+            event.code.substring(event.code.length - 1);
       } else {
-        newCode = newCode.substring(0, event.position) + 
-                  event.code.substring(event.code.length - 1) + 
-                  newCode.substring(event.position + 1);
+        newCode = newCode.substring(0, event.position) +
+            event.code.substring(event.code.length - 1) +
+            newCode.substring(event.position + 1);
       }
     } else {
       newCode = event.code;
     }
-    
+
     // Clean code (remove spaces and limit to 4 digits)
     newCode = newCode.replaceAll(' ', '').replaceAll(RegExp(r'[^0-9]'), '');
     if (newCode.length > 4) {
       newCode = newCode.substring(0, 4);
     }
-    
+
     final isComplete = newCode.length == 4;
-    
+
     emit(currentState.copyWith(
       code: newCode,
       isCodeComplete: isComplete,
       validationMessage: null, // Clear validation when typing
     ));
-    
+
     // Auto-verify when code is complete (like Java)
     if (isComplete) {
       add(VerifyCodePressed(
@@ -89,7 +88,7 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     Emitter<VerificationState> emit,
   ) async {
     final currentState = state as VerificationInitial;
-    
+
     if (event.code.length != 4) {
       emit(currentState.copyWith(
         validationMessage: 'Please enter complete 4-digit code',
@@ -102,11 +101,11 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     // TODO: Call verify code API based on type
     // For now, simulate verification
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (event.isFromForgetPassword) {
       // For forget password flow
       emit(ForgotPasswordVerificationSuccess(identifier: event.identifier));
-      
+
       // Navigate to password reset after delay
       await Future.delayed(const Duration(milliseconds: 500));
       emit(NavigateToPasswordReset(identifier: event.identifier));
@@ -121,9 +120,9 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
         accountStatus: user.AccountStatus.verifiedCustomer,
         loginType: user.LoginType.phone,
       );
-      
+
       emit(const VerificationSuccess(user: mockUser));
-      
+
       // Navigate to home after delay
       await Future.delayed(const Duration(milliseconds: 500));
       emit(const NavigateToHome(user: mockUser));
@@ -149,26 +148,33 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
 
     result.fold(
       (failure) => emit(VerificationError(_mapFailureToMessage(failure))),
-      (_) {
-        emit(const CodeSentSuccess());
-        
-        // Reset state and restart timer
-        final currentState = state as VerificationInitial? ?? VerificationInitial(
-          identifier: event.identifier,
-          isPhone: event.isPhone,
-          isFromForgetPassword: event.isFromForgetPassword,
-        );
-        
-        emit(currentState.copyWith(
-          code: '',
-          isCodeComplete: false,
-          remainingSeconds: 60,
-          canResend: false,
-          validationMessage: null,
-        ));
-        
-        // Restart timer
-        add(StartTimer());
+      (status) {
+        // Check if code was sent successfully (like Java)
+        if (status.toLowerCase() == 'sms_sent' ||
+            status.toLowerCase() == 'email_sent') {
+          emit(const CodeSentSuccess());
+
+          // Reset state and restart timer
+          final currentState = state as VerificationInitial? ??
+              VerificationInitial(
+                identifier: event.identifier,
+                isPhone: event.isPhone,
+                isFromForgetPassword: event.isFromForgetPassword,
+              );
+
+          emit(currentState.copyWith(
+            code: '',
+            isCodeComplete: false,
+            remainingSeconds: 60,
+            canResend: false,
+            validationMessage: null,
+          ));
+
+          // Restart timer
+          add(StartTimer());
+        } else {
+          emit(VerificationError('فشل إرسال كود التحقق: $status'));
+        }
       },
     );
   }
@@ -179,12 +185,12 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     Emitter<VerificationState> emit,
   ) async {
     final currentState = state as VerificationInitial;
-    
+
     emit(currentState.copyWith(
       remainingSeconds: event.remainingSeconds,
       canResend: event.remainingSeconds <= 0,
     ));
-    
+
     if (event.remainingSeconds <= 0) {
       _timer?.cancel();
     }
@@ -196,13 +202,13 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     Emitter<VerificationState> emit,
   ) async {
     _timer?.cancel();
-    
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final currentState = state;
       if (currentState is VerificationInitial) {
         final newSeconds = currentState.remainingSeconds - 1;
         add(TimerTick(newSeconds));
-        
+
         if (newSeconds <= 0) {
           timer.cancel();
         }
@@ -216,7 +222,7 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     Emitter<VerificationState> emit,
   ) async {
     final currentState = state as VerificationInitial;
-    
+
     emit(currentState.copyWith(
       code: '',
       isCodeComplete: false,
