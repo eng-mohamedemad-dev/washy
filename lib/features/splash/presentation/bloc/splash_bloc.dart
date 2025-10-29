@@ -112,8 +112,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
   Future<void> _onNavigateToNext(
       NavigateToNext event, Emitter<SplashState> emit) async {
-    // Always show the Intro flow first (4 صفحات مقدمة)،
-    // ثم من داخل IntroPage سيتم ضبط WalkThroughConsumed والانتقال للّوجين.
-    emit(SplashNavigateToIntro());
+    // Navigate directly to Login after Splash
+    emit(SplashNavigateToSplash());
   }
 }
