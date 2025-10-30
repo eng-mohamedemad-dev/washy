@@ -3,12 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_dimensions.dart';
 import 'package:wash_flutter/core/constants/app_strings.dart';
+import 'package:wash_flutter/core/routes/app_routes.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_state.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/phone_input_section.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/email_page.dart';
-import 'package:wash_flutter/features/auth/presentation/pages/mobile_input_page.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/mobile_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
@@ -180,7 +181,26 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Build header section (just X button on top right)
   Widget _buildHeader() {
-    return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12, right: 12),
+        child: GestureDetector(
+          onTap: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.home,
+              (route) => false,
+            );
+          },
+          child: const Icon(
+            Icons.close,
+            size: 26,
+            color: AppColors.greyDark,
+          ),
+        ),
+      ),
+    );
   }
 
   /// Build content section
@@ -200,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                 MaterialPageRoute(
                   builder: (_) => BlocProvider(
                     create: (_) => di.getIt<LoginBloc>(),
-                    child: const MobileInputPage(),
+                    child: const MobilePage(),
                   ),
                 ),
               );
@@ -259,7 +279,7 @@ class _LoginPageState extends State<LoginPage> {
               'ملابس أنظف مع واشيواش',
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
                 color: Colors.grey[400],
                 fontWeight: FontWeight.w600,
               ),
@@ -278,7 +298,7 @@ class _LoginPageState extends State<LoginPage> {
               MaterialPageRoute(
                 builder: (_) => BlocProvider(
                   create: (_) => di.getIt<LoginBloc>(),
-                  child: const MobileInputPage(),
+                  child: const MobilePage(),
                 ),
               ),
             );
@@ -299,7 +319,7 @@ class _LoginPageState extends State<LoginPage> {
                 MaterialPageRoute(
                   builder: (_) => BlocProvider(
                     create: (_) => di.getIt<LoginBloc>(),
-                    child: const MobileInputPage(),
+                    child: const MobilePage(),
                   ),
                 ),
               );
@@ -310,7 +330,7 @@ class _LoginPageState extends State<LoginPage> {
                 MaterialPageRoute(
                   builder: (_) => BlocProvider(
                     create: (_) => di.getIt<LoginBloc>(),
-                    child: const MobileInputPage(),
+                    child: const MobilePage(),
                   ),
                 ),
               );

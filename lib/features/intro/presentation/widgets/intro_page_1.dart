@@ -28,7 +28,7 @@ class IntroPage1 extends StatelessWidget {
 
         // Content like Java version (scrollable to avoid overflow on small screens)
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(6),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -40,8 +40,8 @@ class IntroPage1 extends StatelessWidget {
                 // Icon like Java version (160dp × 160dp, matches fragment_intro_page1.xml)
                 Image.asset(
                   'assets/images/ic_intro_page1.png',
-                  width: 200,
-                  height: 200,
+                  width: 150,
+                  height: 150,
                   errorBuilder: (context, error, stackTrace) => Container(
                     width: 120,
                     height: 120,

@@ -37,8 +37,8 @@ class IntroPage3 extends StatelessWidget {
               // Icon like Java version (173dp × 160dp, matches fragment_intro_page3.xml)
               Image.asset(
                 'assets/images/ic_intro_page3.png',
-                width: 180,
-                height: 180,
+                width: 160,
+                height: 160,
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 173,
                   height: 160,
@@ -63,7 +63,7 @@ class IntroPage3 extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTextStyles.introTitle.copyWith(
                   color: AppColors.colorTitleBlack, // #333333
-                  fontSize: 23,
+                  fontSize: 20,
                   height: 1.5,
                 ),
               ),

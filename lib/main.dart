@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/routes/app_routes.dart';
-import 'features/splash/presentation/pages/index_page.dart';
 import 'features/splash/presentation/bloc/splash_bloc.dart';
 import 'injection_container.dart' as di;
 

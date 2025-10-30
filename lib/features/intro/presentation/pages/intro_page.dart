@@ -20,6 +20,7 @@ class _IntroPageState extends State<IntroPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   static const int _totalPages = 4;
+  bool _didNavigate = false; // لمنع تكرار التنقل الذي قد يسبب تهنيج
 
   @override
   void initState() {
@@ -36,6 +37,8 @@ class _IntroPageState extends State<IntroPage> {
   }
 
   void _onSkipPressed() {
+    if (_didNavigate) return;
+    _didNavigate = true;
     try {
       // Set walk through consumed in background (don't block)
       unawaited(
@@ -59,6 +62,10 @@ class _IntroPageState extends State<IntroPage> {
         }
       }
     }
+    // في حال الفشل، اسمح بمحاولة أخرى بعد فريم لاحق
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _didNavigate = true; // يظل true لمنع التكرار خلال نفس الجلسة
+    });
   }
 
   @override
@@ -84,6 +91,8 @@ class _IntroPageState extends State<IntroPage> {
                   child: IntroPageView(
                     pageController: _pageController,
                     onPageChanged: _onPageChanged,
+                    isOnLastPage: _currentPage == 0, // because reverse: true
+                    onSwipePastEnd: _onSkipPressed,
                   ),
                 ),
 

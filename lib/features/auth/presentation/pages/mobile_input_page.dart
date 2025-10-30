@@ -149,79 +149,19 @@ class _MobileInputPageState extends State<MobileInputPage> {
 
                         const SizedBox(height: 60),
 
-                        // Phone illustration (simple placeholder)
+                        // Illustration from assets to match original design
                         GestureDetector(
                           onTap: () => _phoneFocusNode.requestFocus(),
                           behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 200,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Phone outline
-                                Container(
-                                  width: 150,
-                                  height: 250,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(
-                                      color: AppColors.grey3,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // Smiley face on screen
-                                      Icon(
-                                        Icons.sentiment_satisfied,
-                                        size: 60,
-                                        color: AppColors.washyGreen,
-                                      ),
-                                      const SizedBox(height: 20),
-                                      // Phone arms
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Icon(
-                                            Icons.waving_hand,
-                                            size: 30,
-                                            color: AppColors.washyBlue,
-                                          ),
-                                          Icon(
-                                            Icons.waving_hand,
-                                            size: 30,
-                                            color: AppColors.washyBlue,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Decorative circles
-                                ...List.generate(
-                                  5,
-                                  (index) => Positioned(
-                                    left: (index * 40.0) % 150,
-                                    top: (index * 50.0) % 200,
-                                    child: Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.washyGreen
-                                            .withOpacity(0.3),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          child: Column(
+                            children: [
+                              Image.asset(
+                                'assets/images/ic_intro_page2.png',
+                                width: 160,
+                                height: 160,
+                                fit: BoxFit.contain,
+                              ),
+                            ],
                           ),
                         ),
 
@@ -232,6 +172,7 @@ class _MobileInputPageState extends State<MobileInputPage> {
                           controller: _phoneController,
                           focusNode: _phoneFocusNode,
                           isMobileMode: true,
+                          autoFocus: true,
                           phoneNumber: phoneInputState.phoneNumber,
                           isPhoneValid: phoneInputState.isPhoneValid,
                           onPhoneNumberChanged: (value) {
@@ -273,7 +214,8 @@ class _MobileInputPageState extends State<MobileInputPage> {
                               GestureDetector(
                                 onTap: () {
                                   // أرجع الرقم للصفحة السابقة (SignUpPage)
-                                  Navigator.of(context).pop(_phoneController.text);
+                                  Navigator.of(context)
+                                      .pop(_phoneController.text);
                                 },
                                 child: Container(
                                   width: 56,

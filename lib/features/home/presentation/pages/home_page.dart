@@ -114,10 +114,10 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// Toolbar (100% matching Java toolbar)
+  /// Toolbar (مطابق للشكل المطلوب: جرس يسار - شعار واسم - منيو يمين)
   Widget _buildToolbar() {
     return Container(
-      height: 110,
+      height: 90,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.washyBlue, AppColors.washyGreen],
@@ -126,144 +126,82 @@ class _HomePageState extends State<HomePage>
         ),
       ),
       child: SafeArea(
-        child: Stack(
-          children: [
-            // Back Button
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 66,
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: AppColors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-
-            // Logo
-            Positioned(
-              left: 66,
-              top: 0,
-              bottom: 0,
-              child: Container(
-                alignment: Alignment.centerLeft,
-                child: Image.asset(
-                  'assets/images/washy_wash_word_white.png',
-                  height: 30,
-                  width: 120,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-
-            // Notification Badge
-            Positioned(
-              right: 80,
-              top: 0,
-              bottom: 0,
-              child: GestureDetector(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Left: Notifications icon
+              GestureDetector(
                 onTap: () => Navigator.pushNamed(context, '/notifications'),
-                child: Container(
-                  width: 40,
-                  child: Stack(
-                    children: [
-                      const Positioned(
-                        left: 8,
-                        top: 18,
-                        child: Icon(
-                          Icons.notifications_outlined,
-                          color: AppColors.white,
-                          size: 24,
-                        ),
-                      ),
-                      if (notificationCount > 0)
-                        Positioned(
-                          right: 6,
-                          top: 12,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.colorRedBadge,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            child: Text(
-                              '$notificationCount',
-                              style: const TextStyle(
-                                color: AppColors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(
+                      Icons.notifications_none,
+                      color: AppColors.white,
+                      size: 26,
+                    ),
+                    if (notificationCount > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: AppColors.colorRedBadge,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$notificationCount',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
-            ),
 
-            // Cart Badge
-            Positioned(
-              right: 20,
-              top: 0,
-              bottom: 0,
-              child: GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/cart'),
-                child: Container(
-                  width: 40,
-                  child: Stack(
-                    children: [
-                      const Positioned(
-                        left: 8,
-                        top: 18,
-                        child: Icon(
-                          Icons.shopping_bag_outlined,
-                          color: AppColors.white,
-                          size: 24,
-                        ),
-                      ),
-                      if (cartItemCount > 0)
-                        Positioned(
-                          right: 6,
-                          top: 12,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.colorRedBadge,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            child: Text(
-                              '$cartItemCount',
-                              style: const TextStyle(
-                                color: AppColors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
+              // Middle: logo + name
+              Row(
+                children: [
+                  Image.asset(
+                    'assets/images/washy_wash_word_white.png',
+                    height: 26,
+                    fit: BoxFit.contain,
                   ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'WashyWash',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Right: menu icon
+              GestureDetector(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('القائمة')),
+                  );
+                },
+                child: const Icon(
+                  Icons.menu,
+                  color: AppColors.white,
+                  size: 26,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

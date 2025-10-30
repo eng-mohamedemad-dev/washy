@@ -28,7 +28,7 @@ class IntroPage2 extends StatelessWidget {
 
         // Content like Java version
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(5.0),
           child: Column(
             children: [
               // Top spacing like Java version (77dp)
@@ -37,8 +37,8 @@ class IntroPage2 extends StatelessWidget {
               // Icon like Java version (160dp × 160dp, matches fragment_intro_page2.xml)
               Image.asset(
                 'assets/images/ic_intro_page2.png',
-                width: 180,
-                height: 180,
+                width: 160,
+                height: 160,
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 160,
                   height: 160,
@@ -63,7 +63,7 @@ class IntroPage2 extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: AppTextStyles.introTitle.copyWith(
                   color: AppColors.colorTitleBlack, // #333333
-                  fontSize: 23,
+                  fontSize: 20,
                   height: 1.5,
                 ),
               ),

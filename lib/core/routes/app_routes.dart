@@ -11,7 +11,6 @@ import 'package:wash_flutter/features/auth/presentation/pages/forget_password_pa
 import 'package:wash_flutter/features/auth/presentation/bloc/signup/signup_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
-import 'package:wash_flutter/features/splash/presentation/pages/index_page.dart';
 import 'package:wash_flutter/features/splash/presentation/pages/splash_page.dart';
 import 'package:wash_flutter/features/intro/presentation/pages/intro_page.dart';
 import 'package:wash_flutter/features/launcher/presentation/pages/launcher_page.dart';
@@ -142,7 +141,8 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.initial:
-        return MaterialPageRoute(builder: (_) => const IndexPage());
+        // Start directly on IntroPage instead of IndexPage/Splash
+        return MaterialPageRoute(builder: (_) => const IntroPage());
 
       case splash:
         return MaterialPageRoute(builder: (_) => const SplashPage());

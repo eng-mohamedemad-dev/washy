@@ -38,6 +38,7 @@ class IntroPage4 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // لا نلتقط السحب هنا؛ الانتقال يحصل عبر NotificationListener في IntroPageView
     return Stack(
       children: [
         // Background image like Java version (matches fragment_intro_page4.xml)
@@ -67,8 +68,8 @@ class IntroPage4 extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 50),
                 child: Image.asset(
                   'assets/images/ic_intro_page4.png',
-                  width: 200,
-                  height: 200,
+                  width: 160,
+                  height: 160,
                   errorBuilder: (context, error, stackTrace) => Container(
                     width: 168,
                     height: 160,
@@ -96,7 +97,7 @@ class IntroPage4 extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: AppTextStyles.introTitle.copyWith(
                     color: AppColors.colorTitleBlack, // #333333
-                    fontSize: 23,
+                    fontSize: 20,
                     height: 1.5,
                   ),
                 ),

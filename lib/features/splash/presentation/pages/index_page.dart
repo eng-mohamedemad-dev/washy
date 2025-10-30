@@ -5,7 +5,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../injection_container.dart' as di;
 import '../../../intro/presentation/pages/intro_page.dart';
 import '../bloc/splash_bloc.dart';
-import 'splash_page.dart';
 
 class IndexPage extends StatelessWidget {
   const IndexPage({super.key});
@@ -33,7 +32,12 @@ class IndexPage extends StatelessWidget {
             );
           }
         },
-        child: const SplashPage(),
+        // Temporarily hide SplashPage UI and show a minimal loader
+        child: const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
       ),
     );
   }
