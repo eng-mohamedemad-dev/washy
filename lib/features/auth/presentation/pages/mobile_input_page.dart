@@ -272,10 +272,8 @@ class _MobileInputPageState extends State<MobileInputPage> {
                             if (phoneInputState.isPhoneValid)
                               GestureDetector(
                                 onTap: () {
-                                  context.read<LoginBloc>().add(
-                                        LoginCheckMobilePressed(
-                                            phoneNumber: _phoneController.text),
-                                      );
+                                  // أرجع الرقم للصفحة السابقة (SignUpPage)
+                                  Navigator.of(context).pop(_phoneController.text);
                                 },
                                 child: Container(
                                   width: 56,

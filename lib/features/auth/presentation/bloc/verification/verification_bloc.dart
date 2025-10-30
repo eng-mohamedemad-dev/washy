@@ -146,17 +146,14 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
         // Check if code was sent successfully (like Java)
         if (status.toLowerCase() == 'sms_sent' ||
             status.toLowerCase() == 'email_sent') {
-          emit(const CodeSentSuccess());
+          // Prepare next initial state BEFORE emitting transient success state
+          final nextInitial = VerificationInitial(
+            identifier: event.identifier,
+            isPhone: event.isPhone,
+            isFromForgetPassword: event.isFromForgetPassword,
+          );
 
-          // Reset state and restart timer
-          final currentState = state as VerificationInitial? ??
-              VerificationInitial(
-                identifier: event.identifier,
-                isPhone: event.isPhone,
-                isFromForgetPassword: event.isFromForgetPassword,
-              );
-
-          emit(currentState.copyWith(
+          emit(nextInitial.copyWith(
             code: '',
             isCodeComplete: false,
             remainingSeconds: 60,
@@ -166,6 +163,21 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
 
           // Restart timer
           add(StartTimer());
+
+          // Emit success notification state at the end (UI may show a toast/snackbar)
+          emit(const CodeSentSuccess());
+        } else if (status.toLowerCase() == 'exceeds_limit') {
+          // في حالة تجاوز الحد، انتقل مباشرة لصفحة كلمة المرور كما في تطبيق الجافا
+          final mockUser = user.User(
+            id: 'temp',
+            name: '',
+            email: event.isPhone ? null : event.identifier,
+            phoneNumber: event.isPhone ? event.identifier : null,
+            accountStatus: user.AccountStatus.verifiedCustomer,
+            loginType: event.isPhone ? user.LoginType.phone : user.LoginType.email,
+          );
+
+          emit(NavigateToPassword(user: mockUser));
         } else {
           emit(VerificationError('فشل إرسال كود التحقق: $status'));
         }
@@ -178,7 +190,10 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
     TimerTick event,
     Emitter<VerificationState> emit,
   ) async {
-    final currentState = state as VerificationInitial;
+    final currentState = state;
+    if (currentState is! VerificationInitial) {
+      return; // Ignore ticks while in transient states (e.g., CodeSentSuccess)
+    }
 
     emit(currentState.copyWith(
       remainingSeconds: event.remainingSeconds,

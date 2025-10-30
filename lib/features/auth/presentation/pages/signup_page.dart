@@ -14,6 +14,8 @@ import 'package:wash_flutter/features/auth/presentation/pages/email_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
+import 'package:wash_flutter/features/auth/presentation/bloc/login/login_bloc.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/mobile_input_page.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
 
 /// SignUpPage - Replicates Java SignUpActivity 100%
@@ -35,6 +37,7 @@ class _SignUpPageState extends State<SignUpPage> {
     // اجعل صفحة التسجيل تطابق الجافا: ابدأ مباشرة بوضع إدخال الموبايل
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _phoneFocusNode.requestFocus(); // إجبار حقل الهاتف على أخذ focus
         context.read<SignUpBloc>().add(NavigateToMobileRegistration());
       }
     });
@@ -276,15 +279,27 @@ class _SignUpPageState extends State<SignUpPage> {
           controller: _phoneController,
           focusNode: _phoneFocusNode,
           isMobileMode: true,
+          readOnly: true, // الحقل لا يقبل الكتابة مباشرة
           phoneNumber: state.phoneNumber,
           isPhoneValid: state.isPhoneValid,
           onPhoneNumberChanged: (value) {
             // Already handled by listener
           },
-          onPhoneNumberTapped: () {
-            // Clear validation message when tapped
-            if (state.validationMessage != null) {
-              context.read<SignUpBloc>().add(ClearPhoneNumber());
+          onPhoneNumberTapped: () async {
+            // انتقل إلى MobileInputPage وانتظر الرقم المدخل
+            final result = await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => BlocProvider(
+                  create: (_) => di.getIt<LoginBloc>(),
+                  child: const MobileInputPage(),
+                ),
+              ),
+            );
+            // عند العودة، إذا عاد رقم، ضعه في الحقل
+            if (result != null && result is String) {
+              setState(() {
+                _phoneController.text = result;
+              });
             }
           },
         ),

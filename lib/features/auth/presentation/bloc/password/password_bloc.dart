@@ -84,25 +84,27 @@ class PasswordBloc extends Bloc<PasswordEvent, PasswordState> {
     Emitter<PasswordState> emit,
   ) async {
     final currentState = state as PasswordInitial;
-    
     if (currentState.password.isEmpty) {
       emit(currentState.copyWith(
-        validationMessage: 'Please enter your password',
+        validationMessage: 'من فضلك أدخل كلمة السر',
       ));
       return;
     }
 
     emit(const PasswordLoading());
 
-    // TODO: Call login with password API
-    // For now, simulate success
-    await Future.delayed(const Duration(seconds: 2));
-    
-    emit(PasswordLoginSuccess(user: event.user));
-    
-    // Navigate to main screen after a short delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    emit(NavigateToHome(user: event.user));
+    // "محاكاة" تحقق الباسورد: اذا كلمة السر هي "123123" اعتبرها صحيحة
+    await Future.delayed(const Duration(seconds: 1));
+    if (event.password == '123123') {
+      emit(PasswordLoginSuccess(user: event.user));
+      // يمكن إضافة تنقل بعد قليل، بناءً على التطبيق الفعلي
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(NavigateToHome(user: event.user));
+    } else {
+      emit(PasswordError('كلمة السر غير صحيحة، حاول مرة أخرى'));
+      // أعد الحالة الأولية لتسمح للمستخدم بالمحاولة مجددًا وتظهر الرسالة
+      emit(currentState.copyWith(validationMessage: 'كلمة السر غير صحيحة، حاول مرة أخرى'));
+    }
   }
 
   /// Handle forget password (like Java's forget password flow)

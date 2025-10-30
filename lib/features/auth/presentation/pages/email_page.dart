@@ -140,10 +140,11 @@ class _EmailPageState extends State<EmailPage> {
                 accountStatus: AccountStatus.verifiedCustomer,
                 loginType: LoginType.email,
               );
-              Navigator.of(context).pushReplacement(
+              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => PasswordPage(user: mockUser, isNewUser: false),
                 ),
+                (route) => false,
               );
             });
           } else if (state is EmailError) {
