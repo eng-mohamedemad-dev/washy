@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/signup_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/login_page.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/mobile_input_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/email_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
@@ -78,6 +79,7 @@ class AppRoutes {
   static const String intro = '/intro';
   static const String signup = '/signup';
   static const String login = '/login';
+  static const String mobileInput = '/mobile-input';
   static const String email = '/email';
   static const String verification = '/verification';
   static const String password = '/password';
@@ -161,6 +163,14 @@ class AppRoutes {
           builder: (_) => BlocProvider(
             create: (_) => di.getIt<LoginBloc>(),
             child: const LoginPage(),
+          ),
+        );
+
+      case mobileInput:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => di.getIt<LoginBloc>(),
+            child: const MobileInputPage(),
           ),
         );
 

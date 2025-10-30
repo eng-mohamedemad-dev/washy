@@ -69,7 +69,7 @@ class _EmailPageState extends State<EmailPage> {
       backgroundColor: AppColors.white,
       body: BlocListener<EmailBloc, EmailState>(
         listener: (context, state) {
-      if (state is EmailLoading) {
+          if (state is EmailLoading) {
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -80,28 +80,30 @@ class _EmailPageState extends State<EmailPage> {
                 ),
               ),
             );
-      } else {
+          } else {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context, rootNavigator: true).pop();
             }
 
-        if (state is EmailChecked) {
-          // قرارات مطابقة للجافا حسب حالة الحساب
-          final status = state.user.accountStatus;
-          if (status.name == 'newCustomer') {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('أنت عميل جديد. من فضلك أنشئ حساباً.')),
-            );
-            Navigator.of(context).pushReplacementNamed('/signup');
-          } else if (status.name == 'notVerifiedCustomer') {
-            context.read<EmailBloc>().add(
-                  SendEmailCodeEvent(email: _emailController.text),
+            if (state is EmailChecked) {
+              // قرارات مطابقة للجافا حسب حالة الحساب
+              final status = state.user.accountStatus;
+              if (status.name == 'newCustomer') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('أنت عميل جديد. من فضلك أنشئ حساباً.')),
                 );
-          } else if (status.name == 'enterPassword' || status.name == 'verifiedCustomer') {
-            // في حالة الإيميل يمكن أن ينتقل لإدخال كلمة المرور
-            Navigator.pushReplacementNamed(context, '/password');
-          }
-        } else if (state is EmailCodeSent) {
+                Navigator.of(context).pushReplacementNamed('/signup');
+              } else if (status.name == 'notVerifiedCustomer') {
+                context.read<EmailBloc>().add(
+                      SendEmailCodeEvent(email: _emailController.text),
+                    );
+              } else if (status.name == 'enterPassword' ||
+                  status.name == 'verifiedCustomer') {
+                // في حالة الإيميل يمكن أن ينتقل لإدخال كلمة المرور
+                Navigator.pushReplacementNamed(context, '/password');
+              }
+            } else if (state is EmailCodeSent) {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => VerificationPage(
@@ -131,7 +133,7 @@ class _EmailPageState extends State<EmailPage> {
                   child: GestureDetector(
                     onTap: _goBack,
                     child: const Icon(
-                      Icons.close,
+                      Icons.arrow_forward,
                       color: Colors.black,
                       size: 28,
                     ),
@@ -148,9 +150,9 @@ class _EmailPageState extends State<EmailPage> {
                       children: [
                         // Welcome Text (line 15-29)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                          padding: const EdgeInsets.symmetric(horizontal: 60),
                           child: Text(
-                            'أهلاً! ما هو بريدك الإلكتروني؟',
+                            'أهلاً و سهلأ! أدخل الايميل',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 26,
@@ -208,7 +210,7 @@ class _EmailPageState extends State<EmailPage> {
                                     color: AppColors.colorBlack,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: 'البريد الإلكتروني',
+                                    hintText: 'الايميل ',
                                     hintStyle: TextStyle(
                                       color: AppColors.colorLoginText,
                                       fontSize: 16,
@@ -257,7 +259,7 @@ class _EmailPageState extends State<EmailPage> {
                               children: [
                                 // Separator line (line 90-96)
                                 Container(
-                                  width: 100,
+                                  width: 250,
                                   height: 1,
                                   color: AppColors.colorViewSeparators,
                                 ),
@@ -279,34 +281,55 @@ class _EmailPageState extends State<EmailPage> {
                                 const SizedBox(height: 6),
 
                                 // زر السهم الأخضر: يظهر عند التركيز أو وجود كتابة، والتفعيل فقط عند صحة الإيميل
-                                if (_emailFocusNode.hasFocus || value.text.isNotEmpty)
+                                if (_emailFocusNode.hasFocus ||
+                                    value.text.isNotEmpty)
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 40, vertical: 8),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
                                       child: SizedBox(
                                         width: 56,
                                         height: 56,
                                         child: ElevatedButton(
-                                          onPressed: _isEmailValid ? _onSendCodePressed : null,
+                                          onPressed: _isEmailValid
+                                              ? _onSendCodePressed
+                                              : null,
                                           style: ButtonStyle(
-                                            shape: const MaterialStatePropertyAll(CircleBorder()),
-                                            elevation: const MaterialStatePropertyAll(0),
-                                            padding: const MaterialStatePropertyAll(EdgeInsets.zero),
-                                            backgroundColor: MaterialStateProperty.resolveWith((states) {
-                                              final isDisabled = states.contains(MaterialState.disabled);
+                                            shape:
+                                                const MaterialStatePropertyAll(
+                                                    CircleBorder()),
+                                            elevation:
+                                                const MaterialStatePropertyAll(
+                                                    0),
+                                            padding:
+                                                const MaterialStatePropertyAll(
+                                                    EdgeInsets.zero),
+                                            backgroundColor:
+                                                MaterialStateProperty
+                                                    .resolveWith((states) {
+                                              final isDisabled =
+                                                  states.contains(
+                                                      MaterialState.disabled);
                                               return isDisabled
-                                                  ? AppColors.washyGreen.withOpacity(0.5)
+                                                  ? AppColors.washyGreen
+                                                      .withOpacity(0.5)
                                                   : AppColors.washyGreen;
                                             }),
-                                            foregroundColor: MaterialStateProperty.resolveWith((states) {
-                                              final isDisabled = states.contains(MaterialState.disabled);
-                                              return isDisabled ? Colors.white70 : Colors.white;
+                                            foregroundColor:
+                                                MaterialStateProperty
+                                                    .resolveWith((states) {
+                                              final isDisabled =
+                                                  states.contains(
+                                                      MaterialState.disabled);
+                                              return isDisabled
+                                                  ? Colors.white70
+                                                  : Colors.white;
                                             }),
                                           ),
                                           child: const Icon(
-                                            Icons.arrow_back_ios_new_rounded,
-                                            size: 18,
+                                            Icons.arrow_back,
+                                            size: 24,
                                           ),
                                         ),
                                       ),

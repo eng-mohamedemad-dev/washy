@@ -8,6 +8,7 @@ import 'package:wash_flutter/features/auth/presentation/bloc/login/login_event.d
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_state.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/phone_input_section.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/email_page.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/mobile_input_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
@@ -137,7 +138,14 @@ class _LoginPageState extends State<LoginPage> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          context.read<LoginBloc>().add(LoginEmailPressed());
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider(
+                                create: (_) => di.getIt<EmailBloc>(),
+                                child: const EmailPage(),
+                              ),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.washyGreen,
@@ -171,20 +179,7 @@ class _LoginPageState extends State<LoginPage> {
 
   /// Build header section (just X button on top right)
   Widget _buildHeader() {
-    return Align(
-      alignment: Alignment.topRight,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: const Icon(
-            Icons.close,
-            color: Colors.black,
-            size: 28,
-          ),
-        ),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   /// Build content section
@@ -196,63 +191,76 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         // Logo at top
         Padding(
-          padding: const EdgeInsets.only(top: 40),
-          child: Image.asset(
-            'assets/images/ic_logo_with_text.png',
-            width: 202,
-            height: 133,
-            errorBuilder: (context, error, stackTrace) {
-              return Column(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.washyBlue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.local_laundry_service,
-                      size: 40,
-                      color: Colors.white,
-                    ),
+          padding: const EdgeInsets.only(top: 90),
+          child: GestureDetector(
+            onTap: () {
+              // فتح صفحة إدخال الموبايل عند الضغط على الرسم/الشعار
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => di.getIt<LoginBloc>(),
+                    child: const MobileInputPage(),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'WashyWash®',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.greyDark,
-                    ),
-                  ),
-                  const Text(
-                    'a cleaner, greener wash',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.grey2,
-                    ),
-                  ),
-                ],
+                ),
               );
             },
+            child: Image.asset(
+              'assets/images/ic_logo_with_text.png',
+              width: 202,
+              height: 133,
+              errorBuilder: (context, error, stackTrace) {
+                return Column(
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.washyBlue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.local_laundry_service,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'WashyWash®',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.greyDark,
+                      ),
+                    ),
+                    const Text(
+                      'a cleaner, greener wash',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.grey2,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
 
-        const SizedBox(height: 40),
+        const SizedBox(height: 60),
 
         // Clean with WashyWash hint (right-aligned like image)
         Align(
           alignment: Alignment.centerRight,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
+            padding: const EdgeInsets.only(right: 16, left: 30),
             child: Text(
               'ملابس أنظف مع واشيواش',
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 20,
-                color: AppColors.colorTextNotSelected,
-                fontWeight: FontWeight.w300,
+                fontSize: 24,
+                color: Colors.grey[400],
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -261,18 +269,52 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(height: 30),
 
         // Phone Number Input Section (like Java's phone input for login) - No label above
-        PhoneInputSection(
-          controller: _phoneController,
-          focusNode: _phoneFocusNode,
-          isMobileMode: true,
-          phoneNumber: phoneInputState.phoneNumber,
-          isPhoneValid: phoneInputState.isPhoneValid,
-          onPhoneNumberChanged: (value) {
-            // Already handled by listener
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => BlocProvider(
+                  create: (_) => di.getIt<LoginBloc>(),
+                  child: const MobileInputPage(),
+                ),
+              ),
+            );
           },
-          onPhoneNumberTapped: () {
-            // Clear validation when tapped
-          },
+          child: PhoneInputSection(
+            controller: _phoneController,
+            focusNode: _phoneFocusNode,
+            isMobileMode: true,
+            readOnly: true,
+            phoneNumber: phoneInputState.phoneNumber,
+            isPhoneValid: phoneInputState.isPhoneValid,
+            onPhoneNumberChanged: (value) {
+              // Already handled by listener
+            },
+            onPhoneNumberTapped: () {
+              FocusScope.of(context).unfocus();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => di.getIt<LoginBloc>(),
+                    child: const MobileInputPage(),
+                  ),
+                ),
+              );
+            },
+            onHintTextTapped: () {
+              FocusScope.of(context).unfocus();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (_) => di.getIt<LoginBloc>(),
+                    child: const MobileInputPage(),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
 
         // Validation message (like Java's validation for login)
@@ -301,23 +343,26 @@ class _LoginPageState extends State<LoginPage> {
                 child: ElevatedButton(
                   onPressed: phoneInputState.isPhoneValid
                       ? () {
-                          context
-                              .read<LoginBloc>()
-                              .add(LoginCheckMobilePressed(phoneNumber: _phoneController.text));
+                          context.read<LoginBloc>().add(LoginCheckMobilePressed(
+                              phoneNumber: _phoneController.text));
                         }
                       : null,
                   style: ButtonStyle(
                     shape: const MaterialStatePropertyAll(CircleBorder()),
                     elevation: const MaterialStatePropertyAll(0),
                     padding: const MaterialStatePropertyAll(EdgeInsets.zero),
-                    backgroundColor: MaterialStateProperty.resolveWith((states) {
-                      final isDisabled = states.contains(MaterialState.disabled);
+                    backgroundColor:
+                        MaterialStateProperty.resolveWith((states) {
+                      final isDisabled =
+                          states.contains(MaterialState.disabled);
                       return isDisabled
                           ? AppColors.washyGreen.withOpacity(0.5)
                           : AppColors.washyGreen;
                     }),
-                    foregroundColor: MaterialStateProperty.resolveWith((states) {
-                      final isDisabled = states.contains(MaterialState.disabled);
+                    foregroundColor:
+                        MaterialStateProperty.resolveWith((states) {
+                      final isDisabled =
+                          states.contains(MaterialState.disabled);
                       return isDisabled ? Colors.white70 : Colors.white;
                     }),
                   ),
