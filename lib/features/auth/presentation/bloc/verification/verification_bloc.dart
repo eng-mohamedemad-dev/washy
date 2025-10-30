@@ -71,15 +71,9 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
       validationMessage: null, // Clear validation when typing
     ));
 
-    // Auto-verify when code is complete (like Java)
-    if (isComplete) {
-      add(VerifyCodePressed(
-        code: newCode,
-        identifier: currentState.identifier,
-        isPhone: currentState.isPhone,
-        isFromForgetPassword: currentState.isFromForgetPassword,
-      ));
-    }
+    // Don't auto-verify - wait for user to complete entry
+    // In Java, verification happens manually when user clicks continue button
+    // or when they finish typing (handled by PinView)
   }
 
   /// Handle verify code (like Java's verify code)
@@ -110,22 +104,22 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
       await Future.delayed(const Duration(milliseconds: 500));
       emit(NavigateToPasswordReset(identifier: event.identifier));
     } else {
-      // For regular verification (sign up/login)
+      // For regular verification (sign up/login) - مطابق لـ Java handleVerifiedCustomerCode()
       // TODO: Get actual user from API response
-      const mockUser = user.User(
+      final mockUser = user.User(
         id: '123',
         name: 'Test User',
-        email: 'test@example.com',
-        phoneNumber: '+962787654321',
-        accountStatus: user.AccountStatus.verifiedCustomer,
-        loginType: user.LoginType.phone,
+        email: event.isPhone ? null : event.identifier,
+        phoneNumber: event.isPhone ? event.identifier : null,
+        accountStatus: user.AccountStatus.verifiedCustomer, // بعد التحقق يصبح verified
+        loginType: event.isPhone ? user.LoginType.phone : user.LoginType.email,
       );
 
-      emit(const VerificationSuccess(user: mockUser));
+      emit(VerificationSuccess(user: mockUser));
 
-      // Navigate to home after delay
+      // Navigate to password page like Java (PasswordActivity)
       await Future.delayed(const Duration(milliseconds: 500));
-      emit(const NavigateToHome(user: mockUser));
+      emit(NavigateToPassword(user: mockUser));
     }
   }
 

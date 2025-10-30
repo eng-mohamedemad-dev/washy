@@ -88,6 +88,7 @@ class _PasswordPageState extends State<PasswordPage> {
               showDialog(
                 context: context,
                 barrierDismissible: false,
+                useRootNavigator: true,
                 builder: (context) => const Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
@@ -180,7 +181,7 @@ class _PasswordPageState extends State<PasswordPage> {
           CustomBackButton(onPressed: () => Navigator.of(context).pop()),
           Expanded(
             child: Text(
-              state.isNewUser ? 'Set Password' : 'Enter Password',
+              state.isNewUser ? 'إنشاء كلمة سر' : 'أدخل كلمة السر',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 18,
@@ -195,129 +196,423 @@ class _PasswordPageState extends State<PasswordPage> {
     );
   }
 
-  /// Build content section
+  /// Build content section - مكيف حسب Java PasswordActivity
   Widget _buildContent(PasswordInitial state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 40),
-        
-        // Title and description (like Java)
-        Text(
-          state.isNewUser 
-              ? 'Create a secure password'
-              : 'Welcome back!',
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppColors.greyDark,
-          ),
-        ),
-        
-        const SizedBox(height: 8),
-        
-        Text(
-          state.isNewUser 
-              ? 'Your password should be at least 8 characters with uppercase, lowercase, number and special character'
-              : 'Enter your password to continue',
-          style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.grey2,
-            height: 1.4,
-          ),
-        ),
-        
-        const SizedBox(height: 40),
-        
-        // Password Label (like Java's password label)
-        const Text(
-          'Password',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: AppColors.grey1,
-          ),
-        ),
-        
-        const SizedBox(height: 8),
-        
-        // Password Input (like Java's password input)
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _passwordFocusNode.hasFocus ? AppColors.washyBlue : AppColors.grey3,
-              width: 1,
-            ),
-          ),
-          child: TextFormField(
-            controller: _passwordController,
-            focusNode: _passwordFocusNode,
-            obscureText: !state.isPasswordVisible,
-            style: const TextStyle(
-              fontSize: 14,
+    // Render different UI based on isNewUser (matching Java fillData() method)
+    
+    if (state.isNewUser) {
+      // For new users: Create password flow
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+          
+          // Title for new users (matching Java: choose_password)
+          const Text(
+            'اختر كلمة السر',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
               color: AppColors.greyDark,
             ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: state.isNewUser ? 'Create password' : 'Enter your password',
-              hintStyle: const TextStyle(
-                color: AppColors.grey2,
+          ),
+          
+          const SizedBox(height: 5),
+          
+          // Hint for new users (matching Java: set_your_new_password)
+          const Text(
+            'ضع كلمة السر الجديدة',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.greyDark,
+            ),
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Password Label
+          const Text(
+            'كلمة السر',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.greyDark,
+            ),
+          ),
+          
+          const SizedBox(height: 13),
+          
+          // Password Input (matching Java layout)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _passwordFocusNode.hasFocus ? AppColors.washyBlue : AppColors.grey3,
+                width: 1,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              suffixIcon: IconButton(
-                onPressed: _onTogglePasswordVisibility,
-                icon: Icon(
-                  state.isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: AppColors.grey2,
+              color: AppColors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _passwordController,
+                    focusNode: _passwordFocusNode,
+                    obscureText: !state.isPasswordVisible,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.colorBlack,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'أدخل كلمة السر',
+                      hintStyle: TextStyle(
+                        color: Color(0xFFBFC0C8),
+                        fontSize: 13,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _onTogglePasswordVisibility,
+                  icon: Icon(
+                    state.isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: const Color(0xFFA1AAB3).withOpacity(0.5),
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Validation message
+          if (state.validationMessage != null) ...[
+            const SizedBox(height: 15),
+            Text(
+              state.validationMessage!,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.colorRedError,
+              ),
+            ),
+          ],
+        ],
+      );
+    } else {
+      // For existing users: Login flow with lock icon
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 60),
+          
+          // Lock icon with smiley face (matching Java welcome design)
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Decorative elements (matching Java)
+              Positioned(
+                left: 40,
+                top: 20,
+                child: Text(
+                  '+',
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: AppColors.washyGreen.withOpacity(0.3),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 50,
+                top: 40,
+                child: Text(
+                  '×',
+                  style: TextStyle(
+                    fontSize: 24,
+                    color: AppColors.washyGreen.withOpacity(0.3),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 60,
+                bottom: 30,
+                child: Text(
+                  '+',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: AppColors.washyGreen.withOpacity(0.3),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 30,
+                bottom: 50,
+                child: Text(
+                  '×',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: AppColors.washyGreen.withOpacity(0.3),
+                  ),
+                ),
+              ),
+              
+              // Main lock icon
+              Container(
+                width: 120,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: AppColors.grey3,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Lock shackle (green arch)
+                    Container(
+                      width: 50,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: AppColors.washyGreen,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    // Lock body with smiley face
+                    Container(
+                      width: 60,
+                      height: 60,
+                      margin: const EdgeInsets.only(top: -10),
+                      decoration: BoxDecoration(
+                        color: AppColors.grey3,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Stack(
+                        children: [
+                          // Green circle (keyhole)
+                          Positioned(
+                            bottom: 10,
+                            left: 10,
+                            right: 10,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: AppColors.washyGreen,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          // Smiley face
+                          Positioned(
+                            top: 12,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.colorBlack,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.colorBlack,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Nose
+                          Positioned(
+                            top: 22,
+                            left: 27,
+                            child: Container(
+                              width: 6,
+                              height: 2,
+                              color: AppColors.colorBlack,
+                            ),
+                          ),
+                          // Smile
+                          Positioned(
+                            top: 32,
+                            left: 16,
+                            right: 16,
+                            child: Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: AppColors.colorBlack,
+                                  width: 2,
+                                ),
+                                borderRadius: const BorderRadius.vertical(
+                                  bottom: Radius.circular(20),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Welcome message (matching Java welcome_back and log_in)
+          const Text(
+            'أهلاً و سهلاً من جديد!',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppColors.greyDark,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          const SizedBox(height: 8),
+          
+          const Text(
+            'سجل الدخول للمتابعة',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppColors.greyDark,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Password Label (right aligned like Java)
+          const Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'كلمة السر',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.greyDark,
                 ),
               ),
             ),
           ),
-        ),
-        
-        // Validation message (like Java's validation)
-        if (state.validationMessage != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            state.validationMessage!,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.colorRedError,
+          
+          const SizedBox(height: 13),
+          
+          // Password Input (matching Java layout)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _passwordFocusNode.hasFocus ? AppColors.washyBlue : AppColors.grey3,
+                  width: 1,
+                ),
+                color: AppColors.white,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _passwordController,
+                      focusNode: _passwordFocusNode,
+                      obscureText: !state.isPasswordVisible,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.colorBlack,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'أدخل كلمة السر',
+                        hintStyle: TextStyle(
+                          color: Color(0xFFBFC0C8),
+                          fontSize: 13,
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _onTogglePasswordVisibility,
+                    icon: Icon(
+                      state.isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: const Color(0xFFA1AAB3).withOpacity(0.5),
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+          
+          // Validation message
+          if (state.validationMessage != null) ...[
+            const SizedBox(height: 15),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                state.validationMessage!,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.colorRedError,
+                ),
+              ),
+            ),
+          ],
 
-        // Forget password link (only for existing users, like Java)
-        if (!state.isNewUser) ...[
-          const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
+          // Forget password link - only show for existing users (matching Java: forgetPasswordTextView.setVisibility(View.VISIBLE) for VERIFIED_CUSTOMER)
+          if (!state.isNewUser) ...[
+            const SizedBox(height: 20),
+            TextButton(
               onPressed: _onForgetPasswordPressed,
               child: const Text(
-                'Forgot Password?',
+                'نسيت كلمة السر',
                 style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.washyBlue,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Color(0xFF92CC74), // Matching Java green
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ),
+          ],
         ],
-      ],
-    );
+      );
+    }
   }
 
   /// Build bottom section (Continue button like Java)
   Widget _buildBottomSection(PasswordInitial state) {
+    // Matching Java: create_account for new users, log_in for existing users
+    final buttonText = state.isNewUser ? 'إنشاء حساب' : 'سجل الدخول';
+    
     return Padding(
       padding: const EdgeInsets.all(AppDimensions.pageMargin),
       child: CustomContinueButton(
-        text: state.isNewUser ? 'Set Password' : 'Continue',
+        text: buttonText,
         onPressed: _onContinuePressed,
-        isEnabled: state.isNewUser ? state.isPasswordValid : state.password.isNotEmpty,
+        isEnabled: state.isNewUser 
+            ? state.isPasswordValid 
+            : state.password.length >= 6, // At least 6 characters for login
         isLoading: false,
       ),
     );

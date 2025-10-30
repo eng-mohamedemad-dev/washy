@@ -78,7 +78,10 @@ class AuthRepositoryImpl implements AuthRepository {
         final status = response.smsCodeData?.status ?? response.status;
         return Right(status);
       } on ServerException catch (e) {
-        return Left(ServerFailure(e.message));
+        print('[AuthRepository] ServerException caught with message: "${e.message}"');
+        final failure = ServerFailure(e.message);
+        print('[AuthRepository] Created ServerFailure with message: "${failure.message}"');
+        return Left(failure);
       }
     } else {
       return const Left(NetworkFailure('No internet connection'));

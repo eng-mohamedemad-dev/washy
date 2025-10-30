@@ -30,6 +30,15 @@ class EmailCodeSent extends EmailState {
   List<Object?> get props => [email];
 }
 
+class NavigateToPassword extends EmailState {
+  final String email;
+
+  const NavigateToPassword({required this.email});
+
+  @override
+  List<Object?> get props => [email];
+}
+
 class EmailError extends EmailState {
   final String message;
 

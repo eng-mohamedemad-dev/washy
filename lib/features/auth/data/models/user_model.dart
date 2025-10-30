@@ -43,11 +43,15 @@ class UserModel extends User {
       case 'new_customer':
         return AccountStatus.newCustomer;
       case 'not_verified_customer':
+      case 'unverified': // بعض الاستجابات ترجع unverified للبريد
         return AccountStatus.notVerifiedCustomer;
       case 'verified_customer':
+      case 'verified':
         return AccountStatus.verifiedCustomer;
       case 'enter_password':
         return AccountStatus.enterPassword;
+      case 'missing_headers': // معالجة حالة missing_headers
+        return AccountStatus.notVerifiedCustomer;
       default:
         return AccountStatus.newCustomer;
     }

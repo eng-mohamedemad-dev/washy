@@ -37,6 +37,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     emit(EmailLoading());
+    print('[EmailBloc] Sending email verification code for: ${event.email}');
     final result = await sendVerificationCode(
       SendVerificationCodeParams(
         request: VerificationRequest(
@@ -46,14 +47,31 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
       ),
     );
     result.fold(
-      (failure) => emit(EmailError(message: _mapFailureToMessage(failure))),
+      (failure) {
+        print('[EmailBloc] Error occurred: ${failure.runtimeType}');
+        print('[EmailBloc] Failure object: $failure');
+        print('[EmailBloc] Failure message property: ${failure.message}');
+        final errorMessage = _mapFailureToMessage(failure);
+        print('[EmailBloc] Final error message after mapping: "$errorMessage"');
+        print('[EmailBloc] Emitting EmailError with message: "$errorMessage"');
+        emit(EmailError(message: errorMessage));
+      },
       (status) {
         // Check if email code was sent successfully (like Java: SMS_SENT_SUCCESS.equals(status))
         // Note: Java uses same constant for both SMS and email
+        print('[EmailBloc] Status received: $status');
         if (status.toLowerCase() == 'sms_sent' ||
             status.toLowerCase() == 'email_sent') {
+          print('[EmailBloc] Code sent successfully, emitting EmailCodeSent');
           emit(EmailCodeSent(email: event.email));
+        } else if (status.toLowerCase() == 'exceeds_limit' || 
+                   status.toLowerCase() == 'verified_customer' ||
+                   status.toLowerCase() == 'enter_password') {
+          // When exceeds_limit or user is already verified, navigate to password page (like Java)
+          print('[EmailBloc] User status: $status, navigating to password page');
+          emit(NavigateToPassword(email: event.email));
         } else {
+          print('[EmailBloc] Invalid status: $status, emitting error');
           emit(EmailError(message: 'فشل إرسال كود التحقق: $status'));
         }
       },
@@ -65,15 +83,26 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   }
 
   String _mapFailureToMessage(Failure failure) {
-    switch (failure.runtimeType) {
-      case ServerFailure _:
-        return (failure as ServerFailure).message;
-      case CacheFailure _:
-        return (failure as CacheFailure).message;
-      case NetworkFailure _:
-        return (failure as NetworkFailure).message;
-      default:
-        return 'Unexpected Error';
+    if (failure is ServerFailure) {
+      print('[EmailBloc] Mapping failure message: "${failure.message}"');
+      print('[EmailBloc] Message length: ${failure.message.length}');
+      print('[EmailBloc] Message is empty: ${failure.message.isEmpty}');
+      
+      // Just return the message as-is since it's already in Arabic from the API
+      // No need to check for specific content - the API already provides the correct message
+      if (failure.message.isEmpty) {
+        print('[EmailBloc] Empty message, using default');
+        return 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى';
+      }
+      
+      print('[EmailBloc] Returning message as-is: "${failure.message}"');
+      return failure.message;
+    } else if (failure is CacheFailure) {
+      return failure.message;
+    } else if (failure is NetworkFailure) {
+      return failure.message;
+    } else {
+      return 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى';
     }
   }
 }

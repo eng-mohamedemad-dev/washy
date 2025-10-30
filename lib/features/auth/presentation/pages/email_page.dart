@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/utils/email_validator.dart';
+import 'package:wash_flutter/features/auth/domain/entities/user.dart' show User, AccountStatus, LoginType;
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_state.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 
 /// EmailPage - Exactly matches Java activity_email.xml
 class EmailPage extends StatefulWidget {
@@ -20,7 +22,9 @@ class _EmailPageState extends State<EmailPage> {
   final FocusNode _emailFocusNode = FocusNode();
   bool _isEmailValid = false;
   String? _validationMessage;
-  // لم نعد بحاجة لهذا العلم بعد استبدال المنطق بزر يعتمد على التركيز وصحة الإدخال
+  // إدارة إظهار/إخفاء حوار التحميل لتجنب الرجوع غير المقصود للصفحة
+  // تم استبداله بطبقة تحميل داخلية
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -69,41 +73,50 @@ class _EmailPageState extends State<EmailPage> {
       backgroundColor: AppColors.white,
       body: BlocListener<EmailBloc, EmailState>(
         listener: (context, state) {
+          // إدارة حالة التحميل بطبقة داخلية بدل showDialog لتفادي تراكُم الحوارات
           if (state is EmailLoading) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => const Center(
-                child: CircularProgressIndicator(
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
-                ),
-              ),
-            );
-          } else {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context, rootNavigator: true).pop();
+            if (!_isLoading) {
+              setState(() => _isLoading = true);
+              print('[EmailPage] Showing inline loading overlay');
             }
+          } else if (state is! NavigateToPassword && state is! EmailCodeSent) {
+            if (_isLoading) {
+              setState(() => _isLoading = false);
+              print('[EmailPage] Hiding inline loading overlay');
+            }
+          }
 
-            if (state is EmailChecked) {
-              // قرارات مطابقة للجافا حسب حالة الحساب
-              final status = state.user.accountStatus;
-              if (status.name == 'newCustomer') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('أنت عميل جديد. من فضلك أنشئ حساباً.')),
-                );
-                Navigator.of(context).pushReplacementNamed('/signup');
-              } else if (status.name == 'notVerifiedCustomer') {
-                context.read<EmailBloc>().add(
-                      SendEmailCodeEvent(email: _emailController.text),
-                    );
-              } else if (status.name == 'enterPassword' ||
-                  status.name == 'verifiedCustomer') {
-                // في حالة الإيميل يمكن أن ينتقل لإدخال كلمة المرور
-                Navigator.pushReplacementNamed(context, '/password');
-              }
-            } else if (state is EmailCodeSent) {
+          // Handle specific states بعد إدارة التحميل
+          if (state is EmailChecked) {
+            final status = state.user.accountStatus;
+            print('[EmailPage] EmailChecked with status: ${status.name}');
+            if (status.name == 'newCustomer') {
+              // أرسل كود التحقق للمستخدم الجديد
+              context.read<EmailBloc>().add(
+                    SendEmailCodeEvent(email: _emailController.text),
+                  );
+            } else if (status.name == 'notVerifiedCustomer') {
+              // مستخدم غير مفعّل: أرسل الكود
+              context.read<EmailBloc>().add(
+                    SendEmailCodeEvent(email: _emailController.text),
+                  );
+            } else if (status.name == 'enterPassword' || status.name == 'verifiedCustomer') {
+              // مستخدم موجود: انتقل لصفحة كلمة المرور
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PasswordPage(
+                    user: state.user,
+                    isNewUser: false,
+                  ),
+                ),
+              );
+            }
+          } else if (state is EmailCodeSent) {
+            // الانتقال إلى صفحة التحقق
+            print('[EmailPage] Code sent, navigating to verification page');
+            if (_isLoading) setState(() => _isLoading = false);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => VerificationPage(
@@ -112,18 +125,38 @@ class _EmailPageState extends State<EmailPage> {
                   ),
                 ),
               );
-            } else if (state is EmailError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.colorRedError,
+            });
+          } else if (state is NavigateToPassword) {
+            // fallback للانتقال إلى كلمة السر
+            if (_isLoading) setState(() => _isLoading = false);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              final mockUser = User(
+                id: 'temp',
+                name: '',
+                email: state.email,
+                phoneNumber: '',
+                token: '',
+                accountStatus: AccountStatus.verifiedCustomer,
+                loginType: LoginType.email,
+              );
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => PasswordPage(user: mockUser, isNewUser: false),
                 ),
               );
-            }
+            });
+          } else if (state is EmailError) {
+            print('[EmailPage] Error: ${state.message}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message), backgroundColor: AppColors.colorRedError),
+            );
           }
         },
         child: SafeArea(
-          child: Column(
+          child: Stack(
+            children: [
+              Column(
             children: [
               // Back button at top (from layout_back_icon_black)
               Align(
@@ -344,6 +377,16 @@ class _EmailPageState extends State<EmailPage> {
                   ),
                 ),
               ),
+            ],
+          ),
+              if (_isLoading) ...[
+                const ModalBarrier(dismissible: false, color: Colors.black26),
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

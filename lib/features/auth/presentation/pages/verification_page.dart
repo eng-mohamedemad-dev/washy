@@ -3,14 +3,13 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_dimensions.dart';
-import 'package:wash_flutter/core/constants/app_strings.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_back_button.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/custom_continue_button.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/pin_input_field.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_state.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
 
 class VerificationPage extends StatefulWidget {
@@ -40,6 +39,7 @@ class _VerificationPageState extends State<VerificationPage> {
   Timer? _timer;
   int _secondsRemaining = 60;
   bool _canResend = false;
+  bool _isLoadingDialogShown = false;
 
   @override
   void initState() {
@@ -100,7 +100,10 @@ class _VerificationPageState extends State<VerificationPage> {
   }
 
   void _goBack() {
-    Navigator.of(context).pop();
+    // Allow back navigation (go back to email page)
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
   }
 
   String get _displayIdentifier {
@@ -126,20 +129,24 @@ class _VerificationPageState extends State<VerificationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: BlocProvider(
-          create: (_) => di.getIt<VerificationBloc>(
-            param1: {
-              'identifier': widget.identifier,
-              'isPhone': widget.isPhone,
-              'isFromForgetPassword': widget.isFromForgetPassword,
-            },
-          ),
-          child: BlocConsumer<VerificationBloc, VerificationState>(
+    return BlocProvider(
+      create: (_) => di.getIt<VerificationBloc>(
+        param1: {
+          'identifier': widget.identifier,
+          'isPhone': widget.isPhone,
+          'isFromForgetPassword': widget.isFromForgetPassword,
+        },
+      ),
+      child: WillPopScope(
+        // Allow back navigation like Java (but prevent accidental back press)
+        onWillPop: () async => true,
+        child: Scaffold(
+          backgroundColor: AppColors.white,
+          body: SafeArea(
+            child: BlocConsumer<VerificationBloc, VerificationState>(
             listener: (context, state) async {
               if (state is VerificationLoading) {
+                _isLoadingDialogShown = true;
                 showDialog(
                   context: context,
                   barrierDismissible: false,
@@ -150,9 +157,12 @@ class _VerificationPageState extends State<VerificationPage> {
                   ),
                 );
               } else {
-                // Dismiss progress
-                if (Navigator.of(context, rootNavigator: true).canPop()) {
-                  Navigator.of(context, rootNavigator: true).pop();
+                // Dismiss progress ONLY if we actually showed a dialog
+                if (_isLoadingDialogShown) {
+                  if (Navigator.of(context, rootNavigator: true).canPop()) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
+                  _isLoadingDialogShown = false;
                 }
 
                 if (state is CodeSentSuccess) {
@@ -167,6 +177,16 @@ class _VerificationPageState extends State<VerificationPage> {
                   Navigator.pushReplacementNamed(context, '/create-password', arguments: {
                     'isFromEmail': !widget.isPhone,
                   });
+                } else if (state is NavigateToPassword) {
+                  // Navigate to password page (matching Java PasswordActivity)
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PasswordPage(
+                        user: state.user,
+                        isNewUser: true, // After verification, user is new and needs to create password
+                      ),
+                    ),
+                  );
                 } else if (state is NavigateToHome) {
                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                 }
@@ -189,7 +209,7 @@ class _VerificationPageState extends State<VerificationPage> {
                   CustomBackButton(onPressed: _goBack),
                   Expanded(
                     child: Text(
-                      'Verification Code',
+                      'رقم التثبيت',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 18,
@@ -232,11 +252,11 @@ class _VerificationPageState extends State<VerificationPage> {
                     
                     const SizedBox(height: 30),
                     
-                    // Title (matching Java)
-                    Text(
-                      'Enter Verification Code',
-                      style: const TextStyle(
-                        fontSize: 22,
+                    // Title (Arabic like Java)
+                    const Text(
+                      'رقم التثبيت',
+                      style: TextStyle(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppColors.greyDark,
                         fontFamily: 'SourceSansPro',
@@ -246,16 +266,30 @@ class _VerificationPageState extends State<VerificationPage> {
                     
                     const SizedBox(height: 16),
                     
-                    // Description (matching Java)
-                    Text(
-                      'We sent a 4-digit verification code to\n$_displayIdentifier',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.grey2,
-                        fontFamily: 'SourceSansPro',
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
+                    // Description (Arabic like Java) + green email
+                    Column(
+                      children: [
+                        const Text(
+                          'إيميل التثبيت تم إرساله إلى:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.grey2,
+                            fontFamily: 'SourceSansPro',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _displayIdentifier,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: AppColors.washyGreen,
+                            fontFamily: 'SourceSansPro',
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                     
                     const SizedBox(height: 40),
@@ -269,6 +303,21 @@ class _VerificationPageState extends State<VerificationPage> {
                           _verificationCode = code;
                           _isCodeComplete = true;
                         });
+                        
+                        // Auto-verify when 4 digits are complete (like Java)
+                        // But only after a small delay to ensure user finished typing
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          if (mounted && _isCodeComplete) {
+                            context.read<VerificationBloc>().add(
+                              VerifyCodePressed(
+                                code: code,
+                                identifier: widget.identifier,
+                                isPhone: widget.isPhone,
+                                isFromForgetPassword: widget.isFromForgetPassword,
+                              ),
+                            );
+                          }
+                        });
                       },
                     ),
                     
@@ -277,11 +326,12 @@ class _VerificationPageState extends State<VerificationPage> {
                     // Timer and Resend (matching Java)
                     if (!canResend) ...[
                       Text(
-                        'Resend code in ${seconds}s',
+                        '00:${seconds.toString().padLeft(2, '0')}',
                         style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.grey2,
+                          fontSize: 18,
+                          color: AppColors.greyDark,
                           fontFamily: 'SourceSansPro',
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ] else ...[
@@ -296,7 +346,7 @@ class _VerificationPageState extends State<VerificationPage> {
                           );
                         },
                         child: Text(
-                          'Resend Code',
+                          'إعادة الإرسال',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.washyBlue,
@@ -311,27 +361,12 @@ class _VerificationPageState extends State<VerificationPage> {
               ),
             ),
 
-            // Verify Button (matching Java layout)
-            Padding(
-              padding: EdgeInsets.all(AppDimensions.signUpContinueButtonMargin),
-              child: CustomContinueButton(
-                text: 'Verify Code',
-                onPressed: () {
-                  context.read<VerificationBloc>().add(
-                    VerifyCodePressed(
-                      code: _verificationCode,
-                      identifier: widget.identifier,
-                      isPhone: widget.isPhone,
-                      isFromForgetPassword: widget.isFromForgetPassword,
-                    ),
-                  );
-                },
-                isEnabled: _isCodeComplete,
-              ),
-            ),
+            // Bottom row: left green circular back + centered timer already above
+            const SizedBox(height: 12),
           ],
               );
             },
+          ),
           ),
         ),
       ),

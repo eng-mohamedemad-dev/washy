@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:wash_flutter/core/constants/app_constants.dart';
 import 'package:wash_flutter/core/errors/exceptions.dart';
@@ -24,6 +27,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   AuthRemoteDataSourceImpl({required this.client});
 
+  Future<Map<String, String>> _headersForm() async {
+    String platform = 'android';
+    String version = '1.0.0';
+    String device = 'android';
+    String lang = ui.PlatformDispatcher.instance.locale.languageCode;
+
+    try {
+      final info = await DeviceInfoPlugin().androidInfo;
+      device = '${info.manufacturer} ${info.model}'.trim();
+    } catch (_) {}
+
+    try {
+      final pkg = await PackageInfo.fromPlatform();
+      version = pkg.version;
+    } catch (_) {}
+
+    final headers = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'platform': platform,
+      'version': version,
+      'device': device,
+      'lang': lang,
+    };
+    print('[API] Common Headers: ' + headers.toString());
+    return headers;
+  }
+
   @override
   Future<CheckUserResponse> checkMobile(String phoneNumber) async {
     try {
@@ -36,10 +67,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final response = await client.post(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'device': 'mobile'
-        },
+        headers: await _headersForm(),
         body: body,
       );
 
@@ -91,17 +119,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     final response = await client.post(
       Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'device': 'mobile'
-      },
+      headers: await _headersForm(),
       body: body,
     );
 
     print('[API] Check Email Response Status: ${response.statusCode}');
     print('[API] Check Email Response Body: ${response.body}');
 
-    if (response.statusCode == 200 || response.statusCode == 400) {
+    if (response.statusCode == 200 || response.statusCode == 400 || response.statusCode == 403) {
       return CheckUserResponse.fromJson(json.decode(response.body));
     } else {
       try {
@@ -125,10 +150,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final response = await client.post(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'device': 'mobile'
-        },
+        headers: await _headersForm(),
         body: body,
       );
 
@@ -180,10 +202,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       final response = await client.post(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'device': 'mobile'
-        },
+        headers: await _headersForm(),
         body: body,
       );
 
@@ -194,17 +213,46 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body) as Map<String, dynamic>;
         return SmsResponse.fromJson(jsonData);
-      } else {
-        // Try to parse error response with login_status mapping
+      } else if (response.statusCode == 301 || response.statusCode == 400 || response.statusCode == 403) {
+        // Handle error response with login_status (like Java)
         try {
           final errorJson = json.decode(response.body) as Map<String, dynamic>;
+          print('[API] Error JSON: $errorJson');
           final data = errorJson['data'] as Map<String, dynamic>?;
+          print('[API] Error data: $data');
           final loginStatus = data != null ? (data['login_status'] as String?) : null;
+          print('[API] Login status: $loginStatus');
+          
+          // Handle different error cases (matching Java)
+          // In Java, even when login_status is exceeds_limit, it still navigates to password page
+          // So we return the status as a valid response, not as an error
           if (loginStatus == 'does_not_exists') {
             throw ServerException('أنت عميل جديد. من فضلك أنشئ حساباً.');
           }
+          
+          // Return ANY login_status as a valid response for bloc to handle (like Java)
+          if (loginStatus != null) {
+            print('[API] Returning login_status as valid response: $loginStatus');
+            final errorData = {'login_status': loginStatus};
+            return SmsResponse.fromJson({
+              'status': 'success',
+              'data': errorData,
+            });
+          }
+          
           throw ServerException(
-              errorJson['message'] ?? loginStatus ?? 'فشل إرسال كود التحقق عبر الإيميل');
+              errorJson['message'] ?? 'فشل إرسال كود التحقق عبر الإيميل');
+        } catch (e) {
+          if (e is ServerException) rethrow;
+          throw ServerException(
+              'فشل إرسال كود التحقق عبر الإيميل (${response.statusCode})');
+        }
+      } else {
+        // Handle any other error status codes
+        try {
+          final errorJson = json.decode(response.body) as Map<String, dynamic>;
+          throw ServerException(
+              errorJson['message'] ?? 'فشل إرسال كود التحقق عبر الإيميل (${response.statusCode})');
         } catch (e) {
           if (e is ServerException) rethrow;
           throw ServerException(

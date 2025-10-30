@@ -130,6 +130,16 @@ class NavigateToPasswordReset extends VerificationState {
   List<Object?> get props => [identifier];
 }
 
+/// Navigate to password page (matching Java PasswordActivity)
+class NavigateToPassword extends VerificationState {
+  final User user;
+
+  const NavigateToPassword({required this.user});
+
+  @override
+  List<Object?> get props => [user];
+}
+
 /// Navigate to main screen
 class NavigateToHome extends VerificationState {
   final User user;

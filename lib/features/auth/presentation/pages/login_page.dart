@@ -88,13 +88,14 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               );
             } else if (state is LoginNavigateToVerification) {
-              Navigator.of(context).push(
+              Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => VerificationPage(
                     identifier: state.identifier,
                     isPhone: state.type == 'sms',
                   ),
                 ),
+                (route) => false,
               );
             } else if (state is LoginNavigateToPassword) {
               Navigator.of(context).push(

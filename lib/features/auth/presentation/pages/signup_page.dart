@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_dimensions.dart';
-import 'package:wash_flutter/core/constants/app_strings.dart';
-import 'package:wash_flutter/core/utils/phone_validator.dart';
+// Removed unused imports
 import 'package:wash_flutter/features/auth/presentation/bloc/signup/signup_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/signup/signup_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/signup/signup_state.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_back_button.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_continue_button.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/phone_input_section.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/social_login_section.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/terms_and_privacy.dart';
+// removed social login/terms section to match Java flow
 import 'package:wash_flutter/features/auth/presentation/pages/email_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
@@ -34,6 +32,12 @@ class _SignUpPageState extends State<SignUpPage> {
   void initState() {
     super.initState();
     _phoneController.addListener(_onPhoneChanged);
+    // اجعل صفحة التسجيل تطابق الجافا: ابدأ مباشرة بوضع إدخال الموبايل
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<SignUpBloc>().add(NavigateToMobileRegistration());
+      }
+    });
   }
 
   void _onPhoneChanged() {
@@ -202,78 +206,15 @@ class _SignUpPageState extends State<SignUpPage> {
 
   /// Build content section based on state
   Widget _buildContent(SignUpState state) {
-    if (state is MobileRegistrationMode) {
-      return _buildMobileRegistrationContent(state);
-    }
-    
-    return _buildInitialContent();
+    // دائماً اعرض وضع إدخال الموبايل مثل الجافا
+    final effectiveState = state is MobileRegistrationMode
+        ? state
+        : const MobileRegistrationMode(
+            phoneNumber: '', isPhoneValid: false, validationMessage: null);
+    return _buildMobileRegistrationContent(effectiveState);
   }
 
-  /// Build initial content (like Java's login method section)
-  Widget _buildInitialContent() {
-    return Column(
-      children: [
-        const SizedBox(height: 60),
-        
-        // Mobile registration button (like Java's mobile login method)
-        _buildMobileButton(),
-        
-        const SizedBox(height: AppDimensions.signUpOrDividerTopMargin),
-
-        // OR Divider
-        const Row(
-          children: [
-            Expanded(child: Divider(color: AppColors.grey3, height: 0.4)),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppDimensions.orDividerHorizontalPadding),
-              child: Text(
-                'OR',
-                style: TextStyle(color: AppColors.grey2),
-              ),
-            ),
-            Expanded(child: Divider(color: AppColors.grey3, height: 0.4)),
-          ],
-        ),
-
-        const SizedBox(height: AppDimensions.signUpSocialLoginTopMargin),
-
-        // Social Login Section (like Java's social login buttons)
-        SocialLoginSection(
-          onGoogleLogin: () {
-            context.read<SignUpBloc>().add(GoogleSignInPressed());
-          },
-          onEmailLogin: () {
-            context.read<SignUpBloc>().add(EmailSignUpPressed());
-          },
-          onFacebookLogin: () {
-            // TODO: Implement Facebook login
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Facebook login not implemented')),
-            );
-          },
-        ),
-
-        const SizedBox(height: AppDimensions.signUpTermsAndPrivacyTopMargin),
-
-        // Terms and Privacy (like Java layout)
-        const TermsAndPrivacy(),
-
-        const SizedBox(height: 20),
-
-        // Skip Login (like Java's skip option)
-        TextButton(
-          onPressed: _onSkipPressed,
-          child: const Text(
-            'Skip for now',
-            style: TextStyle(
-              color: AppColors.grey2,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  // لم نعد نستخدم المحتوى الابتدائي (أزرار الطرق المتعددة)
 
   /// Build mobile button (like Java's mobile login method)
   Widget _buildMobileButton() {
