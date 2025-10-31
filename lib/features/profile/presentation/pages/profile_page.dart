@@ -4,6 +4,10 @@ import 'package:wash_flutter/core/constants/app_dimensions.dart';
 import 'package:wash_flutter/core/constants/app_text_styles.dart';
 import 'package:wash_flutter/features/profile/domain/entities/profile_item.dart';
 import 'package:wash_flutter/features/profile/domain/entities/profile_item_type.dart';
+import 'package:wash_flutter/core/constants/app_constants.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'dart:io' show Platform;
 
 /// ProfilePage - 100% matching Java ProfileActivity
 class ProfilePage extends StatefulWidget {
@@ -413,27 +417,361 @@ class _ProfilePageState extends State<ProfilePage>
 
   // Action methods
   void _handleShareWithFriends() {
-    // Show share dialog (matching Java ShareWithFriendsDialog)
+    _showShareDialog();
+  }
+
+  void _showShareDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('شارك مع الأصدقاء'),
-        content: const Text('شارك تطبيق واشي واش مع أصدقائك'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.close, color: AppColors.colorActionBlack),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'شارك مع الأصدقاء\nأخبرهم عنا.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.colorTitleBlack,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Image.asset(
+                  'assets/images/ic_invite_friends.png',
+                  height: 140,
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) => const Icon(Icons.share, size: 72, color: AppColors.washyBlue),
+                ),
+                const SizedBox(height: 18),
+                _shareButton(
+                  title: 'شارك بواسطة فيسبوك',
+                  color: AppColors.progressBarBlueColor,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    _openFacebookChooser();
+                  },
+                ),
+                const SizedBox(height: 12),
+                _shareButton(
+                  title: 'شارك بواسطة جي ميل',
+                  color: AppColors.colorRedBadge,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _openGmailCompose(
+                      subject: 'WashyWash App',
+                      body: 'واشيواش تقدم إكو كلين، تقنية حديثة لتنظيف\nالملابس بديلة الدراي كلين.\n\n${AppConstants.googlePlayUrl}',
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _shareButton(
+                  title: 'شارك بواسطة الايميل',
+                  color: AppColors.washyGreen,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    _openInlineEmailComposer();
+                  },
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Implement share functionality
-            },
-            child: const Text('شارك'),
+        );
+      },
+    );
+  }
+
+  Widget _shareButton({required String title, required Color color, required VoidCallback onTap}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          elevation: 0,
+        ),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            fontWeight: FontWeight.w600,
+            color: AppColors.white,
+            fontSize: 16,
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  void _openInlineEmailComposer() {
+    final TextEditingController toController = TextEditingController();
+    final TextEditingController subjectController = TextEditingController(text: 'WashyWash App');
+    final TextEditingController bodyController = TextEditingController(
+      text: 'واشيواش تقدم إكو كلين، تقنية حديثة لتنظيف\nالملابس بديلة الدراي كلين.\n\n${AppConstants.googlePlayUrl}',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.colorBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 48,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.colorNewTextNotSelected,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              const Text(
+                'إنشاء رسالة',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
+                  color: AppColors.colorTitleBlack,
+                ),
+              ),
+              const SizedBox(height: 18),
+              _emailField(label: 'إلى', controller: toController, hint: 'example@mail.com'),
+              const SizedBox(height: 14),
+              _emailField(label: 'العنوان', controller: subjectController, hint: ''),
+              const SizedBox(height: 14),
+              _emailMultiline(label: 'المحتوى', controller: bodyController),
+              const SizedBox(height: 18),
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.washyBlue,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                  ),
+                  onPressed: () async {
+                    final to = toController.text.trim();
+                    final subject = subjectController.text.trim();
+                    final body = bodyController.text.trim();
+                    Navigator.pop(context);
+                    if (to.isNotEmpty) {
+                      await _openGmailCompose(to: to, subject: subject, body: body);
+                    } else {
+                      await _openGmailCompose(subject: subject, body: body);
+                    }
+                  },
+                  child: const Text('إرسال', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _emailField({required String label, required TextEditingController controller, required String hint}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            color: AppColors.colorTextNotSelected,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.right,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          textAlign: TextAlign.right,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: AppColors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.progressBarColor)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.progressBarColor)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.washyBlue)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _emailMultiline({required String label, required TextEditingController controller}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            color: AppColors.colorTextNotSelected,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.right,
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          textAlign: TextAlign.right,
+          maxLines: 8,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.progressBarColor)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.progressBarColor)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.washyBlue)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openGmailCompose({String? to, required String subject, required String body}) async {
+    if (Platform.isAndroid) {
+      try {
+        final intent = AndroidIntent(
+          action: 'android.intent.action.SEND',
+          type: 'message/rfc822',
+          package: 'com.google.android.gm',
+          arguments: {
+            'android.intent.extra.SUBJECT': subject,
+            'android.intent.extra.TEXT': body,
+            if (to != null && to.isNotEmpty) 'android.intent.extra.EMAIL': [to],
+          },
+        );
+        await intent.launch();
+        return;
+      } catch (_) {}
+    }
+    // Fallback
+    final encodedSubject = Uri.encodeComponent(subject);
+    final encodedBody = Uri.encodeComponent(body);
+    final uri = to != null && to.isNotEmpty
+        ? Uri.parse('mailto:$to?subject=$encodedSubject&body=$encodedBody')
+        : Uri.parse('mailto:?subject=$encodedSubject&body=$encodedBody');
+    await launchUrl(uri, mode: LaunchMode.platformDefault);
+  }
+
+  void _openFacebookChooser() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _shareButton(
+                  title: 'Facebook',
+                  color: AppColors.progressBarBlueColor,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final ok = await _shareToFacebookPackage('com.facebook.katana');
+                    if (!ok) {
+                      await _fallbackFacebookSharer();
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                _shareButton(
+                  title: 'Facebook Lite',
+                  color: AppColors.progressBarBlueColor,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final ok = await _shareToFacebookPackage('com.facebook.lite');
+                    if (!ok) {
+                      await _fallbackFacebookSharer();
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await _fallbackFacebookSharer();
+                  },
+                  child: const Text('فتح في المتصفح'),
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _shareToFacebookPackage(String package) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.SEND',
+        type: 'text/plain',
+        package: package,
+        arguments: {
+          'android.intent.extra.TEXT': 'WashyWash - أفضل خدمة غسيل\n${AppConstants.googlePlayUrl}',
+        },
+      );
+      await intent.launch();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _fallbackFacebookSharer() async {
+    final url = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(AppConstants.googlePlayUrl)}&quote=${Uri.encodeComponent('WashyWash - أفضل خدمة غسيل')}');
+    await launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   void _handleLogout() {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_text_styles.dart';
+import 'package:wash_flutter/core/constants/app_constants.dart';
+import 'package:wash_flutter/features/webview/presentation/pages/webview_page.dart';
 import 'package:wash_flutter/features/home/domain/entities/home_service.dart';
 import 'package:wash_flutter/features/home/data/services/home_api_service.dart';
 import 'package:wash_flutter/features/home/data/models/landing_page_response.dart' as landing;
@@ -10,6 +12,7 @@ import 'package:wash_flutter/l10n/app_localizations.dart';
 import 'package:wash_flutter/core/config/locale_notifier.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// HomePage - Main application page (100% matching Java HomePageActivity)
 class HomePage extends StatefulWidget {
@@ -27,6 +30,7 @@ class _HomePageState extends State<HomePage>
   int cartItemCount = 3;
   int notificationCount = 5;
   bool isHurryModeEnabled = false;
+  double basketTotal = 0.0;
 
   // Network data
   List<landing.BannerItem> _banners = [];
@@ -157,25 +161,183 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  void _openEcoClean() async {
+    try {
+      // استخدم الدومين الفعلي المحفوظ (_serverBaseUrl) مثل الجافا
+      final root = _serverBaseUrl.endsWith('/') ? _serverBaseUrl : '$_serverBaseUrl/';
+      final ecoUrl = root + 'ecoclean-mob';
+      if (mounted) {
+        Navigator.of(context).pop();
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => WebViewPage(
+              title: AppLocalizations.of(context).t('what_is_ecoclean'),
+              url: ecoUrl,
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      final root = _serverBaseUrl.endsWith('/') ? _serverBaseUrl : '$_serverBaseUrl/';
+      final ecoUrl = root + 'ecoclean-mob';
+      final uri = Uri.tryParse(ecoUrl);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    }
+  }
+
+  void _showShareDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Icon(Icons.close, color: AppColors.colorActionBlack),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'شارك مع الأصدقاء\nأخبرهم عنا.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.colorTitleBlack,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Image.asset(
+                  'assets/images/ic_invite_friends.png',
+                  height: 140,
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) => const Icon(Icons.share, size: 72, color: AppColors.washyBlue),
+                ),
+                const SizedBox(height: 18),
+                _shareButton(
+                  title: 'شارك بواسطة فيسبوك',
+                  color: AppColors.progressBarBlueColor,
+                  onTap: () async {
+                    final url = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(AppConstants.googlePlayUrl)}');
+                    Navigator.pop(context);
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _shareButton(
+                  title: 'شارك بواسطة جي ميل',
+                  color: AppColors.colorRedBadge,
+                  onTap: () async {
+                    final subject = Uri.encodeComponent('WashyWash App');
+                    final body = Uri.encodeComponent('جرّب تطبيق WashyWash: ${AppConstants.googlePlayUrl}');
+                    final url = Uri.parse('mailto:?subject=$subject&body=$body');
+                    Navigator.pop(context);
+                    await launchUrl(url, mode: LaunchMode.platformDefault);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _shareButton(
+                  title: 'شارك بواسطة الايميل',
+                  color: AppColors.washyGreen,
+                  onTap: () async {
+                    final subject = Uri.encodeComponent('WashyWash App');
+                    final body = Uri.encodeComponent('جرّب تطبيق WashyWash: ${AppConstants.googlePlayUrl}');
+                    final url = Uri.parse('mailto:?subject=$subject&body=$body');
+                    Navigator.pop(context);
+                    await launchUrl(url, mode: LaunchMode.platformDefault);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _shareButton({required String title, required Color color, required VoidCallback onTap}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          elevation: 0,
+        ),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontFamily: AppTextStyles.fontFamily,
+            fontWeight: FontWeight.w600,
+            color: AppColors.white,
+            fontSize: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.colorBackground,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildToolbar(),
-            _isLoading
-                ? const SizedBox(height: 220)
-                : _buildBannerSlider(),
-            _buildTopCategoriesGrid(),
-            const SizedBox(height: 8),
-            _buildQuickOrderSection(),
-            const SizedBox(height: 16),
-          ],
-        ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 120),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildToolbar(),
+                _isLoading
+                    ? const SizedBox(height: 220)
+                    : _buildBannerSlider(),
+                _buildTopCategoriesGrid(),
+                const SizedBox(height: 8),
+                _buildSearchAndFilter(),
+                _buildCategories(),
+                SizedBox(
+                  height: 420,
+                  child: _buildServicesList(),
+                ),
+                _buildQuickOrderSection(),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildHurryModeCard(),
+                _buildBottomBar(),
+              ],
+            ),
+          ),
+        ],
       ),
       endDrawer: _buildEndDrawer(),
     );
@@ -327,6 +489,111 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  /// Hurry Mode card (مطابق لكارت HurryMode_CardView)
+  Widget _buildHurryModeCard() {
+    if (!isHurryModeEnabled) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      margin: const EdgeInsets.only(bottom: 84),
+      decoration: BoxDecoration(
+        color: AppColors.washyBlue,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              'طلب سريع متاح',
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 14,
+                color: AppColors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_forward_ios, color: AppColors.white, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Bottom bar (Basket total + Continue) مطابق لتخطيط XML
+  Widget _buildBottomBar() {
+    return Container(
+      height: 85,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(color: AppColors.white, boxShadow: [
+        BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, -2)),
+      ]),
+      child: Row(
+        children: [
+          // Basket Total
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                AppLocalizations.of(context).t('basket_total'),
+                style: const TextStyle(
+                  color: AppColors.grey2,
+                  fontSize: 14,
+                  fontFamily: AppTextStyles.fontFamily,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'JOD ${basketTotal.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  color: AppColors.grey2,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  fontFamily: AppTextStyles.fontFamily,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          // Continue button
+          Expanded(
+            child: SizedBox(
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _onOrderNowPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.washyBlue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context).t('continue_text'),
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: AppTextStyles.fontFamily,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// القائمة الجانبية اليمنى (مطابقة لسلوك الجافا)
   Widget _buildEndDrawer() {
     return Drawer(
@@ -377,7 +644,7 @@ class _HomePageState extends State<HomePage>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: _openEcoClean,
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.washyBlue),
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -461,14 +728,14 @@ class _HomePageState extends State<HomePage>
                 })
             .toList()
         : [
-            {'title': 'Car detailing', 'icon': Icons.directions_car},
-            {'title': 'Carpet', 'icon': Icons.layers},
-            {'title': 'Furniture', 'icon': Icons.chair},
-            {'title': 'Clothes', 'icon': Icons.checkroom},
-            {'title': 'Offers!', 'icon': Icons.local_offer},
-            {'title': 'Tailoring', 'icon': Icons.cut},
-            {'title': 'Shoes', 'icon': Icons.directions_walk},
-            {'title': 'House\ncleaning', 'icon': Icons.home},
+            { 'title': 'Car detailing', 'asset': 'assets/images/car_cleaning.png' },
+            { 'title': 'Carpet', 'asset': 'assets/images/ic_recycle_hanger.png' },
+            { 'title': 'Furniture', 'asset': 'assets/images/premium_care.png' },
+            { 'title': 'Clothes', 'asset': 'assets/images/ic_order_status1.png' },
+            { 'title': 'Offers!', 'asset': 'assets/images/ic_redeam.png' },
+            { 'title': 'Tailoring', 'asset': 'assets/images/ic_info_light.png' },
+            { 'title': 'Shoes', 'asset': 'assets/images/ic_intro_page3.png' },
+            { 'title': 'House\ncleaning', 'asset': 'assets/images/ic_place_holder.png' },
           ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -527,11 +794,20 @@ class _HomePageState extends State<HomePage>
                           errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, color: AppColors.washyBlue),
                         ),
                       )
-                    : Icon(
-                        (item['icon'] as IconData?) ?? Icons.widgets,
-                        color: AppColors.washyBlue,
-                        size: 30,
-                      ),
+                    : (item['asset'] != null)
+                        ? Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Image.asset(
+                              item['asset'] as String,
+                              fit: BoxFit.contain,
+                              errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, color: AppColors.washyBlue),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.widgets,
+                            color: AppColors.washyBlue,
+                            size: 30,
+                          ),
               ),
               const SizedBox(height: 4),
               Flexible(
@@ -691,19 +967,23 @@ class _HomePageState extends State<HomePage>
               },
               child: Row(
                 children: [
-                  const SizedBox(width: 19),
+                  const SizedBox(width: 12),
                   const Icon(
                     Icons.search,
                     color: AppColors.colorTextNotSelected,
                     size: 20,
                   ),
-                  const SizedBox(width: 19),
-                  Text(
-                    AppLocalizations.of(context).t('search_hint'),
-                    style: const TextStyle(
-                      fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 14,
-                      color: AppColors.colorTextNotSelected,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context).t('search_hint'),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        fontSize: 14,
+                        color: AppColors.colorTextNotSelected,
+                      ),
                     ),
                   ),
                 ],

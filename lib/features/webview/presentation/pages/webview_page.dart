@@ -1,17 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-class WebViewPage extends StatelessWidget {
+class WebViewPage extends StatefulWidget {
   final String title;
   final String url;
   const WebViewPage({super.key, required this.title, required this.url});
 
-  Future<void> _openExternal() async {
-    final uri = Uri.tryParse(url);
-    if (uri != null) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  @override
+  State<WebViewPage> createState() => _WebViewPageState();
+}
+
+class _WebViewPageState extends State<WebViewPage> {
+  late final WebViewController _controller;
+  double _progress = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.white)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (p) => setState(() => _progress = p / 100),
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.url));
   }
 
   @override
@@ -26,7 +41,7 @@ class WebViewPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          title,
+          widget.title,
           style: const TextStyle(
             color: AppColors.greyDark,
             fontWeight: FontWeight.bold,
@@ -34,24 +49,20 @@ class WebViewPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.public, size: 72, color: AppColors.grey2),
-            const SizedBox(height: 16),
-            const Text(
-              'لعرض هذا المحتوى، اضغط فتح في المتصفح',
-              style: TextStyle(color: AppColors.grey2),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_progress < 1)
+            Align(
+              alignment: Alignment.topCenter,
+              child: LinearProgressIndicator(
+                value: _progress,
+                color: AppColors.washyBlue,
+                backgroundColor: AppColors.progressBarColor,
+                minHeight: 3,
+              ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _openExternal,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.washyBlue),
-              child: const Text('فتح في المتصفح', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

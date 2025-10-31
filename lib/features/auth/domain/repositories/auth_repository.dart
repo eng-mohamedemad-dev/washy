@@ -1,7 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/features/auth/domain/entities/user.dart';
-import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 
 abstract class AuthRepository {
   // Check user methods (like Java checkMobile/checkEmail)
