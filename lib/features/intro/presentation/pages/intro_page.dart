@@ -91,7 +91,7 @@ class _IntroPageState extends State<IntroPage> {
                   child: IntroPageView(
                     pageController: _pageController,
                     onPageChanged: _onPageChanged,
-                    isOnLastPage: _currentPage == 0, // because reverse: true
+                    isOnLastPage: _currentPage == 3, // صفحة الفيديو (index 3) هي الأخيرة المطلوبة
                     onSwipePastEnd: _onSkipPressed,
                   ),
                 ),

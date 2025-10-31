@@ -112,8 +112,19 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
   Future<void> _onNavigateToNext(
       NavigateToNext event, Emitter<SplashState> emit) async {
-    // Always show the Intro flow first (4 صفحات مقدمة)،
-    // ثم من داخل IntroPage سيتم ضبط WalkThroughConsumed والانتقال للّوجين.
-    emit(SplashNavigateToIntro());
+    // Check if user has already seen intro based on current state
+    final currentState = state;
+    if (currentState is SplashConfigLoaded) {
+      if (currentState.appConfig.isWalkThroughConsumed) {
+        // User has seen intro, go directly to signup
+        emit(SplashNavigateToSignup());
+      } else {
+        // Show intro for first time
+        emit(SplashNavigateToIntro());
+      }
+    } else {
+      // Default to intro if state not loaded
+      emit(SplashNavigateToIntro());
+    }
   }
 }

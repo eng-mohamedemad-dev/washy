@@ -72,6 +72,9 @@ import 'features/orders/domain/usecases/get_order_details.dart';
 import 'features/orders/domain/usecases/cancel_order.dart';
 import 'features/orders/domain/usecases/get_cached_orders.dart';
 import 'features/orders/presentation/bloc/orders_bloc.dart';
+// Home imports
+import 'features/home/data/services/home_api_service.dart';
+import 'core/config/locale_notifier.dart';
 
 final getIt = GetIt.instance;
 
@@ -311,4 +314,11 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => sharedPreferences);
   getIt.registerLazySingleton(() => http.Client());
   // getIt.registerLazySingleton(() => Connectivity()); // Temporarily disabled
+
+  // Services
+  getIt.registerLazySingleton(() => HomeApiService(client: getIt(), sharedPreferences: getIt()));
+
+  // Locale Notifier
+  final localeNotifier = await LocaleNotifier.create(sharedPreferences);
+  getIt.registerLazySingleton<LocaleNotifier>(() => localeNotifier);
 }

@@ -14,15 +14,15 @@ class CustomBackButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          color: AppColors.washyGreen.withOpacity(0.25),
+          shape: BoxShape.circle,
         ),
         child: const Icon(
           Icons.arrow_back,
-          color: AppColors.greyDark,
+          color: Colors.white,
           size: 24,
         ),
       ),

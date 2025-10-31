@@ -33,3 +33,5 @@ class SplashNavigateToIntro extends SplashState {}
 
 class SplashNavigateToSplash extends SplashState {}
 
+class SplashNavigateToSignup extends SplashState {}
+

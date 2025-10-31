@@ -23,6 +23,9 @@ class IndexPage extends StatelessWidget {
           } else if (state is SplashNavigateToSplash) {
             // User has seen intro, navigate to login page directly
             Navigator.pushReplacementNamed(context, '/login');
+          } else if (state is SplashNavigateToSignup) {
+            // User has seen intro, navigate to signup page directly
+            Navigator.pushReplacementNamed(context, '/signup');
           } else if (state is SplashError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

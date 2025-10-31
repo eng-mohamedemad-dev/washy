@@ -9,6 +9,7 @@ import 'package:wash_flutter/features/auth/presentation/widgets/phone_input_sect
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_back_button.dart';
+import 'package:wash_flutter/core/routes/app_routes.dart';
 
 /// MobileInputPage - Welcome page for mobile number input
 class MobileInputPage extends StatefulWidget {
@@ -96,17 +97,24 @@ class _MobileInputPageState extends State<MobileInputPage> {
           return SafeArea(
             child: Column(
               children: [
-                // Back button at top right
+                // Close (X) button at top right - matches Java behavior (finish activity)
                 Align(
                   alignment: Alignment.topRight,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: () {
+                        // افتح الصفحة الرئيسية مثل تطبيق الجافا
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.home,
+                          (route) => false,
+                        );
+                      },
                       child: const Icon(
-                        Icons.arrow_forward,
+                        Icons.close,
                         color: Colors.black,
-                        size: 24,
+                        size: 28,
                       ),
                     ),
                   ),

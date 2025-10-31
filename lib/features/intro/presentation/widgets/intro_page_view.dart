@@ -22,7 +22,7 @@ class IntroPageView extends StatelessWidget {
   Widget build(BuildContext context) {
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        // 1) أجهزة لا تُطلق Overscroll دائمًا: التقط أيضًا ScrollUpdate عند الحافة اليسرى
+        // نريد الانتقال فقط عند السحب يمينًا على آخر صفحة (صفحة الفيديو)
         if (isOnLastPage) {
           if (notification is OverscrollNotification) {
             onSwipePastEnd?.call();
@@ -30,9 +30,8 @@ class IntroPageView extends StatelessWidget {
           }
           if (notification is ScrollUpdateNotification) {
             final metrics = notification.metrics;
-            // مع reverse:true تكون الصفحة الأخيرة بصريًا عند بداية النطاق (pixels <= 0)
-            if (metrics.pixels <= 0 &&
-                (notification.dragDetails?.delta.dx ?? 0) < 0) {
+            // عند الصفحة الأخيرة: لو وصلنا لأي حافة (atEdge) وحدث سحب => اعتبرها محاولة تجاوز
+            if (metrics.atEdge) {
               onSwipePastEnd?.call();
               return true;
             }
@@ -45,8 +44,8 @@ class IntroPageView extends StatelessWidget {
         // Enable right-to-left swiping order
         reverse: true,
         onPageChanged: onPageChanged,
-        physics: const BouncingScrollPhysics(
-            parent: AlwaysScrollableScrollPhysics()),
+        // استخدام Clamping لتقليل تأثير الارتداد وزمن الانتقال
+        physics: const ClampingScrollPhysics(),
         itemBuilder: (context, index) {
           switch (index) {
             case 0:
