@@ -41,13 +41,13 @@ class PhoneInputSection extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: readOnly ? onPhoneNumberTapped : null,
       child: Container(
-        margin: const EdgeInsets.symmetric(
-            horizontal: 24), // مسافة جانبية معقولة مثل الجافا
+        // Matching Java: separator width, center horizontal
+        margin: const EdgeInsets.symmetric(horizontal: 0),
         decoration: BoxDecoration(
           border: const Border(
             bottom: BorderSide(
-              color: AppColors.grey3,
-              width: 1.2,
+              color: AppColors.colorViewSeparators, // #d5d5db
+              width: 1.0,
             ),
           ),
         ),
@@ -72,11 +72,13 @@ class PhoneInputSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              // Matching Java: CountryCode_TextView
+              // textSize: 16sp, color: colorTitleBlack (#333333), alpha: 0.95
               const Text(
                 '+962',
                 style: TextStyle(
-                  fontSize: 18,
-                  color: Color.fromARGB(255, 8, 14, 19),
+                  fontSize: 16,
+                  color: AppColors.colorTitleBlack, // #333333
                   fontFamily: 'SourceSansPro',
                 ),
               ),
@@ -95,31 +97,34 @@ class PhoneInputSection extends StatelessWidget {
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(9),
+                    LengthLimitingTextInputFormatter(10), // Matching Java: maxLength=10
                   ],
                   style: const TextStyle(
-                    fontSize: 18,
-                    color: AppColors.greyDark,
+                    fontSize: 16, // Matching Java: textSize="16sp"
+                    color: AppColors.colorBlack, // #000000
                     fontFamily: 'SourceSansPro',
                   ),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: AppStrings.enterMobileNumber,
-                    hintStyle: TextStyle(
-                      color: Colors.grey.shade400,
+                    // Matching Java: textColorHint="#BFC0C8" (colorNewTextNotSelected)
+                    hintStyle: const TextStyle(
+                      color: AppColors.colorNewTextNotSelected, // #BFC0C8
                       fontFamily: 'SourceSansPro',
                     ),
-                    // زيادة مسافة اليمين داخل الحقل
+                    // Matching Java: padding 60dp on both sides
                     contentPadding:
-                        const EdgeInsets.only(left: 10, bottom: 12, right: 60),
+                        const EdgeInsets.symmetric(horizontal: 60, vertical: 12),
                   ),
                   onChanged: onPhoneNumberChanged,
                   showCursor: !readOnly,
                   enableInteractiveSelection: !readOnly,
                 ),
               ),
-              const SizedBox(width: 4),
-              // زر مسح يمين الحقل (يتفاعل مباشرة مع تغير النص)
+              const SizedBox(width: 10),
+              // Clear button - matching Java ClearText_RelativeLayout
+              // Position: alignEnd, alignRight of Separator, size: 40dp x 40dp
+              // Icon size: 13dp, src: ic_cancel
               ValueListenableBuilder<TextEditingValue>(
                 valueListenable: controller,
                 builder: (context, value, _) {
@@ -131,14 +136,23 @@ class PhoneInputSection extends StatelessWidget {
                             onPhoneNumberChanged('');
                           }
                         : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                      child: Icon(
-                        Icons.close,
-                        size: 25,
-                        color: hasText
-                            ? Colors.grey.shade600
-                            : Colors.grey.shade300,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        'assets/images/ic_cancel.png',
+                        width: 13,
+                        height: 13,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.close,
+                            size: 13,
+                            color: hasText
+                                ? AppColors.grey2
+                                : AppColors.grey3,
+                          );
+                        },
                       ),
                     ),
                   );

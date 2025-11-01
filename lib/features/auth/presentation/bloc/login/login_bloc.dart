@@ -2,9 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/core/utils/phone_validator.dart';
-// import 'package:wash_flutter/features/auth/domain/entities/user.dart';
-import 'package:wash_flutter/features/auth/domain/entities/account_status.dart'
-    as account_status;
+import 'package:wash_flutter/features/auth/domain/entities/user.dart';
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/check_mobile.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/login_with_google.dart';
@@ -25,12 +23,14 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
   }) : super(const LoginInitial()) {
     on<LoginPhoneNumberChanged>(_onPhoneNumberChanged);
     on<LoginCheckMobilePressed>(_onCheckMobilePressed);
+    on<CheckMobileRequested>(_onCheckMobileRequested);
     on<LoginGoogleSignInPressed>(_onGoogleSignInPressed);
     on<LoginEmailPressed>(_onEmailPressed);
     on<NavigateToSignUpPressed>(_onNavigateToSignUpPressed);
   }
 
   /// Handle phone number changes (like Java's TextWatcher)
+  /// Matching Java: MobileValidationUtils.isValidPhoneNumberLength
   Future<void> _onPhoneNumberChanged(
     LoginPhoneNumberChanged event,
     Emitter<LoginState> emit,
@@ -39,12 +39,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         ? state as LoginPhoneInputState
         : const LoginPhoneInputState();
 
-    final isValid =
-        PhoneValidator.isValidJordanianPhoneNumber(event.phoneNumber);
+    // Matching Java: MobileValidationUtils.isValidPhoneNumberLength
+    // Java checks: if phone starts with "7", expected length is 9, otherwise 10
+    const int countryPhoneNumberCharacters = 10;
+    bool isValid = false;
+    
+    if (event.phoneNumber.isNotEmpty) {
+      if (event.phoneNumber.startsWith('7')) {
+        isValid = event.phoneNumber.length == (countryPhoneNumberCharacters - 1); // 9 digits
+      } else {
+        isValid = event.phoneNumber.length == countryPhoneNumberCharacters; // 10 digits
+      }
+    }
 
     String? validationMessage;
     if (event.phoneNumber.isNotEmpty && !isValid) {
-      validationMessage = 'من فضلك أدخل رقم موبايل صحيحًا';
+      validationMessage = null; // Hide validation message when typing (matching Java)
     }
 
     emit(currentState.copyWith(
@@ -52,6 +62,56 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       isPhoneValid: isValid,
       validationMessage: validationMessage,
     ));
+    
+    print('[LoginBloc] Phone changed: ${event.phoneNumber} -> isValid=$isValid');
+  }
+
+  /// Handle check mobile requested (matching Java callCheckMobile in SignUpActivity)
+  Future<void> _onCheckMobileRequested(
+    CheckMobileRequested event,
+    Emitter<LoginState> emit,
+  ) async {
+    emit(const LoginLoading());
+
+    // تنسيق رقم الهاتف وفق تطبيق الجافا: رقم محلي يبدأ بـ 0
+    final rawDigits = event.phoneNumber.replaceAll(RegExp('[^0-9]'), '');
+    final formattedPhone = rawDigits.startsWith('0') ? rawDigits : '0$rawDigits';
+
+    print('[LoginBloc] Checking mobile (SignUp): $formattedPhone');
+
+    final result =
+        await checkMobile(CheckMobileParams(phoneNumber: formattedPhone));
+
+    result.fold(
+      (failure) {
+        print('[LoginBloc] Check Mobile Failed: $failure');
+        // Handle error response (matching Java handleCheckMobileResponse with error)
+        emit(const LoginPhoneInputState(validationMessage: 'Invalid number'));
+      },
+      (user) {
+        print(
+            '[LoginBloc] Check Mobile Success: Account Status = ${user.accountStatus}');
+        // Handle different account statuses (matching Java handleCheckMobileResponse)
+        switch (user.accountStatus) {
+          case AccountStatus.newCustomer:
+            // New user - send verification code
+            _sendVerificationCode(formattedPhone, emit);
+            break;
+          case AccountStatus.notVerifiedCustomer:
+            // Not verified - send verification code
+            _sendVerificationCode(formattedPhone, emit);
+            break;
+          case AccountStatus.verifiedCustomer:
+            // Verified customer - navigate to password
+            emit(LoginNavigateToPassword(user));
+            break;
+          case AccountStatus.enterPassword:
+            // Enter password
+            emit(LoginNavigateToPassword(user));
+            break;
+        }
+      },
+    );
   }
 
   /// Handle check mobile for login (like Java's checkMobile for existing users)
@@ -99,24 +159,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             '[LoginBloc] Check Mobile Success: Account Status = ${user.accountStatus}');
         // Handle different account statuses for LOGIN (different from SignUp)
         switch (user.accountStatus) {
-          case account_status.AccountStatus.NEW_CUSTOMER:
+          case AccountStatus.newCustomer:
             // User doesn't exist, navigate to sign up
             emit(const LoginNavigateToSignUp());
             break;
-          case account_status.AccountStatus.NOT_VERIFIED_CUSTOMER:
+          case AccountStatus.notVerifiedCustomer:
             // User exists but not verified, send verification code
             _sendVerificationCode(formattedPhone, emit);
             break;
-          case account_status.AccountStatus.VERIFIED_CUSTOMER:
+          case AccountStatus.verifiedCustomer:
             // User is verified, navigate to main screen
             emit(LoginSuccess(user: user));
             break;
-          case account_status.AccountStatus.ENTER_PASSWORD:
+          case AccountStatus.enterPassword:
             // User needs to enter password
             emit(LoginNavigateToPassword(user));
             break;
-          default:
-            emit(const LoginError('Unknown account status'));
         }
       },
     );

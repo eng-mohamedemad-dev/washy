@@ -27,6 +27,16 @@ class LoginCheckMobilePressed extends LoginEvent {
   List<Object?> get props => [phoneNumber];
 }
 
+/// Check mobile requested (matching Java callCheckMobile)
+class CheckMobileRequested extends LoginEvent {
+  final String phoneNumber;
+
+  const CheckMobileRequested({required this.phoneNumber});
+
+  @override
+  List<Object?> get props => [phoneNumber];
+}
+
 /// Google Sign In for login
 class LoginGoogleSignInPressed extends LoginEvent {}
 
