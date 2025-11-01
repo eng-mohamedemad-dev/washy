@@ -74,8 +74,22 @@ class AuthRepositoryImpl implements AuthRepository {
       try {
         final response =
             await remoteDataSource.sendEmailVerificationCode(email);
-        // Return status from smsCodeData.login_status (like Java)
+        
+        print('[AuthRepository] sendEmailVerificationCode response:');
+        print('[AuthRepository] - status: ${response.status}');
+        print('[AuthRepository] - smsCodeData?.status: ${response.smsCodeData?.status}');
+        print('[AuthRepository] - data?.loginStatus: ${response.data?.loginStatus}');
+        
+        // Check loginStatus from data first (for exceeds_limit, verified_customer, etc.)
+        final loginStatus = response.data?.loginStatus;
+        if (loginStatus != null) {
+          print('[AuthRepository] Found loginStatus in data: $loginStatus');
+          return Right(loginStatus);
+        }
+        
+        // Fallback to smsCodeData.status or response.status
         final status = response.smsCodeData?.status ?? response.status;
+        print('[AuthRepository] Using status from smsCodeData or response: $status');
         return Right(status);
       } on ServerException catch (e) {
         print('[AuthRepository] ServerException caught with message: "${e.message}"');
@@ -123,18 +137,19 @@ class AuthRepositoryImpl implements AuthRepository {
         print('[AuthRepository] - data.message: ${response.data?.message}');
         print('[AuthRepository] - data.loginStatus: ${response.data?.loginStatus}');
         
-        // Check if this is an exceeds_limit response (set by remoteDataSource)
+        // Check if exceeds_limit - if no code was sent, navigate directly to create password page
         final isExceedsLimit = response.status.toLowerCase() == 'exceeds_limit' ||
                                response.data?.message?.toLowerCase() == 'exceeds_limit';
+        final totalEmailsLeft = response.data?.totalEmailsLeft;
         
-        if (isExceedsLimit) {
-          print('[AuthRepository] exceeds_limit detected - no code will be sent, returning exceeds_limit status');
-          // Return exceeds_limit so PasswordBloc can navigate directly to create password page
+        if (isExceedsLimit || (totalEmailsLeft != null && totalEmailsLeft == 0)) {
+          print('[AuthRepository] ⚠️ exceeds_limit detected - no code was sent');
+          print('[AuthRepository] Returning exceeds_limit status to navigate directly to create password page');
           return const Right('exceeds_limit');
         }
         
-        // Normal success case - code was sent
-        print('[AuthRepository] sendEmailForgetPasswordCode - code sent successfully, returning email_sent');
+        // Normal success case - code was sent successfully
+        print('[AuthRepository] ✅ Code sent successfully, returning email_sent');
         return const Right('email_sent');
       } on ServerException catch (e) {
         print('[AuthRepository] ServerException: ${e.message}');
@@ -200,6 +215,62 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, User>> verifyMobileForgetPasswordCode(
+      String phoneNumber, String code) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response = await remoteDataSource.verifyMobileForgetPasswordCode(
+            phoneNumber, code);
+        print('[AuthRepository] VerifyMobileForgetPasswordCode response status: ${response.data.status}');
+        if (response.data.status.toLowerCase() == 'verified') {
+          final user = response.data.user?.copyWith(
+            token: response.data.token,
+            phoneNumber: phoneNumber,
+          );
+          if (user != null) {
+            await localDataSource.cacheUser(user.toModel());
+            return Right(user);
+          }
+        }
+        return Left(
+            ServerFailure(response.data?.message ?? 'Verification failed'));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> verifyEmailFromForgetPassword(
+      String email, String code) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response =
+            await remoteDataSource.verifyEmailFromForgetPassword(email, code);
+        print('[AuthRepository] VerifyEmailFromForgetPassword response status: ${response.data.status}');
+        if (response.data.status.toLowerCase() == 'verified') {
+          final user = response.data.user?.copyWith(
+            token: response.data.token,
+            email: email,
+          );
+          if (user != null) {
+            await localDataSource.cacheUser(user.toModel());
+            return Right(user);
+          }
+        }
+        return Left(
+            ServerFailure(response.data?.message ?? 'Verification failed'));
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
   Future<Either<Failure, User>> loginWithGoogle(String idToken) async {
     if (await networkInfo.isConnected) {
       try {
@@ -231,14 +302,18 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> loginWithPassword(
-      String identifier, String password) async {
+      String token, String password) async {
     if (await networkInfo.isConnected) {
       try {
-        final user =
-            await remoteDataSource.loginWithPassword(identifier, password);
-        await localDataSource.cacheUser(user);
-        return Right(user);
+        print('[AuthRepository] Calling loginWithPassword with token: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
+        final userModel =
+            await remoteDataSource.loginWithPassword(token, password);
+        await localDataSource.cacheUser(userModel);
+        // UserModel extends User, so we can use it directly
+        print('[AuthRepository] Login successful, user cached');
+        return Right(userModel);
       } on ServerException catch (e) {
+        print('[AuthRepository] Login failed: ${e.message}');
         return Left(ServerFailure(e.message));
       }
     } else {
@@ -248,9 +323,33 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Either<Failure, User>> createPassword(String password) async {
-    // This would typically create a password for a verified user
-    // Implementation depends on API design
-    return const Left(ServerFailure('Not implemented'));
+    // Java: PasswordActivity.callSetPassword() -> WebServiceManager.setPassword(token, password, device)
+    // Java: handlePasswordUpdated() checks for PASSWORD_UPDATED status, then goes to TermsAndConditionsPage
+    if (await networkInfo.isConnected) {
+      try {
+        // Get token from SharedPreferences (like Java's SessionStateManager.getInstance().getToken(this))
+        final lastUser = await localDataSource.getLastUser();
+        if (lastUser == null || lastUser.token == null || lastUser.token!.isEmpty) {
+          return const Left(ServerFailure('خطأ في المصادقة: لم يتم العثور على رمز التحقق'));
+        }
+        
+        final token = lastUser.token!;
+        print('[AuthRepository] Calling setPassword with token: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
+        
+        final userModel = await remoteDataSource.setPassword(token, password);
+        
+        // Cache updated user (like Java saves token and phone number)
+        await localDataSource.cacheUser(userModel);
+        print('[AuthRepository] Password set successfully, user cached');
+        
+        return Right(userModel);
+      } on ServerException catch (e) {
+        print('[AuthRepository] Set password failed: ${e.message}');
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/features/auth/domain/entities/user.dart' as user;
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
+import 'package:wash_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/send_verification_code.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_state.dart';
@@ -10,12 +11,13 @@ import 'package:wash_flutter/features/auth/presentation/bloc/verification/verifi
 /// VerificationBloc - Handles verification logic like Java VerificationActivity
 class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
   final SendVerificationCode sendVerificationCode;
-  // TODO: Add verify code use cases
+  final AuthRepository repository;
 
   Timer? _timer;
 
   VerificationBloc({
     required this.sendVerificationCode,
+    required this.repository,
     required String identifier,
     required bool isPhone,
     bool isFromForgetPassword = false,
@@ -77,49 +79,113 @@ class VerificationBloc extends Bloc<VerificationEvent, VerificationState> {
   }
 
   /// Handle verify code (like Java's verify code)
+  /// Java: VerificationActivity.callVerifyCode() and handleVerifiedCustomerCode()
   Future<void> _onVerifyCodePressed(
     VerifyCodePressed event,
     Emitter<VerificationState> emit,
   ) async {
-    final currentState = state as VerificationInitial;
+    try {
+      final currentState = state as VerificationInitial;
 
-    if (event.code.length != 4) {
-      emit(currentState.copyWith(
-        validationMessage: 'Please enter complete 4-digit code',
-      ));
-      return;
-    }
+      if (event.code.length != 4) {
+        emit(currentState.copyWith(
+          validationMessage: 'Please enter complete 4-digit code',
+        ));
+        return;
+      }
 
-    emit(const VerificationLoading());
+      emit(const VerificationLoading());
 
-    // TODO: Call verify code API based on type
-    // For now, simulate verification
-    await Future.delayed(const Duration(seconds: 2));
+      print('[VerificationBloc] Verifying code: ${event.code}');
+      print('[VerificationBloc] Identifier: ${event.identifier}, isPhone: ${event.isPhone}, isFromForgetPassword: ${event.isFromForgetPassword}');
 
-    if (event.isFromForgetPassword) {
-      // For forget password flow
-      emit(ForgotPasswordVerificationSuccess(identifier: event.identifier));
+      // Java: callVerifyCode() calls different APIs based on isFromForgetPassword and email/mobile
+      // - If isFromForgetPassword && email exists: verifyEmailFromForgetPassword()
+      // - If isFromForgetPassword && no email: verifyMobileForgetPasswordCode()
+      // - Else: verifyEmailCode() or verifyCode() (normal flow)
+      final result = event.isFromForgetPassword
+          ? (event.isPhone
+              ? await repository.verifyMobileForgetPasswordCode(
+                  event.identifier, event.code)
+              : await repository.verifyEmailFromForgetPassword(
+                  event.identifier, event.code))
+          : (event.isPhone
+              ? await repository.verifySmsCode(event.identifier, event.code)
+              : await repository.verifyEmailCode(event.identifier, event.code));
 
-      // Navigate to password reset after delay
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(NavigateToPasswordReset(identifier: event.identifier));
-    } else {
-      // For regular verification (sign up/login) - مطابق لـ Java handleVerifiedCustomerCode()
-      // TODO: Get actual user from API response
-      final mockUser = user.User(
-        id: '123',
-        name: 'Test User',
-        email: event.isPhone ? null : event.identifier,
-        phoneNumber: event.isPhone ? event.identifier : null,
-        accountStatus: user.AccountStatus.verifiedCustomer, // بعد التحقق يصبح verified
-        loginType: event.isPhone ? user.LoginType.phone : user.LoginType.email,
+      result.fold(
+        (failure) {
+          // Java: onError() shows error layout with invalid_code message
+          print('[VerificationBloc] Verification failed: ${failure.message}');
+          emit(currentState.copyWith(
+            validationMessage: _mapFailureToMessage(failure),
+          ));
+        },
+        (verifiedUser) {
+          // Java: handleVerifiedCustomerCode() - if VERIFIED status, navigate
+          // Java: If isFromForgetPassword, navigate to CreatePasswordActivity
+          // Java: Else, navigate to PasswordActivity
+          print('[VerificationBloc] Verification successful! User: ${verifiedUser.email ?? verifiedUser.phoneNumber}');
+          if (event.isFromForgetPassword) {
+            // For forget password flow - navigate to CreatePasswordActivity (like Java)
+            print('[VerificationBloc] Forget password flow - navigating to password reset');
+            emit(ForgotPasswordVerificationSuccess(identifier: event.identifier));
+
+            // Navigate to password reset after delay
+            if (!isClosed) {
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (!isClosed) {
+                  emit(NavigateToPasswordReset(identifier: event.identifier));
+                }
+              });
+            }
+          } else {
+            // For regular verification (sign up/login) - مطابق لـ Java handleVerifiedCustomerCode()
+            print('[VerificationBloc] Normal verification flow - navigating to password page');
+            emit(VerificationSuccess(user: verifiedUser));
+
+            // Navigate to password page like Java (PasswordActivity)
+            if (!isClosed) {
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (!isClosed) {
+                  emit(NavigateToPassword(user: verifiedUser));
+                }
+              });
+            }
+          }
+        },
       );
-
-      emit(VerificationSuccess(user: mockUser));
-
-      // Navigate to password page like Java (PasswordActivity)
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(NavigateToPassword(user: mockUser));
+    } catch (e, stackTrace) {
+      print('[VerificationBloc] EXCEPTION in _onVerifyCodePressed: $e');
+      print('[VerificationBloc] Stack trace: $stackTrace');
+      
+      // Get the initial state for error display
+      if (!isClosed) {
+        try {
+          // Try to get VerificationInitial from current state or create new one
+          VerificationInitial initialState;
+          if (state is VerificationInitial) {
+            initialState = state as VerificationInitial;
+          } else {
+            // Create new initial state with identifier from event
+            initialState = VerificationInitial(
+              identifier: event.identifier,
+              isPhone: event.isPhone,
+              isFromForgetPassword: event.isFromForgetPassword,
+            );
+          }
+          
+          emit(initialState.copyWith(
+            validationMessage: 'حدث خطأ غير متوقع: ${e.toString()}',
+          ));
+        } catch (emitError) {
+          print('[VerificationBloc] Failed to emit error state: $emitError');
+          // Last resort: emit error state
+          if (!isClosed) {
+            emit(VerificationError('حدث خطأ غير متوقع: ${e.toString()}'));
+          }
+        }
+      }
     }
   }
 

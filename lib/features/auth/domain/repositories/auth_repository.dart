@@ -18,6 +18,9 @@ abstract class AuthRepository {
   // Verify codes
   Future<Either<Failure, User>> verifySmsCode(String phoneNumber, String code);
   Future<Either<Failure, User>> verifyEmailCode(String email, String code);
+  // Forget password verification
+  Future<Either<Failure, User>> verifyMobileForgetPasswordCode(String phoneNumber, String code);
+  Future<Either<Failure, User>> verifyEmailFromForgetPassword(String email, String code);
 
   // Social login
   Future<Either<Failure, User>> loginWithGoogle(String idToken);

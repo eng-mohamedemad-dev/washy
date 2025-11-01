@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_text_styles.dart';
+import 'package:wash_flutter/features/auth/domain/entities/user.dart';
 
 /// TermsAndConditionsPage - 100% matching Java TermsAndConditionsActivity
 class TermsAndConditionsPage extends StatefulWidget {
-  const TermsAndConditionsPage({super.key});
+  final String? nextPage; // 'enter-name' or null
+  final User? user;
+  
+  const TermsAndConditionsPage({
+    super.key,
+    this.nextPage,
+    this.user,
+  });
 
   @override
   State<TermsAndConditionsPage> createState() => _TermsAndConditionsPageState();
@@ -319,9 +327,18 @@ class _TermsAndConditionsPageState extends State<TermsAndConditionsPage> {
   }
 
   // Actions (100% matching Java TermsAndConditionsActivity)
+  // Java: handleContinueClick() -> if nextActivityClass != null, navigates to nextActivityClass
+  // Java: TermsAndConditionsActivity receives NEXT_ACTIVITY_KEY = FillNameActivity.class
   void _onContinuePressed() {
-    // Return acceptance result
-    Navigator.pop(context, true);
+    if (widget.nextPage == 'enter-name' && widget.user != null) {
+      // Navigate to Enter Name page (matching Java flow: TermsAndConditions -> FillNameActivity)
+      Navigator.of(context).pushReplacementNamed('/enter-name', arguments: {
+        'user': widget.user,
+      });
+    } else {
+      // Default: return acceptance result
+      Navigator.pop(context, true);
+    }
   }
 }
 

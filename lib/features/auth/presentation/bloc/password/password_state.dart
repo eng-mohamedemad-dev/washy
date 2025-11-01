@@ -110,7 +110,18 @@ class NavigateToForgotPasswordVerification extends PasswordState {
   List<Object?> get props => [identifier, type, isExceedsLimit];
 }
 
-/// Navigate to main screen
+/// Navigate to Terms and Conditions (after password is set)
+/// Java: goToTermsAndConditionsPage() -> TermsAndConditionsActivity
+class NavigateToTermsAndConditions extends PasswordState {
+  final User user;
+
+  const NavigateToTermsAndConditions({required this.user});
+
+  @override
+  List<Object?> get props => [user];
+}
+
+/// Navigate to main screen (after login)
 class NavigateToHome extends PasswordState {
   final User user;
 

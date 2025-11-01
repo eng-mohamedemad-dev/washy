@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:wash_flutter/core/errors/failures.dart';
 import 'package:wash_flutter/features/auth/domain/entities/user.dart';
 import 'package:wash_flutter/features/auth/domain/entities/verification_request.dart';
+import 'package:wash_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:wash_flutter/features/auth/domain/usecases/send_verification_code.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/password/password_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/password/password_state.dart';
@@ -12,11 +13,12 @@ import 'package:wash_flutter/features/auth/data/datasources/auth_local_data_sour
 class PasswordBloc extends Bloc<PasswordEvent, PasswordState> {
   final SendVerificationCode sendVerificationCode;
   final AuthLocalDataSource authLocalDataSource;
-  // TODO: Add more use cases for password operations
+  final AuthRepository authRepository;
 
   PasswordBloc({
     required this.sendVerificationCode,
     required this.authLocalDataSource,
+    required this.authRepository,
     required User user,
     required bool isNewUser,
   }) : super(PasswordInitial(user: user, isNewUser: isNewUser)) {
@@ -63,54 +65,212 @@ class PasswordBloc extends Bloc<PasswordEvent, PasswordState> {
     SetPasswordPressed event,
     Emitter<PasswordState> emit,
   ) async {
+    print('[PasswordBloc] SetPasswordPressed event received, password length: ${event.password.length}');
     final currentState = state as PasswordInitial;
     
     if (!currentState.isPasswordValid) {
+      print('[PasswordBloc] Password not valid, returning');
       emit(currentState.copyWith(
         validationMessage: 'Please enter a valid password',
       ));
       return;
     }
 
+    print('[PasswordBloc] Setting password loading state...');
     emit(const PasswordLoading());
 
-    // TODO: Call setPassword API
-    // For now, simulate success
-    await Future.delayed(const Duration(seconds: 2));
-    
-    emit(PasswordSetSuccess(user: event.user));
-    
-    // Navigate to main screen after a short delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    emit(NavigateToHome(user: event.user));
+    try {
+      // Java: PasswordActivity.callSetPassword() -> WebServiceManager.setPassword(token, password, device)
+      // Java: handlePasswordUpdated() checks for PASSWORD_UPDATED, then goes to TermsAndConditionsPage
+      print('[PasswordBloc] Calling createPassword API...');
+      final result = await authRepository.createPassword(event.password);
+      
+      result.fold(
+        (failure) {
+          print('[PasswordBloc] Set password failed: ${failure.message}');
+          emit(PasswordError(failure.message));
+          
+          // Restore to initial state to allow retry
+          if (!isClosed) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (!isClosed) {
+                emit(PasswordInitial(
+                  user: event.user,
+                  isNewUser: true,
+                  password: '', // Clear password to force user to retype
+                  isPasswordValid: false,
+                  validationMessage: null,
+                ));
+              }
+            });
+          }
+        },
+        (updatedUser) {
+          print('[PasswordBloc] Password set successfully');
+          // Java: handlePasswordUpdated() -> goToTermsAndConditionsPage()
+          // Java: PasswordActivity.goToTermsAndConditionsPage() navigates to TermsAndConditionsActivity
+          emit(PasswordSetSuccess(user: updatedUser));
+          
+          // Navigate to TermsAndConditions (matching Java flow)
+          if (!isClosed) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (!isClosed) {
+                emit(NavigateToTermsAndConditions(user: updatedUser));
+              }
+            });
+          }
+        },
+      );
+    } catch (e) {
+      print('[PasswordBloc] EXCEPTION in _onSetPasswordPressed: $e');
+      emit(PasswordError('حدث خطأ غير متوقع: ${e.toString()}'));
+      
+      // Restore to initial state
+      if (!isClosed) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (!isClosed) {
+            emit(PasswordInitial(
+              user: event.user,
+              isNewUser: true,
+              password: '',
+              isPasswordValid: false,
+              validationMessage: null,
+            ));
+          }
+        });
+      }
+    }
   }
 
   /// Handle login with password for existing users (like Java's login)
+  /// Java: callLoginApi() calls WebServiceManager.login(token, password, device)
   Future<void> _onLoginWithPasswordPressed(
     LoginWithPasswordPressed event,
     Emitter<PasswordState> emit,
   ) async {
-    final currentState = state as PasswordInitial;
-    if (currentState.password.isEmpty) {
-      emit(currentState.copyWith(
-        validationMessage: 'من فضلك أدخل كلمة السر',
-      ));
-      return;
-    }
+    try {
+      print('[PasswordBloc] LoginWithPasswordPressed event received, password length: ${event.password.length}');
+      print('[PasswordBloc] Current state type: ${state.runtimeType}');
+      
+      // Get PasswordInitial state - if current state is not PasswordInitial, restore it from event.user
+      PasswordInitial currentState;
+      if (state is PasswordInitial) {
+        currentState = state as PasswordInitial;
+        print('[PasswordBloc] Current state password: ${currentState.password.length} chars');
+      } else {
+        // If we're in an error state, restore to initial state with the user from event
+        print('[PasswordBloc] Restoring from ${state.runtimeType} to PasswordInitial state');
+        currentState = PasswordInitial(
+          user: event.user,
+          isNewUser: false,
+          password: event.password,
+          isPasswordValid: event.password.length >= 6,
+        );
+      }
+      
+      if (event.password.isEmpty) {
+        print('[PasswordBloc] Password is empty, returning');
+        emit(currentState.copyWith(
+          validationMessage: 'من فضلك أدخل كلمة السر',
+        ));
+        return;
+      }
 
-    emit(const PasswordLoading());
+      print('[PasswordBloc] Setting password loading state...');
+      emit(const PasswordLoading());
 
-    // "محاكاة" تحقق الباسورد: اذا كلمة السر هي "123123" اعتبرها صحيحة
-    await Future.delayed(const Duration(seconds: 1));
-    if (event.password == '123123') {
-      emit(PasswordLoginSuccess(user: event.user));
-      // يمكن إضافة تنقل بعد قليل، بناءً على التطبيق الفعلي
-      await Future.delayed(const Duration(milliseconds: 500));
-      emit(NavigateToHome(user: event.user));
-    } else {
-      emit(PasswordError('كلمة السر غير صحيحة، حاول مرة أخرى'));
-      // أعد الحالة الأولية لتسمح للمستخدم بالمحاولة مجددًا وتظهر الرسالة
-      emit(currentState.copyWith(validationMessage: 'كلمة السر غير صحيحة، حاول مرة أخرى'));
+      // Java: WebServiceManager.login(SessionStateManager.getInstance().getToken(this), password, device)
+      // Get token from user or SharedPreferences (like Java's SessionStateManager)
+      var token = event.user.token;
+      
+      // If token is empty, try to get it from SharedPreferences (like Java's SessionStateManager)
+      if (token == null || token.isEmpty) {
+        print('[PasswordBloc] Token not found in user object, trying SharedPreferences...');
+        try {
+          final lastUser = await authLocalDataSource.getLastUser();
+          if (lastUser != null && lastUser.token != null && lastUser.token!.isNotEmpty) {
+            token = lastUser.token;
+            print('[PasswordBloc] Found token in SharedPreferences: ${token!.substring(0, token.length > 10 ? 10 : token.length)}...');
+          }
+        } catch (e) {
+          print('[PasswordBloc] Error getting token from SharedPreferences: $e');
+        }
+      }
+      
+      print('[PasswordBloc] User token: ${token != null && token.isNotEmpty ? "${token.substring(0, token.length > 10 ? 10 : token.length)}..." : "null/empty"}');
+      
+      if (token == null || token.isEmpty) {
+        print('[PasswordBloc] ERROR: No token found for login');
+        emit(PasswordError('خطأ في المصادقة: لم يتم العثور على رمز التحقق'));
+        emit(currentState.copyWith(validationMessage: 'خطأ في المصادقة'));
+        return;
+      }
+
+      print('[PasswordBloc] Calling loginWithPassword API with token: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
+      print('[PasswordBloc] authRepository: ${authRepository.runtimeType}');
+      
+      final result = await authRepository.loginWithPassword(token, event.password);
+      
+      print('[PasswordBloc] API call completed, result: ${result.isRight() ? "Success" : "Failure"}');
+
+      result.fold(
+        (failure) {
+          print('[PasswordBloc] Login failed: ${failure.runtimeType}, message: ${failure.message}');
+          final errorMessage = _mapFailureToMessage(failure);
+          print('[PasswordBloc] Mapped error message: $errorMessage');
+          
+          // Emit error state first to trigger dialog close and show SnackBar
+          emit(PasswordError(errorMessage));
+          
+          // Restore to initial state after a short delay to allow retry
+          // This ensures dialog is closed and SnackBar is shown before clearing password
+          Future.delayed(const Duration(milliseconds: 400), () {
+            // Check if bloc is still active before emitting
+            if (!isClosed) {
+              try {
+                emit(PasswordInitial(
+                  user: event.user,
+                  isNewUser: false,
+                  password: '', // Clear password to force user to retype
+                  isPasswordValid: false,
+                  validationMessage: null, // Clear validation message - error will show in SnackBar only
+                ));
+              } catch (e) {
+                print('[PasswordBloc] ⚠️ Error emitting PasswordInitial: $e');
+              }
+            } else {
+              print('[PasswordBloc] ⚠️ Bloc is closed, skipping PasswordInitial emit');
+            }
+          });
+        },
+        (loggedInUser) {
+          print('[PasswordBloc] Login successful! User: ${loggedInUser.email ?? loggedInUser.phoneNumber}');
+          emit(PasswordLoginSuccess(user: loggedInUser));
+          // Navigate to home after short delay (like Java)
+          Future.delayed(const Duration(milliseconds: 500), () {
+            // Check if bloc is still active before emitting
+            if (!isClosed) {
+              try {
+                emit(NavigateToHome(user: loggedInUser));
+              } catch (e) {
+                print('[PasswordBloc] ⚠️ Error emitting NavigateToHome: $e');
+              }
+            } else {
+              print('[PasswordBloc] ⚠️ Bloc is closed, skipping NavigateToHome emit');
+            }
+          });
+        },
+      );
+    } catch (e, stackTrace) {
+      print('[PasswordBloc] EXCEPTION in _onLoginWithPasswordPressed: $e');
+      print('[PasswordBloc] StackTrace: $stackTrace');
+      final currentState = state is PasswordInitial ? state as PasswordInitial : null;
+      if (currentState != null) {
+        emit(PasswordError('حدث خطأ غير متوقع: ${e.toString()}'));
+        emit(currentState.copyWith(validationMessage: 'حدث خطأ غير متوقع'));
+      } else {
+        emit(PasswordError('حدث خطأ غير متوقع: ${e.toString()}'));
+      }
     }
   }
 
@@ -189,22 +349,19 @@ class PasswordBloc extends Bloc<PasswordEvent, PasswordState> {
         (status) {
           print('[PasswordBloc] Code sent successfully, status: $status');
           
-          // Handle exceeds_limit - navigate directly to create password page (like Java goToCreatePasswordPage)
-          // When exceeds_limit, no code is actually sent, so user cannot verify
+          // If exceeds_limit, no code was actually sent - show error message in same page
           if (status.toLowerCase() == 'exceeds_limit') {
-            print('[PasswordBloc] Status is exceeds_limit - no code sent, navigating directly to create password page');
-            emit(NavigateToForgotPasswordVerification(
-              identifier: identifier,
-              type: type == VerificationType.sms ? 'sms' : 'email',
-              isExceedsLimit: true, // Skip verification and go directly to create password
-            ));
+            print('[PasswordBloc] ⚠️ exceeds_limit - no code was sent, showing error message');
+            // Show error message in same page instead of navigating
+            emit(PasswordError('لقد استنفدت عدد مرات إرسال الأكواد، يرجى المحاولة غداً'));
           } else {
-            // Normal flow: navigate to verification page to enter code
+            // Normal flow: code was sent, navigate to verification page to enter code
+            print('[PasswordBloc] ✅ Code was sent, navigating to verification page');
             print('[PasswordBloc] Navigating to verification page: identifier=$identifier, type=${type == VerificationType.sms ? 'sms' : 'email'}');
             emit(NavigateToForgotPasswordVerification(
               identifier: identifier,
               type: type == VerificationType.sms ? 'sms' : 'email',
-              isExceedsLimit: false, // Normal flow - show verification page
+              isExceedsLimit: false, // Show verification page to enter code
             ));
           }
         },
@@ -230,37 +387,34 @@ class PasswordBloc extends Bloc<PasswordEvent, PasswordState> {
   }
 
   /// Validate password (like Java's password validation)
+  /// Java: NUMBER_OF_MINIMUM_PASSWORD_DIGITS = 6 for all cases (new users and existing users)
+  /// Java: PasswordActivity.afterTextChanged() checks: editable.toString().length() >= NUMBER_OF_MINIMUM_PASSWORD_DIGITS
   bool _validatePassword(String password) {
     if (password.isEmpty) return false;
     
-    // Only validate for new users if state is PasswordInitial
-    if (state is PasswordInitial) {
-      final currentState = state as PasswordInitial;
-      // For new users, require stronger password
-      if (currentState.isNewUser) {
-        return password.length >= 8 &&
-            password.contains(RegExp(r'[A-Z]')) && // uppercase
-            password.contains(RegExp(r'[a-z]')) && // lowercase
-            password.contains(RegExp(r'[0-9]')) && // number
-            password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]')); // special char
-      }
-    }
-    
-    // For existing users, just check minimum length
+    // Java requires minimum 6 characters for all cases (new users and existing users)
+    // PasswordActivity: NUMBER_OF_MINIMUM_PASSWORD_DIGITS = 6
+    // CreatePasswordActivity: newPassword.length() < 6 returns false
     return password.length >= 6;
   }
 
   /// Map failures to user-friendly messages
   String _mapFailureToMessage(Failure failure) {
-    switch (failure.runtimeType) {
-      case ServerFailure _:
-        return (failure as ServerFailure).message;
-      case CacheFailure _:
-        return (failure as CacheFailure).message;
-      case NetworkFailure _:
-        return (failure as NetworkFailure).message;
-      default:
-        return 'Unexpected Error';
+    print('[PasswordBloc] _mapFailureToMessage: failure type = ${failure.runtimeType}, message = ${failure.message}');
+    
+    if (failure is ServerFailure) {
+      // Return the message as-is (it should already be in Arabic from the API)
+      print('[PasswordBloc] _mapFailureToMessage: ServerFailure detected, returning: ${failure.message}');
+      return failure.message;
+    } else if (failure is CacheFailure) {
+      print('[PasswordBloc] _mapFailureToMessage: CacheFailure detected, returning: ${failure.message}');
+      return failure.message;
+    } else if (failure is NetworkFailure) {
+      print('[PasswordBloc] _mapFailureToMessage: NetworkFailure detected, returning: ${failure.message}');
+      return failure.message;
+    } else {
+      print('[PasswordBloc] _mapFailureToMessage: Unknown failure type, returning default message');
+      return 'حدث خطأ غير متوقع';
     }
   }
 }

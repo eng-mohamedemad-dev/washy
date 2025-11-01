@@ -48,6 +48,7 @@ import 'package:wash_flutter/features/language/presentation/pages/language_selec
 import 'package:wash_flutter/features/about_us/presentation/pages/about_us_page.dart';
 import 'package:wash_flutter/features/privacy_policy/presentation/pages/privacy_policy_page.dart';
 import 'package:wash_flutter/features/terms/presentation/pages/terms_and_conditions_page.dart';
+import 'package:wash_flutter/features/auth/presentation/pages/enter_name_page.dart';
 import 'package:wash_flutter/features/express_delivery/presentation/pages/express_delivery_page.dart';
 import 'package:wash_flutter/features/furniture/presentation/pages/furniture_service_page.dart';
 import 'package:wash_flutter/features/furniture/presentation/pages/time_furniture_page.dart';
@@ -119,6 +120,7 @@ class AppRoutes {
   static const String aboutUs = '/about-us';
   static const String privacyPolicy = '/privacy-policy';
   static const String termsAndConditions = '/terms-and-conditions';
+  static const String enterName = '/enter-name';
   static const String expressDelivery = '/express-delivery';
   static const String furnitureService = '/furniture-service';
   static const String timeFurniture = '/time-furniture';
@@ -510,8 +512,19 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const PrivacyPolicyPage());
 
       case termsAndConditions:
+        final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-            builder: (_) => const TermsAndConditionsPage());
+            builder: (_) => TermsAndConditionsPage(
+              nextPage: args?['nextPage'],
+              user: args?['user'],
+            ));
+
+      case enterName:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+            builder: (_) => EnterNamePage(
+              user: args?['user'],
+            ));
 
       case expressDelivery:
         return MaterialPageRoute(builder: (_) => const ExpressDeliveryPage());
@@ -574,7 +587,12 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ServiceSelectionPage());
 
       case welcome:
-        return MaterialPageRoute(builder: (_) => const WelcomePage());
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+            builder: (_) => WelcomePage(
+              userName: args?['userName'],
+              isFromNameRegistration: args?['isFromNameRegistration'] ?? false,
+            ));
 
       case webView:
         final args = settings.arguments as Map<String, dynamic>?;

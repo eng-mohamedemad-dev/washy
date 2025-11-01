@@ -9,6 +9,9 @@ import 'package:wash_flutter/features/auth/presentation/bloc/email/email_state.d
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
 import 'package:wash_flutter/features/auth/presentation/widgets/custom_progress_dialog.dart';
+import 'package:wash_flutter/injection_container.dart' as di;
+import 'package:wash_flutter/features/auth/data/datasources/auth_local_data_source.dart';
+import 'package:wash_flutter/features/auth/data/models/user_model.dart';
 
 /// EmailPage - Exactly matches Java activity_email.xml
 class EmailPage extends StatefulWidget {
@@ -26,6 +29,8 @@ class _EmailPageState extends State<EmailPage> {
   // إدارة إظهار/إخفاء حوار التحميل لتجنب الرجوع غير المقصود للصفحة
   // تم استبداله بطبقة تحميل داخلية
   bool _isLoading = false;
+  // Save user from EmailChecked to use later if exceeds_limit happens
+  User? _lastCheckedUser;
 
   @override
   void initState() {
@@ -73,7 +78,7 @@ class _EmailPageState extends State<EmailPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: BlocListener<EmailBloc, EmailState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           // إدارة حالة التحميل بطبقة داخلية بدل showDialog لتفادي تراكُم الحوارات
           if (state is EmailLoading) {
             if (!_isLoading) {
@@ -92,6 +97,31 @@ class _EmailPageState extends State<EmailPage> {
           if (state is EmailChecked) {
             final status = state.user.accountStatus;
             print('[EmailPage] EmailChecked with status: ${status.name}');
+            // Save user with token for later use (in case exceeds_limit happens)
+            _lastCheckedUser = state.user;
+            print('[EmailPage] Saved user with token: ${state.user.token != null && state.user.token!.isNotEmpty ? "***" : "null/empty"}');
+            
+            // Save user (with token) to SharedPreferences (like Java's SessionStateManager.setToken)
+            if (state.user.token != null && state.user.token!.isNotEmpty) {
+              try {
+                final userModel = state.user is UserModel 
+                    ? state.user as UserModel 
+                    : UserModel(
+                        id: state.user.id,
+                        name: state.user.name,
+                        email: state.user.email,
+                        phoneNumber: state.user.phoneNumber,
+                        token: state.user.token,
+                        accountStatus: state.user.accountStatus,
+                        loginType: state.user.loginType,
+                      );
+                final authLocalDataSource = di.getIt<AuthLocalDataSource>();
+                await authLocalDataSource.cacheUser(userModel);
+                print('[EmailPage] Saved user with token to SharedPreferences');
+              } catch (e) {
+                print('[EmailPage] Error saving user to SharedPreferences: $e');
+              }
+            }
             
             // Match Java logic from handleCheckMobileResponse():
             // 1. NEW_CUSTOMER → send verification code → Verification page
@@ -148,11 +178,14 @@ class _EmailPageState extends State<EmailPage> {
               );
             });
           } else if (state is NavigateToPassword) {
-            // fallback للانتقال إلى كلمة السر
+            // fallback للانتقال إلى كلمة السر (عند exceeds_limit)
             if (_isLoading) setState(() => _isLoading = false);
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!context.mounted) return;
-              final mockUser = User(
+              
+              // Use saved user from EmailChecked if available (contains token)
+              // Otherwise create a mock user (should not happen in normal flow)
+              final userToNavigate = _lastCheckedUser ?? User(
                 id: 'temp',
                 name: '',
                 email: state.email,
@@ -161,11 +194,24 @@ class _EmailPageState extends State<EmailPage> {
                 accountStatus: AccountStatus.verifiedCustomer,
                 loginType: LoginType.email,
               );
-              Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+              
+              print('[EmailPage] Navigating to Password with user token: ${userToNavigate.token != null && userToNavigate.token!.isNotEmpty ? "***" : "null/empty"}');
+              print('[EmailPage] Using ${_lastCheckedUser != null ? "saved user from EmailChecked" : "mock user (WARNING: no token!)"}');
+              
+              // Determine isNewUser based on accountStatus (like Java's fillData logic)
+              // NEW_CUSTOMER, NOT_VERIFIED_CUSTOMER, ENTER_PASSWORD → create password (isNewUser: true)
+              // VERIFIED_CUSTOMER → login password (isNewUser: false)
+              final isNewUser = userToNavigate.accountStatus == AccountStatus.newCustomer ||
+                  userToNavigate.accountStatus == AccountStatus.notVerifiedCustomer ||
+                  userToNavigate.accountStatus == AccountStatus.enterPassword;
+              
+              print('[EmailPage] Navigating to Password with accountStatus: ${userToNavigate.accountStatus.name}, isNewUser: $isNewUser');
+              
+              // Use push instead of pushAndRemoveUntil to allow back navigation
+              Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => PasswordPage(user: mockUser, isNewUser: false),
+                  builder: (_) => PasswordPage(user: userToNavigate, isNewUser: isNewUser),
                 ),
-                (route) => false,
               );
             });
           } else if (state is EmailError) {

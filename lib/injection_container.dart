@@ -268,6 +268,7 @@ Future<void> init() async {
     (user, isNewUser) => PasswordBloc(
       sendVerificationCode: getIt(),
       authLocalDataSource: getIt(),
+      authRepository: getIt(),
       user: user,
       isNewUser: isNewUser,
     ),
@@ -276,6 +277,7 @@ Future<void> init() async {
   getIt.registerFactoryParam<VerificationBloc, Map<String, dynamic>, void>(
     (params, _) => VerificationBloc(
       sendVerificationCode: getIt(),
+      repository: getIt(),
       identifier: params['identifier'] as String,
       isPhone: params['isPhone'] as bool,
       isFromForgetPassword: params['isFromForgetPassword'] as bool? ?? false,

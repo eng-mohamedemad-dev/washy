@@ -3,8 +3,16 @@ import 'package:wash_flutter/core/constants/app_colors.dart';
 import 'package:wash_flutter/core/constants/app_text_styles.dart';
 
 /// WelcomePage - Welcome and onboarding screen
+/// Java: WelcomeActivity receives USER_NAME_KEY and displays it
 class WelcomePage extends StatefulWidget {
-  const WelcomePage({super.key});
+  final String? userName;
+  final bool isFromNameRegistration;
+  
+  const WelcomePage({
+    super.key,
+    this.userName,
+    this.isFromNameRegistration = false,
+  });
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();

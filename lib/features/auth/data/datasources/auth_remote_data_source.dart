@@ -9,6 +9,7 @@ import 'package:wash_flutter/features/auth/data/models/check_user_response.dart'
 import 'package:wash_flutter/features/auth/data/models/sms_response.dart';
 import 'package:wash_flutter/features/auth/data/models/user_model.dart';
 import 'package:wash_flutter/features/auth/data/models/verify_code_response.dart';
+import 'package:wash_flutter/features/auth/domain/entities/user.dart' show AccountStatus, LoginType;
 
 abstract class AuthRemoteDataSource {
   Future<CheckUserResponse> checkMobile(String phoneNumber);
@@ -19,9 +20,13 @@ abstract class AuthRemoteDataSource {
   Future<SmsResponse> sendEmailForgetPasswordCode(String email);
   Future<VerifyCodeResponse> verifySmsCode(String phoneNumber, String code);
   Future<VerifyCodeResponse> verifyEmailCode(String email, String code);
+  // Forget password verification
+  Future<VerifyCodeResponse> verifyMobileForgetPasswordCode(String phoneNumber, String code);
+  Future<VerifyCodeResponse> verifyEmailFromForgetPassword(String email, String code);
   Future<UserModel> loginWithGoogle(String idToken);
   Future<UserModel> loginWithFacebook(String accessToken);
   Future<UserModel> loginWithPassword(String identifier, String password);
+  Future<UserModel> setPassword(String token, String password);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -344,7 +349,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           // Return ANY login_status as a valid response for bloc to handle (like Java)
           if (loginStatus != null) {
             print('[API] Returning login_status as valid response: $loginStatus');
-            final errorData = {'login_status': loginStatus};
+            // Build response with loginStatus in data (matching Java structure)
+            // Make sure loginStatus is accessible via response.data.loginStatus
+            final errorData = {
+              'login_status': loginStatus,
+              'message': data?['message'],
+              'total_emails_left': data?['total_emails_left'],
+              'total_sms_left': data?['total_sms_left'],
+            };
             return SmsResponse.fromJson({
               'status': 'success',
               'data': errorData,
@@ -416,6 +428,58 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<VerifyCodeResponse> verifyMobileForgetPasswordCode(
+      String phoneNumber, String code) async {
+    // Java: POST customer/account/mobile/forgot-password/verify-code
+    final url =
+        '${AppConstants.baseUrl}customer/account/mobile/forgot-password/verify-code';
+    print('[API] Verify Mobile Forget Password Code - URL: $url');
+    print('[API] Verify Mobile Forget Password Code - Body: mobile=$phoneNumber&code=$code');
+
+    final response = await client.post(
+      Uri.parse(url),
+      headers: await _headersForm(),
+      body:
+          'mobile=${Uri.encodeComponent(phoneNumber)}&code=${Uri.encodeComponent(code)}',
+    );
+
+    print('[API] Verify Mobile Forget Password Code Response Status: ${response.statusCode}');
+    print('[API] Verify Mobile Forget Password Code Response Body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 400) {
+      return VerifyCodeResponse.fromJson(json.decode(response.body));
+    } else {
+      throw const ServerException('Failed to verify mobile forget password code');
+    }
+  }
+
+  @override
+  Future<VerifyCodeResponse> verifyEmailFromForgetPassword(
+      String email, String code) async {
+    // Java: POST customer/account/email/forgot-password/verify-code
+    final url =
+        '${AppConstants.baseUrl}customer/account/email/forgot-password/verify-code';
+    print('[API] Verify Email Forget Password Code - URL: $url');
+    print('[API] Verify Email Forget Password Code - Body: email=$email&code=$code');
+
+    final response = await client.post(
+      Uri.parse(url),
+      headers: await _headersForm(),
+      body:
+          'email=${Uri.encodeComponent(email)}&code=${Uri.encodeComponent(code)}',
+    );
+
+    print('[API] Verify Email Forget Password Code Response Status: ${response.statusCode}');
+    print('[API] Verify Email Forget Password Code Response Body: ${response.body}');
+
+    if (response.statusCode == 200 || response.statusCode == 400) {
+      return VerifyCodeResponse.fromJson(json.decode(response.body));
+    } else {
+      throw const ServerException('Failed to verify email forget password code');
+    }
+  }
+
+  @override
   Future<UserModel> loginWithGoogle(String idToken) async {
     final response = await client.post(
       Uri.parse('${AppConstants.baseUrl}api}login_google'),
@@ -449,21 +513,145 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<UserModel> loginWithPassword(
-      String identifier, String password) async {
+      String token, String password) async {
+    // Java: POST customer/auth with token and password
+    // Java: WebServiceManager.login(SessionStateManager.getInstance().getToken(this), password, device)
+    final url = '${AppConstants.baseUrl}customer/auth';
+    final body = 'token=${Uri.encodeComponent(token)}&password=${Uri.encodeComponent(password)}';
+    print('[API] Login With Password - URL: $url');
+    print('[API] Login With Password - Body: token=***&password=***');
+
     final response = await client.post(
-      Uri.parse('${AppConstants.baseUrl}api}login'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'identifier': identifier, // phone or email
-        'password': password,
-      }),
+      Uri.parse(url),
+      headers: await _headersForm(),
+      body: body,
     );
 
+    print('[API] Login With Password Response Status: ${response.statusCode}');
+    print('[API] Login With Password Response Body: ${response.body}');
+
+    // Parse response regardless of status code (like Java handles 403)
+    final jsonResponse = json.decode(response.body) as Map<String, dynamic>;
+    final data = jsonResponse['data'] as Map<String, dynamic>?;
+    
     if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      return UserModel.fromJson(jsonResponse['data']);
+      print('[API] Login successful, parsing response...');
+      if (data != null) {
+        // Java LoginResponse structure: { "data": { "login_status": "...", "token": "...", "name": "..." } }
+        final loginStatus = data['login_status'] as String?;
+        final token = data['token'] as String?;
+        final name = data['name'] as String?;
+        print('[API] Login response - loginStatus: $loginStatus, token: ${token != null ? "***" : "null"}, name: $name');
+        
+        // Check if login was successful (Java: LOGGED_IN_STATUS.equals(loginResponse.getData().getLoginStatus()))
+        if (loginStatus?.toLowerCase() == 'logged_in') {
+          // Create UserModel from response (matching Java LoginResponse structure)
+          // Use fromJson to parse the response correctly
+          return UserModel.fromJson({
+            'id': data['id']?.toString(),
+            'name': name,
+            'email': data['email'],
+            'phone': data['phone_number'],
+            'token': token,
+            'login_status': 'verified_customer',
+            'login_type': 'phone',
+          });
+        } else {
+          throw ServerException('Login failed: ${data['message'] ?? "Unknown error"}');
+        }
+      } else {
+        throw const ServerException('Invalid login response');
+      }
+    } else if (response.statusCode == 403 || response.statusCode == 400) {
+      // Java: onError() checks for WRONG_LOGIN_STATUS and shows error layout
+      // Java: WRONG_LOGIN_STATUS = "wrong_login"
+      if (data != null) {
+        final loginStatus = data['login_status'] as String?;
+        print('[API] Login failed - loginStatus: $loginStatus');
+        
+        if (loginStatus?.toLowerCase() == 'wrong_login') {
+          // Java shows error with wrong_password_icon and invalid_password message
+          throw ServerException('كلمة السر غير صحيحة، حاول مرة أخرى');
+        } else {
+          final message = data['message'] as String? ?? jsonResponse['message'] as String?;
+          throw ServerException(message ?? 'فشل تسجيل الدخول');
+        }
+      } else {
+        throw ServerException('فشل تسجيل الدخول');
+      }
     } else {
-      throw const ServerException('Failed to login with password');
+      final errorJson = json.decode(response.body) as Map<String, dynamic>;
+      throw ServerException(errorJson['message'] ?? 'Failed to login with password');
+    }
+  }
+
+  @override
+  Future<UserModel> setPassword(String token, String password) async {
+    // Java: WebServiceManager.setPassword(token, password, device)
+    // Endpoint: customer/auth/set-password
+    // Parameters: token, password
+    // Header: device
+    print('[API] Set Password - Starting...');
+    print('[API] Set Password - Token: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
+    
+    final headers = await _headersForm();
+    final device = headers['device'] ?? 'android';
+    
+    final url = '${AppConstants.baseUrl}customer/auth/set-password';
+    final body = 'token=${Uri.encodeComponent(token)}&password=${Uri.encodeComponent(password)}';
+    print('[API] Set Password - URL: $url');
+    print('[API] Set Password - Body: token=***&password=***');
+    print('[API] Common Headers: $headers');
+    
+    final response = await client.post(
+      Uri.parse(url),
+      headers: {
+        ...headers,
+        'device': device, // Add device header separately
+      },
+      body: body,
+    );
+    
+    print('[API] Set Password Response Status: ${response.statusCode}');
+    print('[API] Set Password Response Body: ${response.body}');
+    
+    final jsonResponse = json.decode(response.body) as Map<String, dynamic>;
+    final data = jsonResponse['data'] as Map<String, dynamic>?;
+    
+    if (response.statusCode == 200) {
+      // Java: handlePasswordUpdated() checks for PASSWORD_UPDATED status
+      // Java: if (PASSWORD_UPDATED.equals(setPasswordResponse.getSetPasswordData().getStatus()))
+      // API Response: {"status":"success","data":{"login_status":"password_updated"}}
+      if (data != null) {
+        // Check login_status in data (like Java checks setPasswordData.getStatus())
+        final loginStatus = data['login_status'] as String?;
+        print('[API] Set Password - login_status: $loginStatus');
+        
+        if (loginStatus?.toLowerCase() == 'password_updated') {
+          // Java: goToTermsAndConditionsPage() after successful password update
+          // Return user with updated token if available
+          final userToken = data['token'] as String? ?? token;
+          
+          // Get user data from SharedPreferences or use minimal user
+          // AccountStatus and LoginType are defined in user.dart, not separate files
+          return UserModel(
+            id: 'temp',
+            name: '',
+            email: '',
+            phoneNumber: '',
+            token: userToken,
+            accountStatus: AccountStatus.verifiedCustomer, // After password is set, user is verified
+            loginType: LoginType.phone, // Default, can be updated
+          );
+        } else {
+          throw ServerException('Password update failed: ${data['message'] ?? "Unknown error"}');
+        }
+      } else {
+        throw const ServerException('Invalid set password response');
+      }
+    } else {
+      final errorJson = json.decode(response.body) as Map<String, dynamic>;
+      throw ServerException(errorJson['message'] ?? 'Failed to set password');
     }
   }
 }

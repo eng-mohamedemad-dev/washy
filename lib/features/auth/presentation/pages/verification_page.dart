@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:wash_flutter/core/constants/app_colors.dart';
-import 'package:wash_flutter/core/constants/app_dimensions.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/custom_back_button.dart';
-import 'package:wash_flutter/features/auth/presentation/widgets/pin_input_field.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_event.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/verification/verification_state.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
+import 'package:wash_flutter/features/auth/presentation/widgets/custom_progress_dialog.dart';
 import 'package:wash_flutter/injection_container.dart' as di;
 
 class VerificationPage extends StatefulWidget {
@@ -35,6 +33,7 @@ class _VerificationPageState extends State<VerificationPage> {
   String _verificationCode = '';
   bool _isCodeComplete = false;
   final ValueNotifier<bool> _isCodeCompleteNotifier = ValueNotifier<bool>(false);
+  bool _isAutoVerifying = false; // Flag to prevent duplicate verification
   
   // Timer functionality (matching Java)
   Timer? _timer;
@@ -104,35 +103,33 @@ class _VerificationPageState extends State<VerificationPage> {
   }
 
   void _goBack() {
+    // Close keyboard first
+    FocusScope.of(context).unfocus();
+    
+    // Check if there's a loading dialog open and close it first
+    if (_isLoadingDialogShown) {
+      final navigator = Navigator.of(context, rootNavigator: true);
+      if (navigator.canPop()) {
+        navigator.pop();
+        _isLoadingDialogShown = false;
+        // Wait a bit before navigating back to ensure dialog is closed
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        });
+        return;
+      }
+    }
+    
     // Allow back navigation (go back to email page)
-    if (Navigator.of(context).canPop()) {
+    if (mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
   }
 
   String get _displayIdentifier {
-    // For forget password, show full email/phone without masking
-    if (widget.isFromForgetPassword) {
-      return widget.identifier;
-    }
-    
-    if (widget.isPhone) {
-      // Format phone number for display (e.g., +962 ** *** **23)
-      if (widget.identifier.length > 4) {
-        return '${widget.identifier.substring(0, 4)} ** *** **${widget.identifier.substring(widget.identifier.length - 2)}';
-      }
-    } else {
-      // Format email for display (e.g., ex***@***.com)
-      final parts = widget.identifier.split('@');
-      if (parts.length == 2) {
-        final username = parts[0];
-        final domain = parts[1];
-        final maskedUsername = username.length > 2 
-            ? '${username.substring(0, 2)}***' 
-            : username;
-        return '$maskedUsername@***.${domain.split('.').last}';
-      }
-    }
+    // Always show full identifier (matching Java - no masking in verification page)
     return widget.identifier;
   }
 
@@ -155,38 +152,105 @@ class _VerificationPageState extends State<VerificationPage> {
             child: BlocConsumer<VerificationBloc, VerificationState>(
             listener: (context, state) async {
               if (state is VerificationLoading) {
-                _isLoadingDialogShown = true;
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) => const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
+                // Show loading dialog with animation (matching password page)
+                if (!_isLoadingDialogShown) {
+                  _isLoadingDialogShown = true;
+                  print('[VerificationPage] Showing loading dialog');
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => Stack(
+                      children: [
+                        ModalBarrier(
+                          color: Colors.black.withOpacity(0.3),
+                        ),
+                        const Center(
+                          child: CustomProgressDialog(
+                            iconAssetPath: 'assets/images/password_icon.png',
+                            frameCount: 29,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                );
+                  ).then((_) {
+                    _isLoadingDialogShown = false;
+                    print('[VerificationPage] Dialog closed via then()');
+                  });
+                }
               } else {
                 // Dismiss progress ONLY if we actually showed a dialog
                 if (_isLoadingDialogShown) {
-                  if (Navigator.of(context, rootNavigator: true).canPop()) {
-                    Navigator.of(context, rootNavigator: true).pop();
-                  }
-                  _isLoadingDialogShown = false;
+                  print('[VerificationPage] Attempting to close dialog...');
+                  Future.microtask(() {
+                    if (!mounted) {
+                      _isLoadingDialogShown = false;
+                      return;
+                    }
+                    final navigator = Navigator.of(context, rootNavigator: true);
+                    if (navigator.canPop()) {
+                      navigator.pop();
+                      _isLoadingDialogShown = false;
+                      print('[VerificationPage] ✅ Dialog closed successfully');
+                    } else {
+                      _isLoadingDialogShown = false;
+                      print('[VerificationPage] ⚠️ Forced dialog state to false');
+                    }
+                  });
                 }
 
                 if (state is CodeSentSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Verification code sent successfully')),
-                  );
+                  // Show success message after dialog closes
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && context.mounted) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('تم ارسال كود التحقق بنجاح'),
+                          backgroundColor: Color(0xFF52D0A0), // Green success color
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  });
                 } else if (state is VerificationError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message), backgroundColor: AppColors.colorRedError),
-                  );
+                  // Reset auto-verify flag to allow retry
+                  _isAutoVerifying = false;
+                  // Show error message after dialog closes
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && context.mounted) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: AppColors.colorRedError,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  });
+                } else if (state is VerificationInitial && state.validationMessage != null && state.validationMessage!.isNotEmpty) {
+                  // Reset auto-verify flag to allow retry
+                  _isAutoVerifying = false;
+                  // Show validation message (error) after dialog closes
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted && context.mounted) {
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.validationMessage!),
+                          backgroundColor: AppColors.colorRedError,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  });
                 } else if (state is NavigateToPasswordReset) {
+                  _isAutoVerifying = false; // Reset flag
                   Navigator.pushReplacementNamed(context, '/create-password', arguments: {
                     'isFromEmail': !widget.isPhone,
                   });
                 } else if (state is NavigateToPassword) {
+                  _isAutoVerifying = false; // Reset flag
                   // Navigate to password page (matching Java PasswordActivity)
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -197,7 +261,11 @@ class _VerificationPageState extends State<VerificationPage> {
                     ),
                   );
                 } else if (state is NavigateToHome) {
+                  _isAutoVerifying = false; // Reset flag
                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                } else if (state is VerificationInitial) {
+                  // Reset flag when returning to initial state (allows retry after error)
+                  _isAutoVerifying = false;
                 }
               }
             },
@@ -217,7 +285,31 @@ class _VerificationPageState extends State<VerificationPage> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           GestureDetector(
-                            onTap: _goBack,
+                            onTap: () {
+                              // Use BuildContext from builder, not from widget
+                              FocusScope.of(context).unfocus();
+                              
+                              // Check if there's a loading dialog open and close it first
+                              if (_isLoadingDialogShown) {
+                                final navigator = Navigator.of(context, rootNavigator: true);
+                                if (navigator.canPop()) {
+                                  navigator.pop();
+                                  _isLoadingDialogShown = false;
+                                  // Wait a bit before navigating back to ensure dialog is closed
+                                  Future.delayed(const Duration(milliseconds: 100), () {
+                                    if (mounted && Navigator.of(context).canPop()) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  });
+                                  return;
+                                }
+                              }
+                              
+                              // Allow back navigation (go back to email page)
+                              if (mounted && Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
+                            },
                             child: const Icon(
                               Icons.arrow_forward,
                               size: 30,
@@ -325,20 +417,28 @@ class _VerificationPageState extends State<VerificationPage> {
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque, // Make entire area tappable
                               onTap: () {
-                                print('[VerificationPage] Green button tapped, isComplete: $isComplete, code: $_verificationCode');
-                                if (isComplete && _verificationCode.length == 4) {
-                                  print('[VerificationPage] Dispatching VerifyCodePressed event');
+                                // Update code first to ensure it's current
+                                String currentCode = '';
+                                for (var controller in _controllers) {
+                                  currentCode += controller.text;
+                                }
+                                
+                                print('[VerificationPage] Green button tapped, isComplete: $isComplete, currentCode: $currentCode, _verificationCode: $_verificationCode');
+                                
+                                if (currentCode.length == 4 && !_isAutoVerifying) {
+                                  _isAutoVerifying = true; // Prevent auto-verify from running
+                                  print('[VerificationPage] Dispatching VerifyCodePressed event with code: $currentCode');
                                   // Verify code when complete
                                   context.read<VerificationBloc>().add(
                                     VerifyCodePressed(
-                                      code: _verificationCode,
+                                      code: currentCode,
                                       identifier: widget.identifier,
                                       isPhone: widget.isPhone,
                                       isFromForgetPassword: widget.isFromForgetPassword,
                                     ),
                                   );
                                 } else {
-                                  print('[VerificationPage] Button tapped but code not complete: isComplete=$isComplete, codeLength=${_verificationCode.length}');
+                                  print('[VerificationPage] Button tapped but code not complete or already verifying: codeLength=${currentCode.length}, _isAutoVerifying=$_isAutoVerifying');
                                 }
                               },
                               child: Container(
@@ -409,69 +509,59 @@ class _VerificationPageState extends State<VerificationPage> {
                 );
               }
               
-              // Normal verification layout (existing)
-              return Column(
-          children: [
-            // Header Section (matching Java layout)
-            Padding(
-              padding: EdgeInsets.only(
-                top: AppDimensions.signUpHeaderTopMargin,
-                left: AppDimensions.activityHorizontalMargin,
-                right: AppDimensions.activityHorizontalMargin,
-              ),
-              child: Row(
-                children: [
-                  CustomBackButton(onPressed: _goBack),
-                  Expanded(
-                    child: Text(
-                      'رقم التثبيت',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.greyDark,
-                        fontFamily: 'SourceSansPro',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 40), // Balance the back button
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 25),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppDimensions.activityHorizontalMargin,
-                ),
+              // Normal verification layout (matching Java verification_code.xml and image)
+              return SingleChildScrollView(
                 child: Column(
                   children: [
-                    const SizedBox(height: 60),
-                    
-                    // Icon (matching Java)
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.washyBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(40),
-                      ),
-                      child: Icon(
-                        widget.isPhone ? Icons.sms_outlined : Icons.email_outlined,
-                        size: 40,
-                        color: AppColors.washyBlue,
+                    // Header: Only black forward arrow on right (matching image)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              // Use BuildContext from builder, not from widget
+                              FocusScope.of(context).unfocus();
+                              
+                              // Check if there's a loading dialog open and close it first
+                              if (_isLoadingDialogShown) {
+                                final navigator = Navigator.of(context, rootNavigator: true);
+                                if (navigator.canPop()) {
+                                  navigator.pop();
+                                  _isLoadingDialogShown = false;
+                                  // Wait a bit before navigating back to ensure dialog is closed
+                                  Future.delayed(const Duration(milliseconds: 100), () {
+                                    if (mounted && Navigator.of(context).canPop()) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  });
+                                  return;
+                                }
+                              }
+                              
+                              // Allow back navigation (go back to email page)
+                              if (mounted && Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            child: const Icon(
+                              Icons.arrow_forward,
+                              size: 30,
+                              color: AppColors.greyDark,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 10),
                     
-                    // Title (Arabic like Java)
+                    // Title: "رقم التثبيت" - centered, large (matching image)
                     const Text(
                       'رقم التثبيت',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: AppColors.greyDark,
                         fontFamily: 'SourceSansPro',
@@ -479,75 +569,51 @@ class _VerificationPageState extends State<VerificationPage> {
                       textAlign: TextAlign.center,
                     ),
                     
-                    const SizedBox(height: 16),
-                    
-                    // Description (Arabic like Java) + green email
-                    Column(
-                      children: [
-                        const Text(
-                          'إيميل التثبيت تم إرساله إلى:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.grey2,
-                            fontFamily: 'SourceSansPro',
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _displayIdentifier,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: AppColors.washyGreen,
-                            fontFamily: 'SourceSansPro',
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // PIN Input (matching Java verification_code.xml)
-                    PinInputField(
-                      controllers: _controllers,
-                      focusNodes: _focusNodes,
-                      onCompleted: (code) {
-                        setState(() {
-                          _verificationCode = code;
-                          _isCodeComplete = true;
-                        });
-                        
-                        // Auto-verify when 4 digits are complete (like Java)
-                        // But only after a small delay to ensure user finished typing
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          if (mounted && _isCodeComplete) {
-                            context.read<VerificationBloc>().add(
-                              VerifyCodePressed(
-                                code: code,
-                                identifier: widget.identifier,
-                                isPhone: widget.isPhone,
-                                isFromForgetPassword: widget.isFromForgetPassword,
-                              ),
-                            );
-                          }
-                        });
-                      },
-                    ),
-                    
                     const SizedBox(height: 30),
                     
-                    // Timer and Resend (matching Java)
+                    // Hint: "ايميل التثبيت تم ارساله الى:" (matching image)
+                    Text(
+                      widget.isPhone ? 'SMS verification code has been\nsent to:' : 'ايميل التثبيت تم ارساله الى:',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.grey1, // #a5a5a5 from Java
+                        fontFamily: 'SourceSansPro',
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    
+                    const SizedBox(height: 6),
+                    
+                    // Email/Phone: Full identifier in green color (matching image)
+                    Text(
+                      _displayIdentifier,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Color(0xFF91CC74), // green_1 from Java colors.xml
+                        fontFamily: 'SourceSansPro',
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    
+                    const SizedBox(height: 35),
+                    
+                    // PIN Input Fields: 4 fields with "0" placeholder and thin grey underlines (matching image)
+                    _buildPinInputFields(),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Timer or Resend (matching image - timer is centered below fields)
                     if (!canResend) ...[
                       Text(
                         '00:${seconds.toString().padLeft(2, '0')}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
-                          color: AppColors.greyDark,
+                          color: AppColors.grey1,
                           fontFamily: 'SourceSansPro',
                           fontWeight: FontWeight.w600,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ] else ...[
                       TextButton(
@@ -563,22 +629,78 @@ class _VerificationPageState extends State<VerificationPage> {
                         child: Text(
                           'إعادة الإرسال',
                           style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.washyBlue,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: AppColors.grey1,
                             fontFamily: 'SourceSansPro',
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Green circular back button on left (matching image - bottom left)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: _isCodeCompleteNotifier,
+                          builder: (context, isComplete, child) {
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                // Update code first to ensure it's current
+                                String currentCode = '';
+                                for (var controller in _controllers) {
+                                  currentCode += controller.text;
+                                }
+                                
+                                print('[VerificationPage] Green button (bottom) tapped, currentCode: $currentCode, _verificationCode: $_verificationCode');
+                                
+                                if (currentCode.length == 4 && !_isAutoVerifying) {
+                                  _isAutoVerifying = true; // Prevent auto-verify from running
+                                  print('[VerificationPage] Dispatching VerifyCodePressed event (bottom) with code: $currentCode');
+                                  context.read<VerificationBloc>().add(
+                                    VerifyCodePressed(
+                                      code: currentCode,
+                                      identifier: widget.identifier,
+                                      isPhone: widget.isPhone,
+                                      isFromForgetPassword: widget.isFromForgetPassword,
+                                    ),
+                                  );
+                                } else {
+                                  print('[VerificationPage] Button tapped but code not complete or already verifying: codeLength=${currentCode.length}, _isAutoVerifying=$_isAutoVerifying');
+                                }
+                              },
+                              child: Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: isComplete 
+                                      ? const Color(0xFF92E068) // Light green when complete
+                                      : const Color(0xFF92E068).withOpacity(0.3), // Transparent when incomplete
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.arrow_back,
+                                  color: isComplete 
+                                      ? Colors.white 
+                                      : Colors.white.withOpacity(0.5),
+                                  size: 26,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    
+                    // Empty space at bottom
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.15),
                   ],
                 ),
-              ),
-            ),
-
-            // Bottom row: left green circular back + centered timer already above
-            const SizedBox(height: 12),
-          ],
               );
             },
           ),
@@ -648,13 +770,20 @@ class _VerificationPageState extends State<VerificationPage> {
                   });
                   
                   // Auto-verify when 4 digits are complete (only if user doesn't manually press button)
-                  if (_verificationCode.length == 4 && _isCodeComplete) {
-                    print('[VerificationPage] Auto-verifying code: $_verificationCode');
+                  // Check code from controllers directly for accuracy
+                  String currentCode = '';
+                  for (var controller in _controllers) {
+                    currentCode += controller.text;
+                  }
+                  
+                  if (currentCode.length == 4 && !_isAutoVerifying) {
+                    _isAutoVerifying = true; // Prevent duplicate verification
+                    print('[VerificationPage] Auto-verifying code: $currentCode');
                     Future.delayed(const Duration(milliseconds: 500), () {
-                      if (mounted && _isCodeComplete && _verificationCode.length == 4) {
+                      if (mounted && currentCode.length == 4 && _isAutoVerifying) {
                         context.read<VerificationBloc>().add(
                           VerifyCodePressed(
-                            code: _verificationCode,
+                            code: currentCode,
                             identifier: widget.identifier,
                             isPhone: widget.isPhone,
                             isFromForgetPassword: widget.isFromForgetPassword,

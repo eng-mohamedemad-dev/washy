@@ -45,11 +45,13 @@ class SmsResponseData {
   final String? loginStatus;
   final String? message;
   final int? totalSmsLeft;
+  final int? totalEmailsLeft;
 
   const SmsResponseData({
     this.loginStatus,
     this.message,
     this.totalSmsLeft,
+    this.totalEmailsLeft,
   });
 
   factory SmsResponseData.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class SmsResponseData {
       loginStatus: json['login_status'],
       message: json['message'],
       totalSmsLeft: json['total_sms_left'],
+      totalEmailsLeft: json['total_emails_left'],
     );
   }
 
@@ -65,6 +68,7 @@ class SmsResponseData {
       'login_status': loginStatus,
       'message': message,
       'total_sms_left': totalSmsLeft,
+      'total_emails_left': totalEmailsLeft,
     };
   }
 }
