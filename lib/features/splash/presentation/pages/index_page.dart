@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../injection_container.dart' as di;
 import '../../../intro/presentation/pages/intro_page.dart';
 import '../bloc/splash_bloc.dart';
+import 'splash_page.dart';
 
 class IndexPage extends StatelessWidget {
   const IndexPage({super.key});
@@ -23,9 +24,6 @@ class IndexPage extends StatelessWidget {
           } else if (state is SplashNavigateToSplash) {
             // User has seen intro, navigate to login page directly
             Navigator.pushReplacementNamed(context, '/login');
-          } else if (state is SplashNavigateToSignup) {
-            // User has seen intro, navigate to signup page directly
-            Navigator.pushReplacementNamed(context, '/signup');
           } else if (state is SplashError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -35,12 +33,8 @@ class IndexPage extends StatelessWidget {
             );
           }
         },
-        // Temporarily hide SplashPage UI and show a minimal loader
-        child: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        // Show the actual SplashPage UI (matching Java SplashActivity)
+        child: const SplashPage(),
       ),
     );
   }

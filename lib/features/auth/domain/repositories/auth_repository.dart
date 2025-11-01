@@ -10,6 +10,10 @@ abstract class AuthRepository {
   // Send verification codes
   Future<Either<Failure, String>> sendSmsVerificationCode(String phoneNumber);
   Future<Either<Failure, String>> sendEmailVerificationCode(String email);
+  
+  // Forget password - send verification codes
+  Future<Either<Failure, String>> sendMobileForgetPasswordCode(String phoneNumber);
+  Future<Either<Failure, String>> sendEmailForgetPasswordCode(String email);
 
   // Verify codes
   Future<Either<Failure, User>> verifySmsCode(String phoneNumber, String code);

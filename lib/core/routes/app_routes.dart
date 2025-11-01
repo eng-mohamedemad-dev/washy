@@ -11,7 +11,7 @@ import 'package:wash_flutter/features/auth/presentation/pages/forget_password_pa
 import 'package:wash_flutter/features/auth/presentation/bloc/signup/signup_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/login/login_bloc.dart';
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_bloc.dart';
-import 'package:wash_flutter/features/splash/presentation/pages/splash_page.dart';
+import 'package:wash_flutter/features/splash/presentation/pages/index_page.dart';
 import 'package:wash_flutter/features/intro/presentation/pages/intro_page.dart';
 import 'package:wash_flutter/features/launcher/presentation/pages/launcher_page.dart';
 import 'package:wash_flutter/features/cart/presentation/pages/cart_page.dart';
@@ -141,11 +141,13 @@ class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case AppRoutes.initial:
-        // Start directly on IntroPage instead of IndexPage/Splash
-        return MaterialPageRoute(builder: (_) => const IntroPage());
+        // Match Java: IndexActivity → SplashActivity → LandingPageActivity
+        // Flutter: IndexPage (with SplashBloc) → fetches server URL → navigates based on walkthrough
+        return MaterialPageRoute(builder: (_) => const IndexPage());
 
       case splash:
-        return MaterialPageRoute(builder: (_) => const SplashPage());
+        // SplashPage removed - using IndexPage instead
+        return MaterialPageRoute(builder: (_) => const IndexPage());
 
       case intro:
         return MaterialPageRoute(builder: (_) => const IntroPage());

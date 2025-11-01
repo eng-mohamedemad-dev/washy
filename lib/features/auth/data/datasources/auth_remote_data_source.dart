@@ -15,6 +15,8 @@ abstract class AuthRemoteDataSource {
   Future<CheckUserResponse> checkEmail(String email);
   Future<SmsResponse> sendSmsVerificationCode(String phoneNumber);
   Future<SmsResponse> sendEmailVerificationCode(String email);
+  Future<SmsResponse> sendMobileForgetPasswordCode(String phoneNumber);
+  Future<SmsResponse> sendEmailForgetPasswordCode(String email);
   Future<VerifyCodeResponse> verifySmsCode(String phoneNumber, String code);
   Future<VerifyCodeResponse> verifyEmailCode(String email, String code);
   Future<UserModel> loginWithGoogle(String idToken);
@@ -186,6 +188,115 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } catch (e) {
       print('[API] Send SMS Verification Exception: $e');
+      if (e is ServerException) rethrow;
+      throw ServerException('Network error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<SmsResponse> sendMobileForgetPasswordCode(String phoneNumber) async {
+    try {
+      // Java: POST customer/account/mobile/forgot-password/send-code
+      final url =
+          '${AppConstants.baseUrl}customer/account/mobile/forgot-password/send-code';
+      final body = 'mobile=${Uri.encodeComponent(phoneNumber)}';
+      print('[API] Send Mobile Forget Password Code - URL: $url');
+      print('[API] Send Mobile Forget Password Code - Body: $body');
+
+      final response = await client.post(
+        Uri.parse(url),
+        headers: await _headersForm(),
+        body: body,
+      );
+
+      print('[API] Mobile Forget Password Code Response Status: ${response.statusCode}');
+      print('[API] Mobile Forget Password Code Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body) as Map<String, dynamic>;
+        return SmsResponse.fromJson(jsonData);
+      } else {
+        final errorJson = json.decode(response.body) as Map<String, dynamic>;
+        throw ServerException(
+            errorJson['message'] ?? 'فشل إرسال كود التحقق للهاتف');
+      }
+    } catch (e) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Network error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<SmsResponse> sendEmailForgetPasswordCode(String email) async {
+    try {
+      // Java: POST customer/account/email/forgot-password/send-code
+      final url =
+          '${AppConstants.baseUrl}customer/account/email/forgot-password/send-code';
+      final body = 'email=${Uri.encodeComponent(email)}';
+      print('[API] Send Email Forget Password Code - URL: $url');
+      print('[API] Send Email Forget Password Code - Body: $body');
+
+      final response = await client.post(
+        Uri.parse(url),
+        headers: await _headersForm(),
+        body: body,
+      );
+
+      print('[API] ========================================');
+      print('[API] Email Forget Password Code Response');
+      print('[API] ========================================');
+      print('[API] Status Code: ${response.statusCode}');
+      print('[API] Response Body: ${response.body}');
+      print('[API] Response Headers: ${response.headers}');
+      print('[API] ========================================');
+      
+      // Parse JSON to check response structure
+      final jsonData = json.decode(response.body) as Map<String, dynamic>;
+      print('[API] Parsed JSON: $jsonData');
+      final status = jsonData['status'] as String?;
+      final data = jsonData['data'] as Map<String, dynamic>?;
+      final message = data?['message'] as String?;
+      final totalEmailsLeft = data?['total_emails_left'] as int?;
+      print('[API] Extracted values:');
+      print('[API]   - status: $status');
+      print('[API]   - message: $message');
+      print('[API]   - total_emails_left: $totalEmailsLeft');
+      print('[API]   - data: $data');
+
+      if (response.statusCode == 200) {
+        // Check if status is "fail" with "exceeds_limit" message (like Java)
+        if (status == 'fail' && message == 'exceeds_limit') {
+          // Return response with "exceeds_limit" status (like Java - navigates directly to password page)
+          print('[API] ⚠️ EXCEEDS_LIMIT detected - no code will be sent');
+          print('[API] Returning exceeds_limit status to navigate directly to create password page');
+          return SmsResponse.fromJson({
+            'status': 'exceeds_limit',
+            'data': {
+              'message': 'exceeds_limit',
+              'status': 'exceeds_limit',
+              'total_emails_left': totalEmailsLeft ?? 0,
+            },
+          });
+        }
+        
+        // Normal success case - code was sent successfully
+        print('[API] ✅ Normal success response - code was sent');
+        print('[API] Parsing as SmsResponse...');
+        final smsResponse = SmsResponse.fromJson(jsonData);
+        print('[API] Parsed SmsResponse:');
+        print('[API]   - status: ${smsResponse.status}');
+        print('[API]   - message: ${smsResponse.message}');
+        print('[API]   - smsCodeData.status: ${smsResponse.smsCodeData?.status}');
+        print('[API]   - smsCodeData.message: ${smsResponse.smsCodeData?.message}');
+        print('[API]   - data.message: ${smsResponse.data?.message}');
+        print('[API]   - data.loginStatus: ${smsResponse.data?.loginStatus}');
+        return smsResponse;
+      } else {
+        final errorJson = json.decode(response.body) as Map<String, dynamic>;
+        throw ServerException(
+            errorJson['message'] ?? 'فشل إرسال كود التحقق عبر الإيميل');
+      }
+    } catch (e) {
       if (e is ServerException) rethrow;
       throw ServerException('Network error: ${e.toString()}');
     }

@@ -28,8 +28,13 @@ class SplashRemoteDataSourceImpl implements SplashRemoteDataSource {
         },
       ).timeout(const Duration(seconds: 30));
 
+      print('[SplashRemoteDataSource] Fetching from: ${AppConstants.domainConfigUrl}');
+      print('[SplashRemoteDataSource] Response status: ${response.statusCode}');
+      
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
+        print('[SplashRemoteDataSource] Raw JSON response: $jsonResponse');
+        
         // Match Java: jsonObject.getString("domain_name")
         final domainName = jsonResponse['domain_name'] as String?;
         print('[SplashRemoteDataSource] Config file response: domain_name = $domainName');
@@ -51,6 +56,7 @@ class SplashRemoteDataSourceImpl implements SplashRemoteDataSource {
         print('[SplashRemoteDataSource] ⚠️ No domain_name in config, using fallback: ${AppConstants.baseUrl}');
         return AppConstants.baseUrl;
       } else {
+        print('[SplashRemoteDataSource] ❌ Failed with status ${response.statusCode}, body: ${response.body}');
         throw ServerException('Failed to fetch server URL: ${response.statusCode}');
       }
     } catch (e) {

@@ -22,17 +22,30 @@ class SplashRepositoryImpl implements SplashRepository {
   Future<Either<Failure, String>> fetchServerUrl() async {
     if (await networkInfo.isConnected) {
       try {
+        print('[SplashRepository] Fetching server URL from remote data source...');
         final serverUrl = await remoteDataSource.fetchServerUrl();
+        print('[SplashRepository] ✅ Received server URL: $serverUrl');
+        print('[SplashRepository] Saving to local data source...');
         await localDataSource.setServerUrl(serverUrl);
+        print('[SplashRepository] ✅ Server URL saved successfully');
+        
+        // Verify it was saved correctly
+        final saved = await localDataSource.getAppConfig();
+        print('[SplashRepository] Verified saved URL: ${saved.serverUrl}');
+        
         return Right(serverUrl);
       } on ServerException catch (e) {
+        print('[SplashRepository] ❌ ServerException: ${e.message}');
         return Left(ServerFailure(e.message));
       } on NetworkException catch (e) {
+        print('[SplashRepository] ❌ NetworkException: ${e.message}');
         return Left(NetworkFailure(e.message));
       } catch (e) {
+        print('[SplashRepository] ❌ Unexpected error: $e');
         return Left(UnknownFailure('Unexpected error: $e'));
       }
     } else {
+      print('[SplashRepository] ❌ No internet connection');
       return const Left(NetworkFailure('No internet connection'));
     }
   }

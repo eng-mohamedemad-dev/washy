@@ -126,7 +126,13 @@ class _HomePageState extends State<HomePage>
         : 'https://washywash.net/';
     _bannerController = PageController(viewportFraction: 0.92);
     _categoriesController = PageController();
-    _loadLanding();
+    // CRITICAL: Wait a bit to ensure splash screen has saved SERVER_URL
+    // This ensures we use the dynamically fetched URL (production) instead of fallback (staging)
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _loadLanding();
+      }
+    });
     _loadVersion();
   }
 

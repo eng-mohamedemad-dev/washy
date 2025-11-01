@@ -16,7 +16,8 @@ class HomeApiService {
   /// Get base URL - matching Java SharedPreferenceManager.getServerUrl()
   /// Java fetches URL from config file (DOMAIN_URL_CONFIG) and saves to SharedPreferences
   /// Java uses: SharedPreferencesHelper.getStringByKey(context, "SERVER_URL", "APP_CONFIG")
-  /// Flutter should use the same saved URL, fallback to hardcoded staging URL
+  /// Flutter should use the same saved URL, fallback to production URL (not staging) to match Java release build
+  /// CRITICAL: Production URL (washywash.com) returns 14 items, staging returns 8 items
   String _baseUrl() {
     // Match Java: SharedPreferenceManager.getServerUrl(context)
     // Java key: "SERVER_URL" (uppercase), file: "APP_CONFIG"
@@ -37,10 +38,12 @@ class HomeApiService {
       return url;
     }
     
-    // Fallback to hardcoded staging URL (matching Java BuildConfig.SERVER_URL default)
-    print('[HomeApiService] ⚠️ No saved server URL found, using fallback staging URL: ${AppConstants.serverUrl}');
-    print('[HomeApiService] ⚠️ Make sure Splash screen fetched and saved server URL from config file');
-    return AppConstants.serverUrl;
+    // CRITICAL: Fallback to production URL (not staging) to match Java release build behavior
+    // Java release build uses production config which returns https://washywash.com/api/
+    // This will return 14 items (Arabic data) instead of staging's 8 items
+    print('[HomeApiService] ⚠️ No saved server URL found, using fallback production URL: https://washywash.com/api/');
+    print('[HomeApiService] ⚠️ This matches Java release build behavior (returns 14 items instead of staging 8)');
+    return 'https://washywash.com/api/';
   }
 
   /// Get language header value matching Java format (ar_JO or en_US)

@@ -267,6 +267,7 @@ Future<void> init() async {
   getIt.registerFactoryParam<PasswordBloc, User, bool>(
     (user, isNewUser) => PasswordBloc(
       sendVerificationCode: getIt(),
+      authLocalDataSource: getIt(),
       user: user,
       isNewUser: isNewUser,
     ),

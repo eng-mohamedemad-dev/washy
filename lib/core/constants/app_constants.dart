@@ -5,6 +5,12 @@ class AppConstants {
   static const String baseUrl = 'https://apistaging.washywash.com/api/';
   static const String serverUrl = baseUrl; // Alias for compatibility
   static const String stagingBaseUrl = 'https://moonlit-moss-ofs3ubaqcll5.vapor-farm-f1.com/';
+  
+  // Match Java: BuildConfig.DOMAIN_URL_CONFIG
+  // Release: prod/android/domain/domain_name.json
+  // Debug/Beta: staging/android/domain/domain_name.json
+  // TEMPORARY: Using production config to get same URL as Java (which shows 14 items)
+  // TODO: Use kDebugMode or build flavor to switch between prod/staging config
   static const String domainConfigUrl = 'https://washywash-public-config.s3.eu-west-2.amazonaws.com/prod/android/domain/domain_name.json';
 
   // App Configuration

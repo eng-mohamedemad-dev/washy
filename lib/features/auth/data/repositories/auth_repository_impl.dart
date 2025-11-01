@@ -89,6 +89,63 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, String>> sendMobileForgetPasswordCode(
+      String phoneNumber) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final response =
+            await remoteDataSource.sendMobileForgetPasswordCode(phoneNumber);
+        // Return status from smsCodeData.login_status (like Java)
+        final status = response.smsCodeData?.status ?? response.status;
+        return Right(status);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> sendEmailForgetPasswordCode(
+      String email) async {
+    if (await networkInfo.isConnected) {
+      try {
+        // Call API and check response
+        print('[AuthRepository] Calling sendEmailForgetPasswordCode for email: $email');
+        final response = await remoteDataSource.sendEmailForgetPasswordCode(email);
+        
+        print('[AuthRepository] Response received:');
+        print('[AuthRepository] - status: ${response.status}');
+        print('[AuthRepository] - message: ${response.message}');
+        print('[AuthRepository] - smsCodeData.status: ${response.smsCodeData?.status}');
+        print('[AuthRepository] - smsCodeData.message: ${response.smsCodeData?.message}');
+        print('[AuthRepository] - data.message: ${response.data?.message}');
+        print('[AuthRepository] - data.loginStatus: ${response.data?.loginStatus}');
+        
+        // Check if this is an exceeds_limit response (set by remoteDataSource)
+        final isExceedsLimit = response.status.toLowerCase() == 'exceeds_limit' ||
+                               response.data?.message?.toLowerCase() == 'exceeds_limit';
+        
+        if (isExceedsLimit) {
+          print('[AuthRepository] exceeds_limit detected - no code will be sent, returning exceeds_limit status');
+          // Return exceeds_limit so PasswordBloc can navigate directly to create password page
+          return const Right('exceeds_limit');
+        }
+        
+        // Normal success case - code was sent
+        print('[AuthRepository] sendEmailForgetPasswordCode - code sent successfully, returning email_sent');
+        return const Right('email_sent');
+      } on ServerException catch (e) {
+        print('[AuthRepository] ServerException: ${e.message}');
+        return Left(ServerFailure(e.message));
+      }
+    } else {
+      return const Left(NetworkFailure('No internet connection'));
+    }
+  }
+
+  @override
   Future<Either<Failure, User>> verifySmsCode(
       String phoneNumber, String code) async {
     if (await networkInfo.isConnected) {

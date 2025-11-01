@@ -98,14 +98,16 @@ class PasswordError extends PasswordState {
 class NavigateToForgotPasswordVerification extends PasswordState {
   final String identifier; // email or phone
   final String type; // 'email' or 'sms'
+  final bool isExceedsLimit; // Skip verification if exceeds_limit
 
   const NavigateToForgotPasswordVerification({
     required this.identifier,
     required this.type,
+    this.isExceedsLimit = false,
   });
 
   @override
-  List<Object?> get props => [identifier, type];
+  List<Object?> get props => [identifier, type, isExceedsLimit];
 }
 
 /// Navigate to main screen

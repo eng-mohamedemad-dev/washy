@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wash_flutter/core/constants/app_colors.dart';
-import 'package:wash_flutter/core/constants/app_text_styles.dart';
 
-/// SplashPage - App splash screen
+/// SplashPage - App splash screen matching Java SplashActivity
+/// Java uses: background_splash.xml gradient + ic_splash.png logo with fade-in animation
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -14,13 +13,24 @@ class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _initAnimations();
-    // Navigation is controlled by SplashBloc in IndexPage, don't navigate here
+    // Match Java: AnimationUtils.loadAnimation(this, R.anim.fade_in)
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1000), // Typical fade-in duration
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    ));
+    // Start animation immediately like Java
+    _animationController.forward();
   }
 
   @override
@@ -29,160 +39,55 @@ class _SplashPageState extends State<SplashPage>
     super.dispose();
   }
 
-  void _initAnimations() {
-    _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeIn,
-    ));
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.5,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
-
-    _animationController.forward();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        // Match Java background_splash.xml gradient
+        // Gradient: startColor="#13C0D7" (cyan), centerColor="#52D0A0" (teal), endColor="#92E068" (green)
+        // angle="315" (diagonal from top-left to bottom-right)
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              AppColors.washyBlue,
-              AppColors.washyGreen,
-            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF13C0D7), // Cyan - start color
+              Color(0xFF52D0A0), // Teal - center color (in Java XML)
+              Color(0xFF92E068), // Green - end color
+            ],
+            stops: [0.0, 0.5, 1.0], // Distribute colors evenly with center at 0.5
           ),
         ),
         child: Center(
-          child: AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return FadeTransition(
-                opacity: _fadeAnimation,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Image Card with dots indicator inside
-                      Container(
-                        width: MediaQuery.of(context).size.width - 48,
-                        height: MediaQuery.of(context).size.height * 0.45,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.10),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Center(
-                                child: Icon(
-                                  Icons.local_laundry_service,
-                                  size: 140,
-                                  color: AppColors.washyBlue,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Page indicator dots inside the card
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                _Dot(active: false),
-                                SizedBox(width: 8),
-                                _Dot(active: false),
-                                SizedBox(width: 8),
-                                _Dot(active: false),
-                                SizedBox(width: 8),
-                                _Dot(active: true),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // App Name
-                      const Text(
-                        'واشي واش',
-                        style: TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
-                          letterSpacing: 2,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // App Subtitle with horizontal padding
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Text(
-                          'جميع احتياجاتك للتنظيف والكوي متوفرة بين يديك',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 18,
-                            color: AppColors.white,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 50),
-
-                      // Loading Indicator
-                      const SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: CircularProgressIndicator(
-                          color: AppColors.white,
-                          strokeWidth: 3,
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Loading Text
-                      const Text(
-                        'جاري التحميل...',
-                        style: TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 16,
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ],
+          // Match Java: Logo centered in parent with fade-in animation
+          // Java uses: ImageView with ic_splash.png (84dp x 83dp) + fade_in animation
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Image.asset(
+              'assets/images/ic_splash.png',
+              width: 84,
+              height: 83,
+              // Fallback if image doesn't exist
+              errorBuilder: (context, error, stackTrace) {
+                // If logo doesn't exist, show a simple white circle as placeholder
+                return Container(
+                  width: 84,
+                  height: 83,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 2,
+                    ),
                   ),
-                ),
-              );
-            },
+                  child: const Icon(
+                    Icons.local_laundry_service,
+                    color: Colors.white,
+                    size: 50,
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -190,21 +95,3 @@ class _SplashPageState extends State<SplashPage>
   }
 }
 
-/// Small circle used for page indicator
-class _Dot extends StatelessWidget {
-  final bool active;
-  const _Dot({required this.active});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      width: active ? 10 : 8,
-      height: active ? 10 : 8,
-      decoration: BoxDecoration(
-        color: active ? AppColors.washyGreen : AppColors.grey2,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-}

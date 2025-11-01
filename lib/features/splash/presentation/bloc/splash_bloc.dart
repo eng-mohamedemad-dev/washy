@@ -52,19 +52,23 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
   Future<void> _onFetchServerUrl(
       FetchServerUrlEvent event, Emitter<SplashState> emit) async {
     try {
+      print('[SplashBloc] Starting fetchServerUrl...');
       final result =
-          await fetchServerUrl(NoParams()).timeout(const Duration(seconds: 5));
+          await fetchServerUrl(NoParams()).timeout(const Duration(seconds: 10));
       await result.fold(
         (failure) async {
+          print('[SplashBloc] ❌ fetchServerUrl failed: ${failure.message}');
           // On failure, proceed to check app config anyway
           add(CheckAppConfig());
         },
         (serverUrl) async {
+          print('[SplashBloc] ✅ fetchServerUrl success: $serverUrl');
           // After fetching server URL, check app config
           add(CheckAppConfig());
         },
       );
     } catch (e) {
+      print('[SplashBloc] ❌ fetchServerUrl exception: $e');
       // On timeout or error, proceed to check app config
       add(CheckAppConfig());
     }
@@ -112,19 +116,10 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
   Future<void> _onNavigateToNext(
       NavigateToNext event, Emitter<SplashState> emit) async {
-    // Check if user has already seen intro based on current state
-    final currentState = state;
-    if (currentState is SplashConfigLoaded) {
-      if (currentState.appConfig.isWalkThroughConsumed) {
-        // User has seen intro, go directly to signup
-        emit(SplashNavigateToSignup());
-      } else {
-        // Show intro for first time
-        emit(SplashNavigateToIntro());
-      }
-    } else {
-      // Default to intro if state not loaded
-      emit(SplashNavigateToIntro());
-    }
+    // Always show intro page first (even if user has seen it before)
+    // This ensures splash screen always displays for at least 2 seconds before navigation
+    // Match Java SplashActivity delay
+    await Future.delayed(const Duration(milliseconds: 2000));
+    emit(SplashNavigateToIntro());
   }
 }

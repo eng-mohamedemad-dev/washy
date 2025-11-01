@@ -8,6 +8,7 @@ import 'package:wash_flutter/features/auth/presentation/bloc/email/email_event.d
 import 'package:wash_flutter/features/auth/presentation/bloc/email/email_state.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/verification_page.dart';
 import 'package:wash_flutter/features/auth/presentation/pages/password_page.dart';
+import 'package:wash_flutter/features/auth/presentation/widgets/custom_progress_dialog.dart';
 
 /// EmailPage - Exactly matches Java activity_email.xml
 class EmailPage extends StatefulWidget {
@@ -87,29 +88,49 @@ class _EmailPageState extends State<EmailPage> {
           }
 
           // Handle specific states بعد إدارة التحميل
+          // Match Java EmailActivity.handleCheckMobileResponse() logic exactly
           if (state is EmailChecked) {
             final status = state.user.accountStatus;
             print('[EmailPage] EmailChecked with status: ${status.name}');
-            if (status.name == 'newCustomer') {
-              // أرسل كود التحقق للمستخدم الجديد
+            
+            // Match Java logic from handleCheckMobileResponse():
+            // 1. NEW_CUSTOMER → send verification code → Verification page
+            // 2. NOT_VERIFIED_CUSTOMER → send verification code → Verification page  
+            // 3. VERIFIED_CUSTOMER → go to Password page
+            // 4. ENTER_PASSWORD → go to Password page
+            
+            if (status == AccountStatus.newCustomer) {
+              // Java: AccountStatus.NEW_CUSTOMER → callSendEmailVerificationCode()
+              print('[EmailPage] NEW_CUSTOMER: Sending email verification code');
               context.read<EmailBloc>().add(
                     SendEmailCodeEvent(email: _emailController.text),
                   );
-            } else if (status.name == 'notVerifiedCustomer') {
-              // مستخدم غير مفعّل: أرسل الكود
+            } else if (status == AccountStatus.notVerifiedCustomer) {
+              // Java: AccountStatus.NOT_VERIFIED_CUSTOMER → callSendEmailVerificationCode()
+              print('[EmailPage] NOT_VERIFIED_CUSTOMER: Sending email verification code');
               context.read<EmailBloc>().add(
                     SendEmailCodeEvent(email: _emailController.text),
                   );
-            } else if (status.name == 'enterPassword' || status.name == 'verifiedCustomer') {
-              // مستخدم موجود: انتقل لصفحة كلمة المرور
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => PasswordPage(
-                    user: state.user,
-                    isNewUser: false,
+            } else if (status == AccountStatus.verifiedCustomer || status == AccountStatus.enterPassword) {
+              // Java: AccountStatus.VERIFIED_CUSTOMER or ENTER_PASSWORD → handleVerifiedCustomerCode()
+              // Java: hideCustomProgressDialog() then go to PasswordActivity
+              print('[EmailPage] VERIFIED_CUSTOMER or ENTER_PASSWORD: Going to Password page');
+              if (_isLoading) setState(() => _isLoading = false);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!context.mounted) return;
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PasswordPage(
+                      user: state.user,
+                      isNewUser: false,
+                    ),
                   ),
-                ),
-              );
+                );
+              });
+            } else {
+              // Java: else → hideCustomProgressDialog()
+              print('[EmailPage] Unknown status: ${status.name}, hiding loading');
+              if (_isLoading) setState(() => _isLoading = false);
             }
           } else if (state is EmailCodeSent) {
             // الانتقال إلى صفحة التحقق
@@ -159,22 +180,6 @@ class _EmailPageState extends State<EmailPage> {
             children: [
               Column(
             children: [
-              // Back button at top (from layout_back_icon_black)
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: GestureDetector(
-                    onTap: _goBack,
-                    child: const Icon(
-                      Icons.arrow_forward,
-                      color: Colors.black,
-                      size: 28,
-                    ),
-                  ),
-                ),
-              ),
-
               // Main Content (from LinearLayout starting at line 9)
               Expanded(
                 child: SingleChildScrollView(
@@ -380,14 +385,24 @@ class _EmailPageState extends State<EmailPage> {
               ),
             ],
           ),
-              if (_isLoading) ...[
-                const ModalBarrier(dismissible: false, color: Colors.black26),
-                const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
-                  ),
+              if (_isLoading)
+                // Match Java: Custom progress dialog with icon animation + rotating lines
+                // Java uses: frames_animation_test.xml (29 frames) for icon + rotating arcs
+                Stack(
+                  children: [
+                    // Modal barrier for dimming background
+                    ModalBarrier(
+                      dismissible: false,
+                      color: Colors.black.withOpacity(0.3), // Match Java: dimAmount = 0.30f
+                    ),
+                    // Custom progress dialog
+                    CustomProgressDialog(
+                      // TODO: Add animated_logo frames if available
+                      // iconAssetPath: 'assets/images/loading/animated_logo',
+                      // frameCount: 29,
+                    ),
+                  ],
                 ),
-              ],
             ],
           ),
         ),

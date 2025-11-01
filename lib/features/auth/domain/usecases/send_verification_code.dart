@@ -14,13 +14,26 @@ class SendVerificationCode
   @override
   Future<Either<Failure, String>> call(
       SendVerificationCodeParams params) async {
-    switch (params.request.type) {
-      case VerificationType.sms:
-        return await repository
-            .sendSmsVerificationCode(params.request.identifier);
-      case VerificationType.email:
-        return await repository
-            .sendEmailVerificationCode(params.request.identifier);
+    // If this is a forget password request, use forget password APIs (matching Java)
+    if (params.request.isFromForgetPassword) {
+      switch (params.request.type) {
+        case VerificationType.sms:
+          return await repository
+              .sendMobileForgetPasswordCode(params.request.identifier);
+        case VerificationType.email:
+          return await repository
+              .sendEmailForgetPasswordCode(params.request.identifier);
+      }
+    } else {
+      // Normal verification code flow
+      switch (params.request.type) {
+        case VerificationType.sms:
+          return await repository
+              .sendSmsVerificationCode(params.request.identifier);
+        case VerificationType.email:
+          return await repository
+              .sendEmailVerificationCode(params.request.identifier);
+      }
     }
   }
 }
