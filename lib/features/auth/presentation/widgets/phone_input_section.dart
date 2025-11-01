@@ -97,7 +97,8 @@ class PhoneInputSection extends StatelessWidget {
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10), // Matching Java: maxLength=10
+                    LengthLimitingTextInputFormatter(
+                        10), // Matching Java: maxLength=10
                   ],
                   style: const TextStyle(
                     fontSize: 16, // Matching Java: textSize="16sp"
@@ -113,8 +114,8 @@ class PhoneInputSection extends StatelessWidget {
                       fontFamily: 'SourceSansPro',
                     ),
                     // Matching Java: padding 60dp on both sides
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 60, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 60, vertical: 12),
                   ),
                   onChanged: onPhoneNumberChanged,
                   showCursor: !readOnly,
@@ -148,9 +149,7 @@ class PhoneInputSection extends StatelessWidget {
                           return Icon(
                             Icons.close,
                             size: 13,
-                            color: hasText
-                                ? AppColors.grey2
-                                : AppColors.grey3,
+                            color: hasText ? AppColors.grey2 : AppColors.grey3,
                           );
                         },
                       ),

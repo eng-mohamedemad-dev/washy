@@ -75,6 +75,8 @@ import 'features/orders/presentation/bloc/orders_bloc.dart';
 // Home imports
 import 'features/home/data/services/home_api_service.dart';
 import 'core/config/locale_notifier.dart';
+// Notifications imports
+import 'features/notifications/data/datasources/notifications_remote_data_source.dart';
 
 final getIt = GetIt.instance;
 
@@ -319,7 +321,13 @@ Future<void> init() async {
   // getIt.registerLazySingleton(() => Connectivity()); // Temporarily disabled
 
   // Services
-  getIt.registerLazySingleton(() => HomeApiService(client: getIt(), sharedPreferences: getIt()));
+  getIt.registerLazySingleton(
+      () => HomeApiService(client: getIt(), sharedPreferences: getIt()));
+
+  // Notifications Data Source
+  getIt.registerLazySingleton<NotificationsRemoteDataSource>(
+    () => NotificationsRemoteDataSourceImpl(client: getIt()),
+  );
 
   // Locale Notifier
   final localeNotifier = await LocaleNotifier.create(sharedPreferences);
