@@ -55,6 +55,7 @@ flutter:
   # Assets from Java WashyWash project (100% matching)
   assets:
     - assets/images/
+    - assets/imaes icons/
 
   # Fonts from Java project (source_sans_pro)
   fonts:
