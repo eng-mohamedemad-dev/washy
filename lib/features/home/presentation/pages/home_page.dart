@@ -152,6 +152,22 @@ class _HomePageState extends State<HomePage>
     return '$_serverBaseUrl$p';
   }
 
+  /// Encode image URL - handle spaces in path (مثل: "Landing page" -> "Landing%20page")
+  /// Java's Glide handles this automatically, but Flutter's Image.network needs explicit encoding
+  String _encodeImageUrl(String url) {
+    if (url.isEmpty) return url;
+    try {
+      final uri = Uri.parse(url);
+      // Encode path segments to handle spaces (مثل: "/Landing page/" -> "/Landing%20page/")
+      final encodedPath = uri.pathSegments.map((segment) => Uri.encodeComponent(segment)).join('/');
+      final encodedPathWithSlashes = uri.path.isEmpty ? '' : '/$encodedPath${uri.path.endsWith('/') ? '/' : ''}';
+      return uri.replace(path: encodedPathWithSlashes).toString();
+    } catch (e) {
+      // Fallback: simple space encoding if URI parsing fails
+      return url.replaceAll(' ', '%20');
+    }
+  }
+
   Future<void> _loadLanding() async {
     try {
       final api = di.getIt<HomeApiService>();
@@ -163,7 +179,13 @@ class _HomePageState extends State<HomePage>
         _categories = homeRes.data?.categories ?? [];
         _isLoading = false;
       });
+      // Debug: التأكد من البيانات القادمة من API
+      print('[HomePage] _landingItems count: ${_landingItems.length}');
+      for (var item in _landingItems) {
+        print('[HomePage] Landing item: ${item.title}, icon: ${item.image}');
+      }
     } catch (e) {
+      print('[HomePage] Error loading landing: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -776,11 +798,13 @@ class _HomePageState extends State<HomePage>
   /// شبكة الخدمات المختصرة (14 أيقونة في صفحتين: 8 + 6)
   Widget _buildTopCategoriesGrid() {
     final localizations = AppLocalizations.of(context);
-    final allItems = _categories.isNotEmpty
-        ? _categories
+    // CRITICAL: استخدام _landingItems من landing-page API (مطابق لتطبيق Java)
+    // Java يستخدم LandingPageResponse.getData().getLandingItems() من listing/landing-page
+    final allItems = _landingItems.isNotEmpty
+        ? _landingItems
             .map((e) => {
                   'title': e.title ?? '',
-                  'image': _resolveUrl(e.image),
+                  'image': e.image ?? '', // URL كامل من الباك إند (مثل: https://storage.washywash.com/image/...)
                 })
             .toList()
         : [
@@ -845,11 +869,14 @@ class _HomePageState extends State<HomePage>
             },
           ];
 
-    // تقسيم العناصر إلى صفحتين
-    final page1Items = allItems.take(8).toList(); // الصفحة الأولى: 8 عناصر
-    final page2Items =
-        allItems.skip(8).take(6).toList(); // الصفحة الثانية: 6 عناصر
-    final totalPages = 2;
+    // تقسيم العناصر ديناميكياً حسب العدد الفعلي من الباك إند
+    // إذا كان ≤ 8 عناصر: صفحة واحدة فقط
+    // إذا كان > 8 عناصر: صفحتين (8 + الباقي)
+    final page1Items = allItems.take(8).toList(); // الصفحة الأولى: أول 8 عناصر
+    final page2Items = allItems.length > 8
+        ? allItems.skip(8).toList() // الصفحة الثانية: الباقي إذا كان > 8
+        : <Map<String, dynamic>>[]; // فارغة إذا كان ≤ 8
+    final totalPages = page2Items.isEmpty ? 1 : 2; // صفحة واحدة إذا كان ≤ 8 عناصر
 
     Widget _buildCategoryItem(item) {
       return GestureDetector(
@@ -896,12 +923,25 @@ class _HomePageState extends State<HomePage>
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Image.network(
-                        item['image'] as String,
+                        _encodeImageUrl(item['image'] as String), // Encode spaces in URL path (مثل: "Landing page" -> "Landing%20page")
                         fit: BoxFit.contain,
-                        errorBuilder: (c, e, s) => const Icon(
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
+                            ),
+                          );
+                        },
+                        errorBuilder: (c, e, s) {
+                          print('[HomePage] Image load error: ${item['image']}, error: $e');
+                          return const Icon(
                             Icons.image_not_supported,
                             color: AppColors.washyBlue,
-                            size: 24),
+                            size: 24,
+                          );
+                        },
                       ),
                     )
                   : (item['asset'] != null)
@@ -979,31 +1019,37 @@ class _HomePageState extends State<HomePage>
               itemBuilder: (context, pageIndex) {
                 if (pageIndex == 0) {
                   return _buildCategoryGrid(page1Items);
-                } else {
+                } else if (pageIndex == 1 && page2Items.isNotEmpty) {
                   return _buildCategoryGrid(page2Items);
+                } else {
+                  // Fallback: صفحة فارغة (يجب ألا يحدث إذا كان totalPages صحيح)
+                  return const SizedBox.shrink();
                 }
               },
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              totalPages,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: i == _categoriesPageIndex ? 9 : 7,
-                height: i == _categoriesPageIndex ? 9 : 7,
-                margin: const EdgeInsets.symmetric(horizontal: 3.5),
-                decoration: BoxDecoration(
-                  color: i == _categoriesPageIndex
-                      ? AppColors.washyGreen
-                      : AppColors.grey3,
-                  shape: BoxShape.circle,
+          // عرض النقاط فقط إذا كان هناك أكثر من صفحة واحدة
+          if (totalPages > 1) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                totalPages,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: i == _categoriesPageIndex ? 9 : 7,
+                  height: i == _categoriesPageIndex ? 9 : 7,
+                  margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                  decoration: BoxDecoration(
+                    color: i == _categoriesPageIndex
+                        ? AppColors.washyGreen
+                        : AppColors.grey3,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

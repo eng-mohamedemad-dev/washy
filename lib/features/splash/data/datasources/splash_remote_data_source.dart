@@ -17,8 +17,11 @@ class SplashRemoteDataSourceImpl implements SplashRemoteDataSource {
   @override
   Future<String> fetchServerUrl() async {
     try {
+      // Match Java: IndexActivity.fetchServerUrl() uses BuildConfig.DOMAIN_URL_CONFIG
+      // Java uses: https://washywash-public-config.s3.eu-west-2.amazonaws.com/prod/android/domain/domain_name.json
+      // or staging: https://washywash-public-config.s3.eu-west-2.amazonaws.com/staging/android/domain/domain_name.json
       final response = await client.get(
-        Uri.parse(AppConstants.baseUrl),
+        Uri.parse(AppConstants.domainConfigUrl),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -27,7 +30,26 @@ class SplashRemoteDataSourceImpl implements SplashRemoteDataSource {
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        return jsonResponse['domain_name'] ?? AppConstants.baseUrl;
+        // Match Java: jsonObject.getString("domain_name")
+        final domainName = jsonResponse['domain_name'] as String?;
+        print('[SplashRemoteDataSource] Config file response: domain_name = $domainName');
+        
+        if (domainName != null && domainName.isNotEmpty) {
+          // Ensure URL ends with /api/ like Java expects
+          String url = domainName;
+          if (!url.endsWith('/')) {
+            url += '/';
+          }
+          if (!url.endsWith('api/')) {
+            url += 'api/';
+          }
+          print('[SplashRemoteDataSource] ✅ Resolved server URL: $url');
+          return url;
+        }
+        
+        // Fallback to hardcoded staging URL (matching Java BuildConfig.SERVER_URL)
+        print('[SplashRemoteDataSource] ⚠️ No domain_name in config, using fallback: ${AppConstants.baseUrl}');
+        return AppConstants.baseUrl;
       } else {
         throw ServerException('Failed to fetch server URL: ${response.statusCode}');
       }

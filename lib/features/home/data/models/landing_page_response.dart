@@ -46,14 +46,16 @@ class BannerItem {
 
 class LandingItem {
   final String? title;
-  final String? image;
+  final String? image; // هذا يحتوي على URL الصورة من الباك إند (من حقل 'icon' في JSON)
   final String? deeplink;
 
   LandingItem({this.title, this.image, this.deeplink});
 
   factory LandingItem.fromJson(Map<String, dynamic> json) => LandingItem(
         title: json['title'] as String? ?? json['name'] as String?,
-        image: json['image'] as String?,
+        // CRITICAL: الباك إند يرجع الحقل باسم 'icon' وليس 'image'
+        // من JSON: "icon": "https://storage.washywash.com/image/catalog/Landing page/icons8-shirt-64.png"
+        image: json['icon'] as String? ?? json['image'] as String?,
         deeplink: json['deeplink'] as String? ?? json['deep_link'] as String?,
       );
 }

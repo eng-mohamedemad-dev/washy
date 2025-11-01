@@ -46,8 +46,12 @@ class SplashLocalDataSourceImpl implements SplashLocalDataSource {
   @override
   Future<void> setServerUrl(String url) async {
     try {
+      print('[SplashLocalDataSource] Saving server URL: $url (key: ${AppConstants.keyServerUrl})');
       await sharedPreferences.setString(AppConstants.keyServerUrl, url);
+      final saved = sharedPreferences.getString(AppConstants.keyServerUrl);
+      print('[SplashLocalDataSource] ✅ Server URL saved successfully. Verified: $saved');
     } catch (e) {
+      print('[SplashLocalDataSource] ❌ Error saving server URL: $e');
       throw CacheException('Failed to set server URL: $e');
     }
   }

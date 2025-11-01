@@ -46,7 +46,9 @@ class AppConstants {
   static const String englishLanguage = 'en';
 
   // SharedPreferences Keys
-  static const String keyServerUrl = 'server_url';
+  // Match Java: SharedPreferenceManager uses "SERVER_URL" key in "APP_CONFIG" SharedPreferences file
+  // Flutter uses default SharedPreferences, so we use same key name "SERVER_URL" for compatibility
+  static const String keyServerUrl = 'SERVER_URL';
   static const String keyWalkThroughConsumed = 'walk_through_consumed';
   static const String keyUserLoggedIn = 'user_logged_in';
   static const String keyUserLoggedInSkipped = 'user_logged_in_skipped';
