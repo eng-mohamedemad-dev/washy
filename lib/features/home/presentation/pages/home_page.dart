@@ -25,7 +25,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late TabController _tabController;
   int selectedTabIndex = 0;
@@ -118,6 +118,7 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: categories.length, vsync: this);
     final prefs = di.getIt<SharedPreferences>();
     final saved = prefs.getString('server_url');
@@ -134,10 +135,35 @@ class _HomePageState extends State<HomePage>
       }
     });
     _loadVersion();
+    _loadNotificationCount(); // Load notification count on init
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Update notification count when app resumes (matching Java onResume behavior)
+    if (state == AppLifecycleState.resumed) {
+      _loadNotificationCount();
+    }
+  }
+
+  /// Load notification count from API (matching Java onResume behavior)
+  Future<void> _loadNotificationCount() async {
+    try {
+      final api = di.getIt<HomeApiService>();
+      final count = await api.getNotificationCount();
+      if (mounted) {
+        setState(() {
+          notificationCount = count;
+        });
+      }
+    } catch (e) {
+      print('[HomePage] Error loading notification count: $e');
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     _bannerController.dispose();
     _categoriesController.dispose();
@@ -165,8 +191,12 @@ class _HomePageState extends State<HomePage>
     try {
       final uri = Uri.parse(url);
       // Encode path segments to handle spaces (مثل: "/Landing page/" -> "/Landing%20page/")
-      final encodedPath = uri.pathSegments.map((segment) => Uri.encodeComponent(segment)).join('/');
-      final encodedPathWithSlashes = uri.path.isEmpty ? '' : '/$encodedPath${uri.path.endsWith('/') ? '/' : ''}';
+      final encodedPath = uri.pathSegments
+          .map((segment) => Uri.encodeComponent(segment))
+          .join('/');
+      final encodedPathWithSlashes = uri.path.isEmpty
+          ? ''
+          : '/$encodedPath${uri.path.endsWith('/') ? '/' : ''}';
       return uri.replace(path: encodedPathWithSlashes).toString();
     } catch (e) {
       // Fallback: simple space encoding if URI parsing fails
@@ -179,10 +209,15 @@ class _HomePageState extends State<HomePage>
       final api = di.getIt<HomeApiService>();
       final res = await api.fetchLanding();
       final homeRes = await api.fetchHomePage();
+
+      // Load notification count
+      final notifCount = await api.getNotificationCount();
+
       setState(() {
         _banners = res.data?.bannersItems ?? [];
         _landingItems = res.data?.landingItems ?? [];
         _categories = homeRes.data?.categories ?? [];
+        notificationCount = notifCount;
         _isLoading = false;
       });
       // Debug: التأكد من البيانات القادمة من API
@@ -360,7 +395,7 @@ class _HomePageState extends State<HomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _isLoading ? const SizedBox(height: 220) : _buildBannerSlider(),
+                _isLoading ? const SizedBox(height: 170) : _buildBannerSlider(),
                 _buildTopCategoriesGrid(),
                 const SizedBox(height: 8),
                 _buildQuickOrderSection(),
@@ -409,7 +444,11 @@ class _HomePageState extends State<HomePage>
       automaticallyImplyLeading: false,
       leadingWidth: 56,
       leading: IconButton(
-        onPressed: () => Navigator.pushNamed(context, '/notifications'),
+        onPressed: () async {
+          await Navigator.pushNamed(context, '/notifications');
+          // Refresh notification count when returning from notifications page
+          _loadNotificationCount();
+        },
         icon: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -500,53 +539,56 @@ class _HomePageState extends State<HomePage>
             'assets/images/background_intro_page3.png',
           ];
     return SizedBox(
-      height: 240,
-      child: Column(
+      height: 170, // تقليل الـ height إلى 170
+      child: Stack(
         children: [
-          Expanded(
-            child: PageView.builder(
-              controller: _bannerController,
-              itemCount: banners.length,
-              onPageChanged: (i) => setState(() => _bannerIndex = i),
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14.0, vertical: 10),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: banners[index].startsWith('http')
-                        ? Image.network(
-                            banners[index],
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(color: AppColors.grey3),
-                          )
-                        : Image.asset(
-                            banners[index],
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(color: AppColors.grey3),
-                          ),
-                  ),
-                );
-              },
-            ),
+          PageView.builder(
+            controller: _bannerController,
+            itemCount: banners.length,
+            onPageChanged: (i) => setState(() => _bannerIndex = i),
+            itemBuilder: (context, index) {
+              return Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: banners[index].startsWith('http')
+                      ? Image.network(
+                          banners[index],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: AppColors.grey3),
+                        )
+                      : Image.asset(
+                          banners[index],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: AppColors.grey3),
+                        ),
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              banners.length,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: i == _bannerIndex ? 9 : 7,
-                height: i == _bannerIndex ? 9 : 7,
-                margin: const EdgeInsets.symmetric(horizontal: 3.5),
-                decoration: BoxDecoration(
-                  color: i == _bannerIndex
-                      ? AppColors.washyGreen
-                      : AppColors.grey3,
-                  shape: BoxShape.circle,
+          // عرض النقاط داخل الصور في الأسفل (overlay)
+          Positioned(
+            bottom: 28, // رفع النقاط 20 بكسل إلى الأعلى (من 8 إلى 28)
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                banners.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: i == _bannerIndex ? 9 : 7,
+                  height: i == _bannerIndex ? 9 : 7,
+                  margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                  decoration: BoxDecoration(
+                    color: i == _bannerIndex
+                        ? AppColors.washyGreen
+                        : AppColors.grey3,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
             ),
@@ -688,11 +730,10 @@ class _HomePageState extends State<HomePage>
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 16),
               child: Center(
-                child: Image.asset('assets/images/washy_wash_word_white.png',
-                    height: 42, fit: BoxFit.contain),
+                child: Image.asset('assets/images/login_logo.png',
+                    height: 70, fit: BoxFit.contain),
               ),
             ),
-            const Divider(height: 1),
             Expanded(
               child: ListView(
                 children: [
@@ -810,7 +851,8 @@ class _HomePageState extends State<HomePage>
         ? _landingItems
             .map((e) => {
                   'title': e.title ?? '',
-                  'image': e.image ?? '', // URL كامل من الباك إند (مثل: https://storage.washywash.com/image/...)
+                  'image': e.image ??
+                      '', // URL كامل من الباك إند (مثل: https://storage.washywash.com/image/...)
                 })
             .toList()
         : [
@@ -882,7 +924,8 @@ class _HomePageState extends State<HomePage>
     final page2Items = allItems.length > 8
         ? allItems.skip(8).toList() // الصفحة الثانية: الباقي إذا كان > 8
         : <Map<String, dynamic>>[]; // فارغة إذا كان ≤ 8
-    final totalPages = page2Items.isEmpty ? 1 : 2; // صفحة واحدة إذا كان ≤ 8 عناصر
+    final totalPages =
+        page2Items.isEmpty ? 1 : 2; // صفحة واحدة إذا كان ≤ 8 عناصر
 
     Widget _buildCategoryItem(item) {
       return GestureDetector(
@@ -911,8 +954,8 @@ class _HomePageState extends State<HomePage>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: 100, // تكبير العرض فقط 5 بكسل (من 60 إلى 65)
+              height: 65, // الارتفاع كما كان (60)
               decoration: BoxDecoration(
                 color: AppColors.greyBlue,
                 borderRadius: BorderRadius.circular(12),
@@ -929,19 +972,22 @@ class _HomePageState extends State<HomePage>
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Image.network(
-                        _encodeImageUrl(item['image'] as String), // Encode spaces in URL path (مثل: "Landing page" -> "Landing%20page")
+                        _encodeImageUrl(item['image']
+                            as String), // Encode spaces in URL path (مثل: "Landing page" -> "Landing%20page")
                         fit: BoxFit.contain,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
                           return const Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.washyBlue),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.washyBlue),
                             ),
                           );
                         },
                         errorBuilder: (c, e, s) {
-                          print('[HomePage] Image load error: ${item['image']}, error: $e');
+                          print(
+                              '[HomePage] Image load error: ${item['image']}, error: $e');
                           return const Icon(
                             Icons.image_not_supported,
                             color: AppColors.washyBlue,
@@ -983,10 +1029,10 @@ class _HomePageState extends State<HomePage>
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
-                fontSize: 14,
+                fontSize: 12, // تصغير من 14 إلى 12
                 height: 1.2,
                 color: AppColors.colorTitleBlack,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w300,
               ),
             )
           ],
@@ -995,19 +1041,23 @@ class _HomePageState extends State<HomePage>
     }
 
     Widget _buildCategoryGrid(List items) {
-      return GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        itemCount: items.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 0.65,
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return Directionality(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: items.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            childAspectRatio: 0.65,
+          ),
+          itemBuilder: (context, index) {
+            return _buildCategoryItem(items[index]);
+          },
         ),
-        itemBuilder: (context, index) {
-          return _buildCategoryItem(items[index]);
-        },
       );
     }
 
@@ -1017,45 +1067,52 @@ class _HomePageState extends State<HomePage>
         children: [
           SizedBox(
             height: 240,
-            child: PageView.builder(
-              controller: _categoriesController,
-              itemCount: totalPages,
-              onPageChanged: (index) =>
-                  setState(() => _categoriesPageIndex = index),
-              itemBuilder: (context, pageIndex) {
-                if (pageIndex == 0) {
-                  return _buildCategoryGrid(page1Items);
-                } else if (pageIndex == 1 && page2Items.isNotEmpty) {
-                  return _buildCategoryGrid(page2Items);
-                } else {
-                  // Fallback: صفحة فارغة (يجب ألا يحدث إذا كان totalPages صحيح)
-                  return const SizedBox.shrink();
-                }
-              },
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _categoriesController,
+                  itemCount: totalPages,
+                  onPageChanged: (index) =>
+                      setState(() => _categoriesPageIndex = index),
+                  itemBuilder: (context, pageIndex) {
+                    if (pageIndex == 0) {
+                      return _buildCategoryGrid(page1Items);
+                    } else if (pageIndex == 1 && page2Items.isNotEmpty) {
+                      return _buildCategoryGrid(page2Items);
+                    } else {
+                      // Fallback: صفحة فارغة (يجب ألا يحدث إذا كان totalPages صحيح)
+                      return const SizedBox.shrink();
+                    }
+                  },
+                ),
+                // عرض النقاط داخل الصور في الأسفل (overlay)
+                if (totalPages > 1)
+                  Positioned(
+                    bottom: 8,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        totalPages,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: i == _categoriesPageIndex ? 9 : 7,
+                          height: i == _categoriesPageIndex ? 9 : 7,
+                          margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                          decoration: BoxDecoration(
+                            color: i == _categoriesPageIndex
+                                ? AppColors.washyGreen
+                                : AppColors.grey3,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          // عرض النقاط فقط إذا كان هناك أكثر من صفحة واحدة
-          if (totalPages > 1) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                totalPages,
-                (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: i == _categoriesPageIndex ? 9 : 7,
-                  height: i == _categoriesPageIndex ? 9 : 7,
-                  margin: const EdgeInsets.symmetric(horizontal: 3.5),
-                  decoration: BoxDecoration(
-                    color: i == _categoriesPageIndex
-                        ? AppColors.washyGreen
-                        : AppColors.grey3,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1063,36 +1120,42 @@ class _HomePageState extends State<HomePage>
 
   /// قسم "طلب سريع" ببطاقتين
   Widget _buildQuickOrderSection() {
+    final localizations = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.only(
+          left: 16, right: 16, bottom: 8), // إزالة top padding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min, // لتقليل المساحة
         children: [
-          Text(
-            'Quick Order',
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.colorTitleBlack,
+          Transform.translate(
+            offset: const Offset(0, -10), // رفع النص 10 بكسل إلى الأعلى
+            child: Text(
+              localizations.t('quick_order'),
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 18, // تصغير من 22 إلى 20
+                fontWeight: FontWeight.bold,
+                color: AppColors.colorTitleBlack,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
+          // إزالة SizedBox تماماً لإزالة أي مسافة
           Row(
             children: [
               Expanded(
                 child: _quickCard(
                   image: 'assets/images/ic_express_delivery.png',
-                  title: 'Skip item selection',
-                  subtitle: 'Our Laundry agent will come get your laundry',
+                  title: localizations.t('express_delivery'),
+                  subtitle: localizations.t('express_delivery_subtitle'),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _quickCard(
                   image: 'assets/images/ic_skip_new.png',
-                  title: 'Express Delivery',
-                  subtitle: 'Receive your laundry twice as fast',
+                  title: localizations.t('skip_item_selection'),
+                  subtitle: localizations.t('skip_item_selection_subtitle'),
                 ),
               ),
             ],
@@ -1108,12 +1171,15 @@ class _HomePageState extends State<HomePage>
       required String subtitle}) {
     return GestureDetector(
         onTap: () {
-          if (title.contains('مستعجل') ||
-              title.contains('اطلب') ||
-              title.contains('Order')) {
-            Navigator.pushNamed(context, '/new-order');
-          } else {
+          final localizations = AppLocalizations.of(context);
+          // Check if it's the Express Delivery card (first card now)
+          if (title == localizations.t('express_delivery') ||
+              title.contains('اكسبرس') ||
+              title.contains('Express')) {
             Navigator.pushNamed(context, '/express-delivery');
+          } else {
+            // Skip item selection card (second card now)
+            Navigator.pushNamed(context, '/new-order');
           }
         },
         child: Container(
@@ -1138,37 +1204,43 @@ class _HomePageState extends State<HomePage>
                 child: Image.asset(
                   image,
                   fit: BoxFit.cover,
-                  height: 150,
+                  height: 150, // إرجاع الحجم الأصلي
                   width: double.infinity,
                   errorBuilder: (context, error, stackTrace) =>
                       Container(color: AppColors.grey3),
                 ),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10), // تصغير padding
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      textAlign: TextAlign.left,
+                      textAlign:
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? TextAlign.right
+                              : TextAlign.left,
                       style: const TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 18,
+                        fontSize: 16, // تصغير من 18 إلى 16
                         fontWeight: FontWeight.bold,
                         color: AppColors.colorTitleBlack,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 5), // تصغير من 6 إلى 5
                     Text(
                       subtitle,
-                      textAlign: TextAlign.left,
+                      textAlign:
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? TextAlign.right
+                              : TextAlign.left,
                       style: const TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 13,
+                        fontSize: 12, // تصغير من 13 إلى 12
                         color: AppColors.grey2,
                       ),
                       maxLines: 2,

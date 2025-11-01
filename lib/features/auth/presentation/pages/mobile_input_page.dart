@@ -21,12 +21,13 @@ class _MobileInputPageState extends State<MobileInputPage> {
   final TextEditingController _phoneController = TextEditingController();
   final FocusNode _phoneFocusNode = FocusNode();
   bool _showValidationError = false;
-  bool _isPhoneValid = false; // Local state for immediate UI updates (matching Java enableView/disableView)
+  bool _isPhoneValid =
+      false; // Local state for immediate UI updates (matching Java enableView/disableView)
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize phone valid state (matching Java: disableView on init)
     _isPhoneValid = false;
     print('[MobileInputPage] initState: _isPhoneValid initialized to false');
@@ -51,33 +52,34 @@ class _MobileInputPageState extends State<MobileInputPage> {
     if (phoneNumber.isEmpty) {
       return false;
     }
-    
+
     const int countryPhoneNumberCharacters = 10;
     final trimmed = phoneNumber.trim();
-    
+
     bool isValid;
     if (trimmed.startsWith('7')) {
-      isValid = trimmed.length == (countryPhoneNumberCharacters - 1); // 9 digits
+      isValid =
+          trimmed.length == (countryPhoneNumberCharacters - 1); // 9 digits
     } else {
       isValid = trimmed.length == countryPhoneNumberCharacters; // 10 digits
     }
-    
+
     print('[MobileInputPage] _calculateIsPhoneValid: "$trimmed" -> $isValid');
     return isValid;
   }
 
-
   void _handleCheckMobile() {
     final phoneNumber = _phoneController.text.trim();
-    
+
     // Get current BLoC state to check validation
     final currentState = context.read<LoginBloc>().state;
-    final isPhoneValid = currentState is LoginPhoneInputState 
-        ? currentState.isPhoneValid 
+    final isPhoneValid = currentState is LoginPhoneInputState
+        ? currentState.isPhoneValid
         : false;
-    
-    print('[MobileInputPage] _handleCheckMobile called with: $phoneNumber, isValid=$isPhoneValid');
-    
+
+    print(
+        '[MobileInputPage] _handleCheckMobile called with: $phoneNumber, isValid=$isPhoneValid');
+
     // Early return if phone is not valid (shouldn't happen due to AbsorbPointer, but double check)
     if (!isPhoneValid || phoneNumber.isEmpty) {
       print('[MobileInputPage] Phone validation failed - showing error');
@@ -94,7 +96,8 @@ class _MobileInputPageState extends State<MobileInputPage> {
       _showValidationError = false;
     });
 
-    print('[MobileInputPage] Dispatching CheckMobileRequested event with phone: $phoneNumber');
+    print(
+        '[MobileInputPage] Dispatching CheckMobileRequested event with phone: $phoneNumber');
     // Call check mobile API (via BLoC) - matching Java callCheckMobile
     // Important: This should NOT navigate back - it should call API and navigate based on response
     context.read<LoginBloc>().add(
@@ -115,7 +118,7 @@ class _MobileInputPageState extends State<MobileInputPage> {
         },
         listener: (context, state) {
           print('[MobileInputPage] BLoC state changed: ${state.runtimeType}');
-          
+
           if (state is LoginLoading) {
             // Show loading dialog
             showDialog(
@@ -168,7 +171,8 @@ class _MobileInputPageState extends State<MobileInputPage> {
               );
             } else if (state is LoginPhoneInputState) {
               // Update local state when phone input state changes
-              if (state.validationMessage != null && state.validationMessage!.isNotEmpty) {
+              if (state.validationMessage != null &&
+                  state.validationMessage!.isNotEmpty) {
                 setState(() {
                   _showValidationError = true;
                 });
@@ -200,9 +204,10 @@ class _MobileInputPageState extends State<MobileInputPage> {
               isPhoneValid: _calculateIsPhoneValid(currentPhone),
             );
           }
-          
+
           // Debug print to track state changes
-          debugPrint('[MobileInputPage Builder] State: ${state.runtimeType}, Phone: ${phoneInputState.phoneNumber}, Local isValid: $_isPhoneValid (BLoC: ${phoneInputState.isPhoneValid})');
+          debugPrint(
+              '[MobileInputPage Builder] State: ${state.runtimeType}, Phone: ${phoneInputState.phoneNumber}, Local isValid: $_isPhoneValid (BLoC: ${phoneInputState.isPhoneValid})');
 
           return SafeArea(
             child: Stack(
@@ -285,20 +290,24 @@ class _MobileInputPageState extends State<MobileInputPage> {
                               controller: _phoneController,
                               focusNode: _phoneFocusNode,
                               isMobileMode: true,
-                              autoFocus: false, // Will be focused programmatically
+                              autoFocus:
+                                  false, // Will be focused programmatically
                               phoneNumber: phoneInputState.phoneNumber,
-                              isPhoneValid: _isPhoneValid, // Use local state for immediate UI updates
+                              isPhoneValid:
+                                  _isPhoneValid, // Use local state for immediate UI updates
                               onPhoneNumberChanged: (value) {
                                 // CRITICAL: This callback is called immediately when user types (matching Java onTextChanged)
                                 // Matching Java: validatePhoneNumber logic called from onTextChanged
-                                print('[MobileInputPage] ⚡ onPhoneNumberChanged FIRED: "$value", controller.text="${_phoneController.text}"');
-                                
+                                print(
+                                    '[MobileInputPage] ⚡ onPhoneNumberChanged FIRED: "$value", controller.text="${_phoneController.text}"');
+
                                 // Calculate validation immediately (matching Java validatePhoneNumber)
                                 final trimmed = value.trim();
                                 final isValid = _calculateIsPhoneValid(trimmed);
-                                
-                                print('[MobileInputPage] ⚡ Validation: "$trimmed" -> isValid=$isValid');
-                                
+
+                                print(
+                                    '[MobileInputPage] ⚡ Validation: "$trimmed" -> isValid=$isValid');
+
                                 // Update state immediately for UI feedback (matching Java enableView/disableView)
                                 // enableView: alpha=1.0, enabled=true, clickable=true, background=blue_button_continue
                                 // disableView: alpha=0.3, enabled=false, clickable=false, background=gray_button_continue
@@ -307,13 +316,15 @@ class _MobileInputPageState extends State<MobileInputPage> {
                                     _isPhoneValid = isValid;
                                     _showValidationError = false;
                                   });
-                                  print('[MobileInputPage] ⚡ setState called: _isPhoneValid=$isValid');
+                                  print(
+                                      '[MobileInputPage] ⚡ setState called: _isPhoneValid=$isValid');
                                 }
-                                
+
                                 // Send to BLoC for state management (async, doesn't block UI update)
                                 if (mounted && context.mounted) {
                                   context.read<LoginBloc>().add(
-                                        LoginPhoneNumberChanged(phoneNumber: trimmed),
+                                        LoginPhoneNumberChanged(
+                                            phoneNumber: trimmed),
                                       );
                                 }
                               },
@@ -348,24 +359,31 @@ class _MobileInputPageState extends State<MobileInputPage> {
                             // This matches Java's validatePhoneNumber -> enableView/disableView pattern
                             Builder(
                               builder: (context) {
-                                print('[MobileInputPage ContinueButton] Builder rebuild: _isPhoneValid=$_isPhoneValid');
+                                print(
+                                    '[MobileInputPage ContinueButton] Builder rebuild: _isPhoneValid=$_isPhoneValid');
                                 return Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     // Continue button - matching Java Continue_ImageView (ImageView with drawable background)
                                     // Size: 50dp x 50dp, position: alignParentEnd, margin 27dp, marginTop 6dp
                                     AbsorbPointer(
-                                      absorbing: !_isPhoneValid, // Disable interaction when not valid (matching Java setClickable(false))
+                                      absorbing:
+                                          !_isPhoneValid, // Disable interaction when not valid (matching Java setClickable(false))
                                       child: GestureDetector(
-                                        onTap: _isPhoneValid ? () {
-                                          print('[MobileInputPage] Continue button tapped - phone is valid');
-                                          _handleCheckMobile();
-                                        } : null,
+                                        onTap: _isPhoneValid
+                                            ? () {
+                                                print(
+                                                    '[MobileInputPage] Continue button tapped - phone is valid');
+                                                _handleCheckMobile();
+                                              }
+                                            : null,
                                         behavior: HitTestBehavior.opaque,
                                         child: Padding(
-                                          padding: const EdgeInsets.only(right: 27, top: 6),
+                                          padding: const EdgeInsets.only(
+                                              right: 27, top: 6),
                                           child: AnimatedContainer(
-                                            duration: const Duration(milliseconds: 200),
+                                            duration: const Duration(
+                                                milliseconds: 200),
                                             width: 50,
                                             height: 50,
                                             decoration: BoxDecoration(
@@ -375,30 +393,41 @@ class _MobileInputPageState extends State<MobileInputPage> {
                                                   ? const LinearGradient(
                                                       // Matching Java blue_button_continue.xml: angle="74" degrees
                                                       begin: Alignment.topLeft,
-                                                      end: Alignment.bottomRight,
+                                                      end:
+                                                          Alignment.bottomRight,
                                                       colors: [
-                                                        Color(0xFF73D9A1), // Exact match: startColor from Java
-                                                        Color(0xFF62B5B3), // Exact match: endColor from Java
+                                                        Color(
+                                                            0xFF73D9A1), // Exact match: startColor from Java
+                                                        Color(
+                                                            0xFF62B5B3), // Exact match: endColor from Java
                                                       ],
                                                     )
                                                   : null,
                                               // Matching Java: gray_button_continue.xml solid color when disabled
                                               // solid android:color="@color/grey_3" = #ECEEF0
-                                              color: _isPhoneValid ? null : const Color(0xFFECEEF0), // Exact grey_3 from Java colors.xml
+                                              color: _isPhoneValid
+                                                  ? null
+                                                  : const Color(
+                                                      0xFFECEEF0), // Exact grey_3 from Java colors.xml
                                               // Matching Java: corners android:radius="4dp"
-                                              borderRadius: BorderRadius.circular(4),
-                                              shape: BoxShape.rectangle, // Matching Java rectangle shape with rounded corners
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              shape: BoxShape
+                                                  .rectangle, // Matching Java rectangle shape with rounded corners
                                             ),
                                             // Matching Java: enableView sets alpha=1.0, disableView sets alpha=0.3
                                             child: Opacity(
-                                              opacity: _isPhoneValid ? 1.0 : 0.3,
+                                              opacity:
+                                                  _isPhoneValid ? 1.0 : 0.3,
                                               child: Center(
                                                 child: Image.asset(
                                                   'assets/images/go_to_next_page_icon.png',
                                                   width: 24,
                                                   height: 24,
-                                                  color: Colors.white, // White icon on colored background
-                                                  errorBuilder: (context, error, stackTrace) {
+                                                  color: Colors
+                                                      .white, // White icon on colored background
+                                                  errorBuilder: (context, error,
+                                                      stackTrace) {
                                                     return const Icon(
                                                       Icons.arrow_forward,
                                                       color: Colors.white,

@@ -43,18 +43,21 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     // Java checks: if phone starts with "7", expected length is 9, otherwise 10
     const int countryPhoneNumberCharacters = 10;
     bool isValid = false;
-    
+
     if (event.phoneNumber.isNotEmpty) {
       if (event.phoneNumber.startsWith('7')) {
-        isValid = event.phoneNumber.length == (countryPhoneNumberCharacters - 1); // 9 digits
+        isValid = event.phoneNumber.length ==
+            (countryPhoneNumberCharacters - 1); // 9 digits
       } else {
-        isValid = event.phoneNumber.length == countryPhoneNumberCharacters; // 10 digits
+        isValid = event.phoneNumber.length ==
+            countryPhoneNumberCharacters; // 10 digits
       }
     }
 
     String? validationMessage;
     if (event.phoneNumber.isNotEmpty && !isValid) {
-      validationMessage = null; // Hide validation message when typing (matching Java)
+      validationMessage =
+          null; // Hide validation message when typing (matching Java)
     }
 
     emit(currentState.copyWith(
@@ -62,8 +65,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       isPhoneValid: isValid,
       validationMessage: validationMessage,
     ));
-    
-    print('[LoginBloc] Phone changed: ${event.phoneNumber} -> isValid=$isValid');
+
+    print(
+        '[LoginBloc] Phone changed: ${event.phoneNumber} -> isValid=$isValid');
   }
 
   /// Handle check mobile requested (matching Java callCheckMobile in SignUpActivity)
@@ -75,7 +79,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     // تنسيق رقم الهاتف وفق تطبيق الجافا: رقم محلي يبدأ بـ 0
     final rawDigits = event.phoneNumber.replaceAll(RegExp('[^0-9]'), '');
-    final formattedPhone = rawDigits.startsWith('0') ? rawDigits : '0$rawDigits';
+    final formattedPhone =
+        rawDigits.startsWith('0') ? rawDigits : '0$rawDigits';
 
     print('[LoginBloc] Checking mobile (SignUp): $formattedPhone');
 
@@ -139,7 +144,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     // تنسيق رقم الهاتف وفق تطبيق الجافا: رقم محلي يبدأ بـ 0 (بدون +962)
     final rawDigits = event.phoneNumber.replaceAll(RegExp('[^0-9]'), '');
-    final formattedPhone = rawDigits.startsWith('0') ? rawDigits : '0$rawDigits';
+    final formattedPhone =
+        rawDigits.startsWith('0') ? rawDigits : '0$rawDigits';
 
     print('[LoginBloc] Checking mobile: $formattedPhone');
 
