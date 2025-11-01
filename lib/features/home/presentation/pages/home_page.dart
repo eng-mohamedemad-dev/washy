@@ -5,8 +5,10 @@ import 'package:wash_flutter/core/constants/app_constants.dart';
 import 'package:wash_flutter/features/webview/presentation/pages/webview_page.dart';
 import 'package:wash_flutter/features/home/domain/entities/home_service.dart';
 import 'package:wash_flutter/features/home/data/services/home_api_service.dart';
-import 'package:wash_flutter/features/home/data/models/landing_page_response.dart' as landing;
-import 'package:wash_flutter/features/home/data/models/home_page_response.dart' as home;
+import 'package:wash_flutter/features/home/data/models/landing_page_response.dart'
+    as landing;
+import 'package:wash_flutter/features/home/data/models/home_page_response.dart'
+    as home;
 import 'package:wash_flutter/injection_container.dart' as di;
 import 'package:wash_flutter/l10n/app_localizations.dart';
 import 'package:wash_flutter/core/config/locale_notifier.dart';
@@ -41,6 +43,9 @@ class _HomePageState extends State<HomePage>
   // Banner slider state
   late final PageController _bannerController;
   int _bannerIndex = 0;
+  // Categories grid state
+  late final PageController _categoriesController;
+  int _categoriesPageIndex = 0;
   String _appVersion = '';
 
   // Mock data for home services
@@ -120,6 +125,7 @@ class _HomePageState extends State<HomePage>
         ? (saved.endsWith('/') ? saved : '$saved/')
         : 'https://washywash.net/';
     _bannerController = PageController(viewportFraction: 0.92);
+    _categoriesController = PageController();
     _loadLanding();
     _loadVersion();
   }
@@ -128,6 +134,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     _tabController.dispose();
     _bannerController.dispose();
+    _categoriesController.dispose();
     super.dispose();
   }
 
@@ -164,7 +171,8 @@ class _HomePageState extends State<HomePage>
   void _openEcoClean() async {
     try {
       // استخدم الدومين الفعلي المحفوظ (_serverBaseUrl) مثل الجافا
-      final root = _serverBaseUrl.endsWith('/') ? _serverBaseUrl : '$_serverBaseUrl/';
+      final root =
+          _serverBaseUrl.endsWith('/') ? _serverBaseUrl : '$_serverBaseUrl/';
       final ecoUrl = root + 'ecoclean-mob';
       if (mounted) {
         Navigator.of(context).pop();
@@ -178,7 +186,8 @@ class _HomePageState extends State<HomePage>
         );
       }
     } catch (_) {
-      final root = _serverBaseUrl.endsWith('/') ? _serverBaseUrl : '$_serverBaseUrl/';
+      final root =
+          _serverBaseUrl.endsWith('/') ? _serverBaseUrl : '$_serverBaseUrl/';
       final ecoUrl = root + 'ecoclean-mob';
       final uri = Uri.tryParse(ecoUrl);
       if (uri != null) {
@@ -193,7 +202,8 @@ class _HomePageState extends State<HomePage>
       barrierDismissible: true,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           insetPadding: const EdgeInsets.symmetric(horizontal: 24),
           child: Container(
             decoration: BoxDecoration(
@@ -210,7 +220,8 @@ class _HomePageState extends State<HomePage>
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.close, color: AppColors.colorActionBlack),
+                      child: const Icon(Icons.close,
+                          color: AppColors.colorActionBlack),
                     ),
                   ],
                 ),
@@ -230,14 +241,16 @@ class _HomePageState extends State<HomePage>
                   'assets/images/ic_invite_friends.png',
                   height: 140,
                   fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) => const Icon(Icons.share, size: 72, color: AppColors.washyBlue),
+                  errorBuilder: (c, e, s) => const Icon(Icons.share,
+                      size: 72, color: AppColors.washyBlue),
                 ),
                 const SizedBox(height: 18),
                 _shareButton(
                   title: 'شارك بواسطة فيسبوك',
                   color: AppColors.progressBarBlueColor,
                   onTap: () async {
-                    final url = Uri.parse('https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(AppConstants.googlePlayUrl)}');
+                    final url = Uri.parse(
+                        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(AppConstants.googlePlayUrl)}');
                     Navigator.pop(context);
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   },
@@ -248,8 +261,10 @@ class _HomePageState extends State<HomePage>
                   color: AppColors.colorRedBadge,
                   onTap: () async {
                     final subject = Uri.encodeComponent('WashyWash App');
-                    final body = Uri.encodeComponent('جرّب تطبيق WashyWash: ${AppConstants.googlePlayUrl}');
-                    final url = Uri.parse('mailto:?subject=$subject&body=$body');
+                    final body = Uri.encodeComponent(
+                        'جرّب تطبيق WashyWash: ${AppConstants.googlePlayUrl}');
+                    final url =
+                        Uri.parse('mailto:?subject=$subject&body=$body');
                     Navigator.pop(context);
                     await launchUrl(url, mode: LaunchMode.platformDefault);
                   },
@@ -260,8 +275,10 @@ class _HomePageState extends State<HomePage>
                   color: AppColors.washyGreen,
                   onTap: () async {
                     final subject = Uri.encodeComponent('WashyWash App');
-                    final body = Uri.encodeComponent('جرّب تطبيق WashyWash: ${AppConstants.googlePlayUrl}');
-                    final url = Uri.parse('mailto:?subject=$subject&body=$body');
+                    final body = Uri.encodeComponent(
+                        'جرّب تطبيق WashyWash: ${AppConstants.googlePlayUrl}');
+                    final url =
+                        Uri.parse('mailto:?subject=$subject&body=$body');
                     Navigator.pop(context);
                     await launchUrl(url, mode: LaunchMode.platformDefault);
                   },
@@ -274,7 +291,10 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _shareButton({required String title, required Color color, required VoidCallback onTap}) {
+  Widget _shareButton(
+      {required String title,
+      required Color color,
+      required VoidCallback onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -282,7 +302,8 @@ class _HomePageState extends State<HomePage>
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           elevation: 0,
         ),
         child: Text(
@@ -303,6 +324,7 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: AppColors.colorBackground,
+      appBar: _buildAppBar(),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -310,18 +332,9 @@ class _HomePageState extends State<HomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildToolbar(),
-                _isLoading
-                    ? const SizedBox(height: 220)
-                    : _buildBannerSlider(),
+                _isLoading ? const SizedBox(height: 220) : _buildBannerSlider(),
                 _buildTopCategoriesGrid(),
                 const SizedBox(height: 8),
-                _buildSearchAndFilter(),
-                _buildCategories(),
-                SizedBox(
-                  height: 420,
-                  child: _buildServicesList(),
-                ),
                 _buildQuickOrderSection(),
                 const SizedBox(height: 24),
               ],
@@ -329,13 +342,7 @@ class _HomePageState extends State<HomePage>
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHurryModeCard(),
-                _buildBottomBar(),
-              ],
-            ),
+            child: _buildHurryModeCard(),
           ),
         ],
       ),
@@ -343,82 +350,111 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// Toolbar (مطابق للشكل المطلوب: جرس يسار - شعار واسم - منيو يمين)
-  Widget _buildToolbar() {
-    return Container(
-      height: 90,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.washyBlue, AppColors.washyGreen],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Left: Notifications icon
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/notifications'),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const Icon(
-                      Icons.notifications_none,
-                      color: AppColors.white,
-                      size: 26,
-                    ),
-                    if (notificationCount > 0)
-                      Positioned(
-                        right: -4,
-                        top: -4,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: AppColors.colorRedBadge,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '$notificationCount',
-                            style: const TextStyle(
-                              color: AppColors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+  /// AppBar (ثابت - لا يتحرك مع الشاشة: جرس يسار - شعار واسم - منيو يمين)
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      toolbarHeight: 50, // 4.5 سم تقريباً
+      flexibleSpace: Stack(
+        children: [
+          // الخلفية البيضاء
+          Container(
+            decoration: const BoxDecoration(
+              color: AppColors.white,
+            ),
+          ),
+          // التدرج في أول 4 سم من الأعلى
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 30, // 4 سم تقريباً
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Color.fromARGB(255, 51, 144, 110),
               ),
-
-              // Middle: logo + name (مرن لمنع overflow)
-              Expanded(
-                child: Center(
-                  child: Image.asset(
-                    'assets/images/washy_wash_word_white.png',
-                    height: 24,
-                    fit: BoxFit.contain,
+            ),
+          ),
+        ],
+      ),
+      automaticallyImplyLeading: false,
+      leadingWidth: 56,
+      leading: IconButton(
+        onPressed: () => Navigator.pushNamed(context, '/notifications'),
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(
+              Icons.notifications_none,
+              color: Colors.grey[600],
+              size: 26,
+            ),
+            if (notificationCount > 0)
+              Positioned(
+                right: -4,
+                top: -4,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: const BoxDecoration(
+                    color: AppColors.colorRedBadge,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      notificationCount > 99 ? '99+' : '$notificationCount',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                    ),
                   ),
                 ),
               ),
-
-              // Right: menu icon
-              GestureDetector(
-                onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-                child: const Icon(
-                  Icons.menu,
-                  color: AppColors.white,
-                  size: 26,
-                ),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/logo_ww_icon.png',
+            height: 40,
+            width: 40,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(width: 1),
+          Image.asset(
+            'assets/images/washy_wash_word_white.png',
+            height: 14,
+            fit: BoxFit.contain,
+            color: AppColors.greyDark, // تغيير اللون ليكون مرئي على خلفية بيضاء
+          ),
+        ],
+      ),
+      centerTitle: true,
+      actions: [
+        GestureDetector(
+          onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Image.asset(
+              'assets/images/ic_burger_icon.png',
+              width: 26,
+              height: 26,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -446,7 +482,8 @@ class _HomePageState extends State<HomePage>
               onPageChanged: (i) => setState(() => _bannerIndex = i),
               itemBuilder: (context, index) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14.0, vertical: 10),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(22),
                     child: banners[index].startsWith('http')
@@ -478,7 +515,9 @@ class _HomePageState extends State<HomePage>
                 height: i == _bannerIndex ? 9 : 7,
                 margin: const EdgeInsets.symmetric(horizontal: 3.5),
                 decoration: BoxDecoration(
-                  color: i == _bannerIndex ? AppColors.washyGreen : AppColors.grey3,
+                  color: i == _bannerIndex
+                      ? AppColors.washyGreen
+                      : AppColors.grey3,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -609,7 +648,9 @@ class _HomePageState extends State<HomePage>
                   TextButton(
                     onPressed: () => di.getIt<LocaleNotifier>().toggle(),
                     child: Text(
-                      Localizations.localeOf(context).languageCode == 'ar' ? 'English' : 'العربية',
+                      Localizations.localeOf(context).languageCode == 'ar'
+                          ? 'English'
+                          : 'العربية',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -619,38 +660,49 @@ class _HomePageState extends State<HomePage>
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 16),
               child: Center(
-                child: Image.asset('assets/images/washy_wash_word_white.png', height: 42, fit: BoxFit.contain),
+                child: Image.asset('assets/images/washy_wash_word_white.png',
+                    height: 42, fit: BoxFit.contain),
               ),
             ),
             const Divider(height: 1),
             Expanded(
               child: ListView(
                 children: [
-                  _drawerNavItem(AppLocalizations.of(context).t('home'), selected: true, onTap: () {
+                  _drawerNavItem(AppLocalizations.of(context).t('home'),
+                      selected: true, onTap: () {
                     Navigator.pop(context);
                   }),
-                  _drawerNavItem(AppLocalizations.of(context).t('orders'), onTap: () {
+                  _drawerNavItem(AppLocalizations.of(context).t('orders'),
+                      onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/orders');
                   }),
-                  _drawerNavItem(AppLocalizations.of(context).t('notifications'), onTap: () {
+                  _drawerNavItem(
+                      AppLocalizations.of(context).t('notifications'),
+                      onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/notifications');
                   }),
-                  _drawerNavItem(AppLocalizations.of(context).t('profile'), onTap: () {
+                  _drawerNavItem(AppLocalizations.of(context).t('profile'),
+                      onTap: () {
                     Navigator.pop(context);
                     Navigator.pushNamed(context, '/profile');
                   }),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 24),
                     child: OutlinedButton(
                       onPressed: _openEcoClean,
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.washyBlue),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28)),
                       ),
-                      child: Text(AppLocalizations.of(context).t('what_is_ecoclean'), style: const TextStyle(fontSize: 16, color: AppColors.washyBlue)),
+                      child: Text(
+                          AppLocalizations.of(context).t('what_is_ecoclean'),
+                          style: const TextStyle(
+                              fontSize: 16, color: AppColors.washyBlue)),
                     ),
                   ),
                 ],
@@ -661,7 +713,8 @@ class _HomePageState extends State<HomePage>
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('${AppLocalizations.of(context).t('version')} ${_appVersion.isEmpty ? '—' : _appVersion}',
+                    child: Text(
+                        '${AppLocalizations.of(context).t('version')} ${_appVersion.isEmpty ? '—' : _appVersion}',
                         textAlign: TextAlign.left,
                         style: const TextStyle(color: AppColors.grey2)),
                   ),
@@ -670,7 +723,8 @@ class _HomePageState extends State<HomePage>
                       Navigator.pop(context);
                       Navigator.pushNamed(context, '/terms-and-conditions');
                     },
-                    child: Text(AppLocalizations.of(context).t('terms'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(AppLocalizations.of(context).t('terms'),
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -698,7 +752,8 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _drawerNavItem(String title, {bool selected = false, VoidCallback? onTap}) {
+  Widget _drawerNavItem(String title,
+      {bool selected = false, VoidCallback? onTap}) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       title: Text(
@@ -718,9 +773,10 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// شبكة الخدمات المختصرة (8 أيقونات) تحت السلايدر
+  /// شبكة الخدمات المختصرة (14 أيقونة في صفحتين: 8 + 6)
   Widget _buildTopCategoriesGrid() {
-    final items = _categories.isNotEmpty
+    final localizations = AppLocalizations.of(context);
+    final allItems = _categories.isNotEmpty
         ? _categories
             .map((e) => {
                   'title': e.title ?? '',
@@ -728,105 +784,227 @@ class _HomePageState extends State<HomePage>
                 })
             .toList()
         : [
-            { 'title': 'Car detailing', 'asset': 'assets/images/car_cleaning.png' },
-            { 'title': 'Carpet', 'asset': 'assets/images/ic_recycle_hanger.png' },
-            { 'title': 'Furniture', 'asset': 'assets/images/premium_care.png' },
-            { 'title': 'Clothes', 'asset': 'assets/images/ic_order_status1.png' },
-            { 'title': 'Offers!', 'asset': 'assets/images/ic_redeam.png' },
-            { 'title': 'Tailoring', 'asset': 'assets/images/ic_info_light.png' },
-            { 'title': 'Shoes', 'asset': 'assets/images/ic_intro_page3.png' },
-            { 'title': 'House\ncleaning', 'asset': 'assets/images/ic_place_holder.png' },
+            // الصف الأول: Clothes, Furniture, Carpet, Car detailing
+            {
+              'title': localizations.t('clothes'),
+              'asset': 'assets/imaes icons/Clothes.jpg'
+            },
+            {
+              'title': localizations.t('furniture'),
+              'asset': 'assets/images/Furniture.jpg'
+            },
+            {
+              'title': localizations.t('carpet'),
+              'asset': 'assets/imaes icons/Carpet.jpg'
+            },
+            {
+              'title': localizations.t('car_detailing'),
+              'asset': 'assets/imaes icons/Car detailing.jpg'
+            },
+            // الصف الثاني: House cleaning, Shoes, Tailoring, Offers!
+            {
+              'title': localizations.t('house_cleaning'),
+              'asset': 'assets/imaes icons/House Cleaning.jpg'
+            },
+            {
+              'title': localizations.t('shoes'),
+              'asset': 'assets/imaes icons/Shoes.jpg'
+            },
+            {
+              'title': localizations.t('tailoring'),
+              'asset': 'assets/images/Tailoring.jpg'
+            },
+            {
+              'title': localizations.t('offers'),
+              'asset': 'assets/imaes icons/Offers!.jpg'
+            },
+            // الصفحة الثانية (6 عناصر)
+            {
+              'title': localizations.t('dresses'),
+              'asset': 'assets/imaes icons/Dresses.jpg'
+            },
+            {
+              'title': localizations.t('bags'),
+              'asset': 'assets/imaes icons/Bags.jpg'
+            },
+            {
+              'title': localizations.t('wash_and_fold'),
+              'asset': 'assets/imaes icons/Wash abd Fold Per Kilo.jpg'
+            },
+            {
+              'title': localizations.t('bedding'),
+              'asset': 'assets/imaes icons/Bedding.jpg'
+            },
+            {
+              'title': localizations.t('curtains_cleaning'),
+              'asset': 'assets/imaes icons/Cutains Cleaning.jpg'
+            },
+            {
+              'title': localizations.t('ecoclean'),
+              'asset': 'assets/imaes icons/Ecoclean.jpg'
+            },
           ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: GridView.builder(
-        shrinkWrap: true,
+
+    // تقسيم العناصر إلى صفحتين
+    final page1Items = allItems.take(8).toList(); // الصفحة الأولى: 8 عناصر
+    final page2Items =
+        allItems.skip(8).take(6).toList(); // الصفحة الثانية: 6 عناصر
+    final totalPages = 2;
+
+    Widget _buildCategoryItem(item) {
+      return GestureDetector(
+        onTap: () {
+          final String title = (item['title'] as String?) ?? '';
+          final String asset = (item['asset'] as String?) ?? '';
+
+          // التحقق من اسم الملف للتفريق بين الخدمات
+          if (asset.contains('Furniture.jpg')) {
+            Navigator.pushNamed(context, '/furniture-service');
+            return;
+          }
+          if (title.contains('Express') || title.contains('السريع')) {
+            Navigator.pushNamed(context, '/express-delivery');
+            return;
+          }
+          Navigator.pushNamed(
+            context,
+            '/home-category-details',
+            arguments: {'title': title},
+          );
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: AppColors.greyBlue,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: (item['image'] != null &&
+                      (item['image'] as String).isNotEmpty)
+                  ? Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Image.network(
+                        item['image'] as String,
+                        fit: BoxFit.contain,
+                        errorBuilder: (c, e, s) => const Icon(
+                            Icons.image_not_supported,
+                            color: AppColors.washyBlue,
+                            size: 24),
+                      ),
+                    )
+                  : (item['asset'] != null)
+                      ? Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Transform.scale(
+                            scale: (item['asset'] as String).endsWith('.jpg')
+                                ? 1.5
+                                : 1.0,
+                            child: Image.asset(
+                              item['asset'] as String,
+                              fit: (item['asset'] as String).endsWith('.jpg')
+                                  ? BoxFit.cover
+                                  : BoxFit.contain,
+                              errorBuilder: (c, e, s) => const Icon(
+                                  Icons.image_not_supported,
+                                  color: AppColors.washyBlue,
+                                  size: 24),
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.widgets,
+                          color: AppColors.washyBlue,
+                          size: 24,
+                        ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              item['title'] as String,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 14,
+                height: 1.2,
+                color: AppColors.colorTitleBlack,
+                fontWeight: FontWeight.w400,
+              ),
+            )
+          ],
+        ),
+      );
+    }
+
+    Widget _buildCategoryGrid(List items) {
+      return GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
         itemCount: items.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: .9,
+          childAspectRatio: 0.65,
         ),
         itemBuilder: (context, index) {
-          final item = items[index];
-          return GestureDetector(
-            onTap: () {
-              final String title = (item['title'] as String?) ?? '';
-              if (title.contains('Furniture') || title.contains('أثاث')) {
-                Navigator.pushNamed(context, '/furniture-service');
-                return;
-              }
-              if (title.contains('Express') || title.contains('السريع')) {
-                Navigator.pushNamed(context, '/express-delivery');
-                return;
-              }
-              Navigator.pushNamed(
-                context,
-                '/home-category-details',
-                arguments: {'title': title},
-              );
-            },
-            child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppColors.greyBlue,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: (item['image'] != null && (item['image'] as String).isNotEmpty)
-                    ? Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Image.network(
-                          item['image'] as String,
-                          fit: BoxFit.contain,
-                          errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, color: AppColors.washyBlue),
-                        ),
-                      )
-                    : (item['asset'] != null)
-                        ? Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Image.asset(
-                              item['asset'] as String,
-                              fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, color: AppColors.washyBlue),
-                            ),
-                          )
-                        : const Icon(
-                            Icons.widgets,
-                            color: AppColors.washyBlue,
-                            size: 30,
-                          ),
-              ),
-              const SizedBox(height: 4),
-              Flexible(
-                child: Text(
-                  item['title'] as String,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 11,
-                    height: 1.2,
-                    color: AppColors.colorTitleBlack,
-                  ),
-                ),
-              )
-            ],
-          ));
+          return _buildCategoryItem(items[index]);
         },
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 240,
+            child: PageView.builder(
+              controller: _categoriesController,
+              itemCount: totalPages,
+              onPageChanged: (index) =>
+                  setState(() => _categoriesPageIndex = index),
+              itemBuilder: (context, pageIndex) {
+                if (pageIndex == 0) {
+                  return _buildCategoryGrid(page1Items);
+                } else {
+                  return _buildCategoryGrid(page2Items);
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              totalPages,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: i == _categoriesPageIndex ? 9 : 7,
+                height: i == _categoriesPageIndex ? 9 : 7,
+                margin: const EdgeInsets.symmetric(horizontal: 3.5),
+                decoration: BoxDecoration(
+                  color: i == _categoriesPageIndex
+                      ? AppColors.washyGreen
+                      : AppColors.grey3,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -836,10 +1014,10 @@ class _HomePageState extends State<HomePage>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).t('quick_order'),
+            'Quick Order',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 22,
@@ -852,17 +1030,17 @@ class _HomePageState extends State<HomePage>
             children: [
               Expanded(
                 child: _quickCard(
-                  image: 'assets/images/ic_intro_page2.png',
-                  title: 'مستعجل؟ اطلب الآن!',
-                  subtitle: 'سيقوم موظف التوصيل بأخذ طلبك',
+                  image: 'assets/images/ic_express_delivery.png',
+                  title: 'Skip item selection',
+                  subtitle: 'Our Laundry agent will come get your laundry',
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _quickCard(
-                  image: 'assets/images/ic_intro_page3.png',
-                  title: 'الطلب السريع اكسبرس',
-                  subtitle: 'احصل على غسيلك بسرعة مضاعفة',
+                  image: 'assets/images/ic_skip_new.png',
+                  title: 'Express Delivery',
+                  subtitle: 'Receive your laundry twice as fast',
                 ),
               ),
             ],
@@ -872,73 +1050,84 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _quickCard({required String image, required String title, required String subtitle}) {
+  Widget _quickCard(
+      {required String image,
+      required String title,
+      required String subtitle}) {
     return GestureDetector(
-      onTap: () {
-        if (title.contains('مستعجل') || title.contains('اطلب') || title.contains('Order')) {
-          Navigator.pushNamed(context, '/new-order');
-        } else {
-          Navigator.pushNamed(context, '/express-delivery');
-        }
-      },
-      child: Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+        onTap: () {
+          if (title.contains('مستعجل') ||
+              title.contains('اطلب') ||
+              title.contains('Order')) {
+            Navigator.pushNamed(context, '/new-order');
+          } else {
+            Navigator.pushNamed(context, '/express-delivery');
+          }
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: Column(
-          children: [
-            AspectRatio(
-              aspectRatio: 16/9,
-              child: Image.asset(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Container(color: AppColors.grey3),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(22),
+                  topRight: Radius.circular(22),
+                ),
+                child: Image.asset(
+                  image,
+                  fit: BoxFit.cover,
+                  height: 150,
+                  width: double.infinity,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Container(color: AppColors.grey3),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    title,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.colorTitleBlack,
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.colorTitleBlack,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 13,
-                      color: AppColors.grey2,
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        fontSize: 13,
+                        color: AppColors.grey2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
-              ),
-            )
-          ],
-        ),
-      ),
-    ));
-    
+                  ],
+                ),
+              )
+            ],
+          ),
+        ));
   }
 
   /// Search and Filter Section (100% matching Java FilterSection_CardView)
